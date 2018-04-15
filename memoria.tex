@@ -1,0 +1,60 @@
+\documentclass[upright, contnum]{umemoria}
+
+%fix for the oneside argument
+\makeatletter
+\g@addto@macro\titlepage{\pagenumbering{Alph}}
+\g@addto@macro\endtitlepage{\pagenumbering{roman}}
+\makeatother
+
+\depto{Departamento de Ciencias de la Computación}
+\author{Matías Ignacio Meneses Cortés}
+\title{Type-Based Declassification en Dart: Implementación y Elaboración de Herramientas de Inferencia}
+\auspicio{}
+\date{Abril 2018}
+\guia{Éric Tanter}
+\carrera{Ingeniero Civil en Computación}
+\memoria{Memoria para optar al Título de \break  Ingeniero Civil en Computación}
+\comision{}
+
+\usepackage{lipsum}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\begin{document}
+
+\frontmatter
+\maketitle
+
+\begin{abstract}
+{\lipsum[1-4]}
+\end{abstract}
+
+\begin{dedicatoria} % opcional
+Una dedicatoria corta. Por ejemplo, \emph{A los creadores de U-Campus}
+\end{dedicatoria}
+
+\begin{thanks} % opcional
+\lipsum[1-2]
+\end{thanks}
+\cleardoublepage
+
+\tableofcontents
+\listoftables % opcional
+\listoffigures % opcional
+
+\mainmatter
+
+\input{intro.tex}
+\input{cap1.tex}
+\input{cap2.tex}
+\input{conclu.tex}
+
+% \input{glosario.tex} % opcional
+
+\bibliographystyle{plain}
+\bibliography{bibliografia}
+
+% \input{anexo_apendices.tex} % opcionales
+
+\end{document}
