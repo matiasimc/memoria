@@ -2,14 +2,14 @@
 
 	La protección de la confidencialidad de la información manipulada por los programas computacionales es un problema cuya relevancia se ha incrementado en el último tiempo, a pesar de tener varias décadas de investigación. Por ejemplo, una aplicación web (o móvil) que como parte de su funcionamiento debe interactuar con servicios de terceros y por tanto debe proteger que su información sensible no se escape durante la ejecución de la aplicación a canales públicos.
 
-\section{Conceptos de language-based security}
+\section{Information flow control}
 
-	Muchas de las técnicas de seguridad convencionales como \textit{control de acceso} tienen deficiencias para proteger la confidencialidad de un programa, por ejemplo no restringen la propagación de información []. % TODO citation needed
+	Muchas de las técnicas de seguridad convencionales como \textit{control de acceso} tienen deficiencias para proteger la confidencialidad de un programa, por ejemplo no restringen la propagación de información [].% TODO citation needed
 
-	Formas más expresivas y efectivas de proteger la confidencialidad se basan en un análisis, ya sea estático o dinámico, sobre el código del programa, y se categorizan dentro de \textit{language-based security} (LBS). En este trabajo, nos centraremos en la verificación estática de que un programa protege la confidencialidad de su información.
+	Un mecanismo más expresivo para la protección de la confidencialidad e integridad de la información se denomina \textit{information flow control}. Mientras control de acceso restringe qué datos pueden ser accedidos, \textit{information flow control} restringe el flujo de estos datos.
 
 	\subsection{Tipado de seguridad}
-	Una de las técnicas más efectivas de LBS con análisis estático es \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}. En un lenguaje de seguridad, los valores y los tipos son anotados con niveles de seguridad para clasificar la información que el programa manipula. Dichos niveles de seguridad forman una \textit{lattice} \footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo}. Por ejemplo con la \textit{lattice} de dos niveles de seguridad $L \sqsubseteq H$, se puede distinguir entre valores enteros públicos o de baja confidencialidad ($Int_L$) y valores enteros privados o de alta confidencialidad ($Int_H$). El sistema de tipos usa estos niveles de seguridad para prevenir que la información confidencial no fluya directa o indirectamente hacia canales públicos []. % TODO citation needed
+	El análisis de \textit{information flow control} puede ser realizado sobre el código del programa, de forma estática o dinámica. Una de las técnicas más efectivas de \textit{information flow control} con análisis estático es \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}. En un lenguaje de seguridad, los valores y los tipos son anotados con niveles de seguridad para clasificar la información que el programa manipula. Dichos niveles de seguridad forman una \textit{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo}. Por ejemplo con la \textit{lattice} de dos niveles de seguridad $L \sqsubseteq H$, se puede distinguir entre valores enteros públicos o de baja confidencialidad ($Int_L$) y valores enteros privados o de alta confidencialidad ($Int_H$). El sistema de tipos usa estos niveles de seguridad para prevenir que la información confidencial no fluya directa o indirectamente hacia canales públicos []. % TODO citation needed
 
 	\subsection{No-interferencia}
 	Formalmente, la propiedad de confidencialidad puede ser expresada como una propiedad de \textit{no-interferencia (noninterference)}. A grandes rasgos noninterference expresa que para dos ejecuciones realizadas por el adversario de un programa seguro, con valores confidenciales equivalentes, las salidas del programa deben ser equivalentes para el adversario. Esto caracteriza que el adversario no aprende nada sobre los valores confidenciales de un programa.
@@ -41,4 +41,33 @@ String login(String password, String guess) {
 
 	Varios mecanismos se han explorado para controlar el uso de declasificación, y poder asegurar además una propiedad de seguridad para el programa []. En esta dirección, Cruz et al. [] recientemente propusieron \textit{type-based declassification} como un mecanismo de declasificación que conecta la abstracción de tipos con una forma controlada de declasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa. %TODO citation needed.
 
-	
+	\subsection{Sistema de tipos}
+
+	En \textit{type-based declassification} los tipos tienen dos facetas, una que refleja el tipo de implementación y otro tipo que refleja las operaciones de declasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\text{StringEq} \triangleq [\text{eq} : \text{String} \rightarrow \text{Bool}]$ autoriza la operación \texttt{eq} sobre un String. Entonces se puede usar el tipo de dos facetas $\text{String} < \text{StringEq}$, en donde String es un subtipo de StringEq, para controlar la operación de declasificación de la igualdad sobre \texttt{password}.
+
+	\begin{lstlisting}
+String login(String<StringEq password, String guess) {
+	if (password.eq(guess)) return "Login successful";
+	else return "Login failed";
+}
+	\end{lstlisting}
+
+	Para formalizar y demostrar propiedades del sistema de tipos, se utilizó el lenguaje $\text{Ob}_{\text{SEC}}$, que se muestra en la figura. % TODO poner lenguaje Ob_SEC en figura
+
+	$\text{Ob}_{\text{SEC}}$ es un lenguaje minimalista, y por tanto no soporta características comunes de lenguajes de programación, como asignaciones a variables y condicionales. La justificación de su uso se debe a que era suficiente para formular y demostrar la proposición.
+
+	\subsubsection{Características}
+
+	Se demostró que programas de $\text{Ob}_{\text{SEC}}$ bien tipados son \textit{safe}\footnote{Sin errores de tipos en tiempo de ejecución}.
+
+	\subsection{Relaxed noninterference}
+
+	La propiedad de seguridad que se demuestra para $\text{Ob}_{\text{SEC}}$ es una forma de no-interferencia con políticas de declasificación, denominada \textit{Relaxed noninterference}.	Un lenguaje de seguridad que tiene esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de una forma controlada, por medio de las políticas de declasificación. % TODO citation needed
+
+	\section{Lenguaje Dart}
+
+	Dart [] es un lenguaje de programación de propósito general, orientado a objetos y de código abierto desarrollado por Google. Es usado para construir aplicaciones web, móviles y dispositivos IoT (Internet of Things). % TODO citation needed
+
+	Dart es un lenguaje de creciente adopción. Actualmente, la interfaz de Google Adwords está construida sobre Dart y Angular2. Además, Dart es usado en el framework de desarollo multiplataforma \textit{Flutter}.
+
+	El lenguaje Dart fue escogido porque los investigadores que realizaron el trabajo de \textit{type-based declassification} estudian este lenguaje como parte de un proyecto de investigación mayor en el área de seguridad. Es factible implementar el enfoque de \textit{type-based declassification} en Dart, dado que fue formalizado considerando un lenguaje minimalista orientado a objetos ($\text{Ob}_{\text{SEC}}$).

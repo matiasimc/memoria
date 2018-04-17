@@ -20,6 +20,30 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\usepackage{listings}
+\lstset{%
+	basicstyle=\large,
+	numberstyle=\tiny,
+	numbersep=15pt,tabsize=4,
+	flexiblecolumns=true,
+	keywordstyle=\color{blue},
+	commentstyle=\color{dkgreen},
+	stringstyle=\color{mauve},
+	numberstyle=\tiny\color{gray},
+	language=Java,
+	breaklines=true,
+	breakatwhitespace=true,
+  showstringspaces=false,
+  aboveskip=1.2em,
+  belowskip=1.2em,
+	morekeywords={*,num,String,var,library,get,set} ,
+}
 
 \begin{document}
 \frontmatter
@@ -46,6 +70,7 @@ Una dedicatoria corta. Por ejemplo, \emph{A los creadores de U-Campus}
 
 \input{intro.tex}
 \input{marcoteorico.tex}
+\input{especificacion.tex}
 \input{cap1.tex}
 \input{cap2.tex}
 \input{conclu.tex}
