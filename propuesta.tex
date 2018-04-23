@@ -1,0 +1,78 @@
+\chapter{Propuesta}
+
+En este trabajo se propone realizar la implementación del análisis de \textit{Type-based Relaxed Noninterference} en Dart, y una herramienta de inferencia de facetas de declasificación, mediante la realización de un plugin para Dart Analyzer. En este capítulo se detallan los problemas de inferencia a resolver, las estrategias utilizadas para resolverlos y el subconjunto del lenguaje soportado.
+
+\section{DRAFT de ejemplos}
+
+Inferencia completa basado en uso de distintas variables.
+ \begin{lstlisting}
+int foo(String a, String b) {
+  return a.length + b.indexOf("a");
+}
+->
+@IntPlus int foo(@StringLength String a, @StringIndexOf String b) {
+  return a.length + b.indexOf("a");
+}
+ \end{lstlisting}
+
+¿Qué pasa si se llama a un metodo que retorna High?
+
+ \begin{lstlisting}
+class int {
+  @High int operator +(int b);
+  ...
+}
+
+int foo(String a, String b) {
+  return a.length + b.indexOf("a");
+}
+->
+@High int foo(@StringLength String a, @StringIndexOf String b) {
+  return a.length + b.indexOf("a");
+}
+ \end{lstlisting}
+
+ Inferencia en condicionales.
+
+ \begin{lstlisting}
+int foo(bool a) {
+ bool b = !a;
+ int ret = 0;
+ if (a) {
+   ret = 4;
+ }
+ else {
+   ret = 5;
+ }
+ return ret;
+}
+
+@High int foo(@BoolNot bool a) {
+ @High bool b = !a;
+ @High int ret = 0;
+ if (a) {
+   ret = 4;
+ }
+ else {
+   ret = 5;
+ }
+ return ret;
+}
+ \end{lstlisting}
+
+  Si la variable retornada no tiene ninguna llamada a método, retornará High. En este caso las asignaciones son válidas, pues se puede asignar cualquier cosa a High (si los tipos de implementación son válidos).
+
+  \begin{lstlisting}
+ @High int foo(@Bool bool a) {
+  @Int int ret = 0;
+  if (a) {
+    ret = 4;
+  }
+  else {
+    ret = 5;
+  }
+  return ret;
+ }
+  \end{lstlisting}
+
+  Si forzamos la declaración de \texttt{ret} como pública, la asignación será inválida, puesto que el contexto de seguridad del \texttt{if} es \texttt{BoolNot}, lo cual no tiene una relación de subtyping válida con \texttt{int} para realizar la asignación.
