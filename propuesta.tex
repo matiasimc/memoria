@@ -2,6 +2,20 @@
 
 En este trabajo se propone realizar la implementación del análisis de \textit{Type-based Relaxed Noninterference} en Dart, y una herramienta de inferencia de facetas de declasificación, mediante la realización de un plugin para Dart Analyzer. En este capítulo se detallan los problemas de inferencia a resolver, las estrategias utilizadas para resolverlos, las extensiones al trabajo original y el subconjunto del lenguaje soportado.
 
+\section{Extensión de propuesta teórica}
+
+Se propone extender el lenguaje $\text{Ob}_{\text{SEC}}$ para soportar instrucciones de asignación y condicionales (\texttt{if}, \texttt{while} y \texttt{for}). La sintaxis del nuevo lenguaje, denominado $\text{Ob}_{\text{SEC}}$*, se muestra en la figura.
+
+\subsection{Reglas de subtyping}
+
+\subsection{Reglas semánticas}
+
+\section{Inferencia de facetas de seguridad}
+
+Como $\text{Ob}_{\text{SEC}}$* posee instrucciones condicionales, es vulnerable a flujos implícitos de información, por lo que se usa \textit{program counter} para seguridad como mecanismo para su detección.
+
+
+
 \section{DRAFT de ejemplos}
 
 Inferencia completa basado en uso de distintas variables.

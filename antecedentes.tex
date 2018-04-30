@@ -4,7 +4,7 @@ En este capítulo se discuten los antecedentes y el marco teórico necesario par
 
 \section{Information flow control}
 
-	El problema de la protección de confidencialidad de la información ha sido enfrentado principalmente mediante \textit{control de acceso}, método que tiene deficiencias debido a que no restringe la propagación de información.~\cite{myers-phd}.
+	El problema de la protección de confidencialidad de la información ha sido enfrentado principalmente mediante \textit{control de acceso}, método que tiene deficiencias debido a que no restringe la propagación de información~\cite{myers-phd}.
 
 	Un mecanismo más expresivo para la protección de la confidencialidad e integridad de la información se denomina \textit{information flow control}. Mientras control de acceso restringe qué datos pueden ser accedidos, \textit{information flow control} restringe el flujo de estos datos.
 
@@ -22,7 +22,7 @@ En este capítulo se discuten los antecedentes y el marco teórico necesario par
 	\end{figure}
 
 
-	Por ejemplo con la \textit{lattice} de dos niveles de seguridad $L \sqsubseteq H$, se puede distinguir entre valores enteros públicos o de baja confidencialidad ($Int_L$) y valores enteros privados o de alta confidencialidad ($Int_H$). El sistema de tipos usa estos niveles de seguridad para prevenir que la información confidencial no fluya directa o indirectamente hacia canales públicos\cite{volpanoAl:S96}. % TODO citation needed
+	Por ejemplo con la \textit{lattice} de dos niveles de seguridad $L \sqsubseteq H$, se puede distinguir entre valores enteros públicos o de baja confidencialidad ($Int_L$) y valores enteros privados o de alta confidencialidad ($Int_H$). El sistema de tipos usa estos niveles de seguridad para prevenir que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}. % TODO citation needed
 
 	\begin{lstlisting}
 String @H login(String @L guess, String @H password) {
@@ -75,7 +75,7 @@ String @H login(String @L guess, String @H password) {
 	Este programa no cumple con noninterference, debido a que el adversario puede aprender sobre la variable confidencial \texttt{password} observando el valor de retorno del método para distintas ejecuciones.
 
 	\subsection{Declasificación}
-	En una aplicación real y práctica deseamos que el programa anterior sea aceptado a pesar de violar la propiedad de no-interferencia, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para \textit{declasificar} la información confidencial, implementados de diferentes formas\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif (un lenguaje de seguridad)\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, declasificando la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess} %TODO citation needed.
+	En una aplicación real y práctica deseamos que el programa anterior sea aceptado a pesar de violar la propiedad de no-interferencia, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para \textit{declasificar} la información confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif (un lenguaje de seguridad)~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, declasificando la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess} %TODO citation needed.
 
 \clearpage
 
@@ -90,7 +90,7 @@ String login(String password, String guess) {
 
 	\section{Type-based declassification}
 
-	Varios mecanismos se han explorado para controlar el uso de declasificación, y poder asegurar además una propiedad de seguridad para el programa\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification} como un mecanismo de declasificación que conecta la abstracción de tipos con una forma controlada de declasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa. %TODO citation needed.
+	Varios mecanismos se han explorado para controlar el uso de declasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification} como un mecanismo de declasificación que conecta la abstracción de tipos con una forma controlada de declasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa. %TODO citation needed.
 
 	\subsection{Sistema de tipos}
 
@@ -142,15 +142,15 @@ String login(String<StringEq password, String guess) {
 
 	\subsubsection{Relaxed noninterference}
 
-	La propiedad de seguridad que se demuestra para $\text{Ob}_{\text{SEC}}$ es una forma de no-interferencia con políticas de declasificación, denominada \textit{Relaxed noninterference}.	Un lenguaje de seguridad que tiene esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de una forma controlada, por medio de las políticas de declasificación\cite{cruzAl:ecoop2017}.
+	La propiedad de seguridad que se demuestra para $\text{Ob}_{\text{SEC}}$ es una forma de no-interferencia con políticas de declasificación, denominada \textit{Relaxed noninterference}.	Un lenguaje de seguridad que tiene esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de una forma controlada, por medio de las políticas de declasificación~\cite{cruzAl:ecoop2017}.
 
 	\section{Inferencia de tipos de seguridad}
 
 	La inferencia de tipos se refiere a la detección automática del tipo de una expresión en un lenguaje de programación. En \textit{Security Typing}, las expresiones también poseen un tipo de seguridad, el cual puede estar implícito o no especificado, por lo que es posible desarrollar un algoritmo de inferencia para tipos de seguridad.
 
-	En esta dirección, se han desarrollado modelos de inferencia de tipos de seguridad, para lenguajes orientados a objetos\cite{SunBanerjeeGiacobazzi} y lenguajes funcionales\cite{Pottier}, con el objetivo de extender los modelos simplificados para los cuales se demuestran las propiedades de seguridad relevantes.
+	En esta dirección, se han desarrollado modelos de inferencia de tipos de seguridad, para lenguajes orientados a objetos~\cite{SunBanerjeeGiacobazzi} y lenguajes funcionales~\cite{Pottier}, con el objetivo de extender los modelos simplificados para los cuales se demuestran las propiedades de seguridad relevantes.
 
-	Para llevar registro del nivel de seguridad en cada instrucción del programa, se utiliza el concepto de \textit{program counter} (PC) para seguridad\cite{Molnar:2005}. Este registro es utilizado por los modelos de inferencia de tipos de seguridad, y para realizar el análisis de seguridad que detecta la existencia de fugas de información.
+	Para llevar registro del nivel de seguridad en cada instrucción del programa, se utiliza el concepto de \textit{program counter} (PC) para seguridad~\cite{Molnar:2005}. Este registro es utilizado por los modelos de inferencia de tipos de seguridad, y para realizar el análisis de seguridad que detecta la existencia de fugas de información.
 
 	\section{Lenguaje Dart}
 
