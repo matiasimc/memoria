@@ -4,9 +4,7 @@ En este capítulo se discuten los antecedentes y el marco teórico necesario par
 
 \section{Information flow control}
 
-	La protección de la confidencialidad de la información manipulada por los programas computacionales es un problema cuya relevancia se ha incrementado en el último tiempo, a pesar de tener varias décadas de investigación. Por ejemplo, una aplicación web (o móvil) que como parte de su funcionamiento debe interactuar con servicios de terceros y por tanto debe proteger que su información sensible no se escape durante la ejecución de la aplicación a canales públicos.
-
-	Muchas de las técnicas de seguridad convencionales como \textit{control de acceso} tienen deficiencias para proteger la confidencialidad de un programa, por ejemplo no restringen la propagación de información\cite{myers-phd}.% TODO citation needed
+	El problema de la protección de confidencialidad de la información ha sido enfrentado principalmente mediante \textit{control de acceso}, método que tiene deficiencias debido a que no restringe la propagación de información.~\cite{myers-phd}.
 
 	Un mecanismo más expresivo para la protección de la confidencialidad e integridad de la información se denomina \textit{information flow control}. Mientras control de acceso restringe qué datos pueden ser accedidos, \textit{information flow control} restringe el flujo de estos datos.
 
@@ -79,6 +77,8 @@ String @H login(String @L guess, String @H password) {
 	\subsection{Declasificación}
 	En una aplicación real y práctica deseamos que el programa anterior sea aceptado a pesar de violar la propiedad de no-interferencia, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para \textit{declasificar} la información confidencial, implementados de diferentes formas\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif (un lenguaje de seguridad)\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, declasificando la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess} %TODO citation needed.
 
+\clearpage
+
 \begin{lstlisting}
 String login(String password, String guess) {
 	if (declassify(password == guess)) return "Login Successful";
@@ -95,8 +95,6 @@ String login(String password, String guess) {
 	\subsection{Sistema de tipos}
 
 	En \textit{type-based declassification} los tipos tienen dos facetas, una que refleja el tipo de implementación y otro tipo que refleja las operaciones de declasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\text{StringEq} \triangleq [\text{eq} : \text{String} \rightarrow \text{Bool}]$ autoriza la operación \texttt{eq} sobre un String. Entonces se puede usar el tipo de dos facetas $\text{String} < \text{StringEq}$, en donde String es un subtipo de StringEq, para controlar la operación de declasificación de la igualdad sobre \texttt{password}.
-
-	\clearpage
 
 	\begin{lstlisting}
 String login(String<StringEq password, String guess) {
@@ -180,8 +178,6 @@ class Bar {
 	\end{lstlisting}
 
 	Dart Analyzer genera el siguiente AST, en donde se indica el tipo de nodo y la expresión al cual corresponde
-
-	\clearpage
 
 	\begin{figure}[ht]
 		\centering

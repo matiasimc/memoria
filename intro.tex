@@ -1,3 +1,41 @@
 \begin{intro}
-		
+
+	La protección de la confidencialidad de la información manipulada por los programas computacionales es un problema cuya relevancia se ha incrementado en el último tiempo, a pesar de tener varias décadas de investigación. Por ejemplo, una aplicación web (o móvil) que como parte de su funcionamiento debe interactuar con servicios de terceros y por tanto debe proteger que su información sensible no se escape durante la ejecución de la aplicación a canales públicos.
+
+	Muchas de las técnicas de seguridad convencionales como \textit{control de acceso} tienen deficiencias para proteger la confidencialidad de un programa, por ejemplo no restringen la propagación de información\cite{myers-phd}.
+
+	Formas más expresivas y efectivas de proteger la confidencialidad se basan en un análisis estático sobre el código del programa, y se categorizan dentro de \textit{language-based security}. Una de las técnicas más efectivas se denomina \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}, donde los tipos son anotados con niveles de seguridad para clasificar la información manipulada por el programa.
+
+	Uno de los mayores desafíos de los lenguajes de seguridad es facilitar el trabajo del programador, utilizando técnicas más expresivas. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification}, una variación de tipado de seguridad que utiliza el sistema de tipos del lenguaje para controlar la declasificación de la información.
+
+	\textit{Type-based declassification} presenta limitaciones en cuanto a su implementación, debido a que el análisis teórico se realiza sobre un lenguaje minimalista que no incluye características básicas de los lenguajes de programación, como instrucciones condicionales y mutabilidad. En este trabajo, se propone una extensión al lenguaje minimalista utilizado en \textit{type-based declassification}, y la implementación en el lenguaje de programación Dart, desarrollando un plugin para los editores de texto más populares, con el objetivo de proporcionar una experiencia interactiva e intuitiva al usuario.
+
+
+
+		\section{Motivación}
+	El tema escogido se considera interesante debido a su importancia teórica y práctica en el campo de la seguridad en lenguajes de programación. Los fundamentos teorícos de \textit{type-based declassification} están bien descritos~\cite{cruzAl:ecoop2017}, pero no así su realización práctica, siendo esto reconocido por sus autores.
+
+	Se considera que la realización de este trabajo es relevante para demostrar y materializar en un lenguaje de uso general la investigación de type-based declassification. Dicha materalización constituye un desafío importante en términos de complejidad, al tener que entender la teoría subyacente de tipado de seguridad, así como extender un lenguaje real y sus herramientas de análisis estático con nuevas funcionalidades.
+
+		\section{Objetivos}
+	El objetivo de la memoria es realizar la implementación de type-based declassification en Dart. Dentro de los objetivos específicos del trabajo, podemos encontrar:
+
+	\begin{itemize}
+	\item \textbf{Verificación estática de type-based declassification}. Se entiende coma la implementación del sistema de tipos de \textit{type-based declassification} en un herramienta de análisis estático para un subconjunto del lenguaje Dart.
+
+	\item \textbf{Inferencia de tipos de declasificacion}. Desarrollar una herramienta, que dado un código fuente de Dart, realice una inferencia de las facetas de declasificación, evitando así que el programador tenga que anotarlas inicialmente. Luego del proceso de inferencia se generara un código equivalente con los tipos inferidos. Sobre este nuevo código el programador podrá realizar las modificaciones que considere pertinentes y usar las herramienta de verificación.
+
+	\item \textbf{Plugin para editores}. Integrar los objetivos anteriores mediante un plugin para los editores de texto que soporten servidores de análisis estático de Dart, con el objetivo de mostrar al usuario el resultado del análisis estático de type-based declassification, y ofrecerle acciones al respecto.
+
+	\end{itemize}
+
+		\section{Resultados y Organización del documento}
+
+	En términos concretos este trabajo presenta el diseño de un plugin que realiza el análisis de type-based declassification. Los antecedentes teóricos necesarios para entender este trabajo se abordan en el capítulo 2, mientras que la propuesta de solución es desarrollada en el capítulo 3.
+
+	Los detalles de diseño de implementación de la propuesta son revisados en el capítulo 4.
+
+	Por terminar.
+
+
 \end{intro}
