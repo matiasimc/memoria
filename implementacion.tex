@@ -1,2 +1,16 @@
 \chapter{Implementación}
-En esta sección se detalla la implementación de este trabajo, que se dividió en tres componentes principales. Primero, se implementó el análisis del sistema de tipos de type-based declassification. Segundo, se desarrolló una herramienta de inferencia de facetas de declasificación. Y por último, se elaboró un plugin para los editores de texto más populares que integra las soluciones anteriores.
+En esta sección se detalla la implementación de este trabajo, que se dividió en dos componentes principales. Primero, se implementó un sistema de inferencia para type-based declassification. Segundo, se elaboró un plugin para los editores de texto más populares que integra el resultado de la inferencia.
+
+\section{Implementación de sistema de inferencia}
+
+\subsection{Representación de tipos}
+Cómo se representaron los distintos tipos (type variables, arrow types, object types, Top, Bot, OrType).
+
+\subsection{Representación de constraints}
+En qué consiste una constraint de subtyping.
+
+\subsection{Almacenamiento de información relevante}
+Uso de diccionarios para llevar registro del tipo de ciertos elementos o expresiones.
+
+\subsection{Fase de generación de constraints}
+Uso del patrón visitor para recorrer el AST que provee Dart Analyzer.

@@ -1,92 +1,21 @@
 \chapter{Propuesta}
 
-En este trabajo se propone realizar la implementación del análisis de \textit{Type-based Relaxed Noninterference} en Dart, y una herramienta de inferencia de facetas de declasificación, mediante la realización de un plugin para Dart Analyzer. En este capítulo se detallan los problemas de inferencia a resolver, las estrategias utilizadas para resolverlos, las extensiones al trabajo original y el subconjunto del lenguaje soportado.
+En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas de declasificación, que incluya el análisis de \textit{Type-based Relaxed Noninterference}, mediante la realización de un plugin para Dart Analyzer. En este capítulo se detallan los problemas de inferencia a resolver, las estrategias utilizadas para resolverlos, los cambios al trabajo original y el subconjunto del lenguaje soportado.
+
+\section{Problema de inferencia}
+Se discute el problema de inferencia a resolver y ejemplos de lo que se busca del sistema a implementar.
+
+\section{Consideraciones de diseño}
+Se discuten las alternativas disponibles respecto a la decisión sobre las facetas de métodos que pertenecen al core del lenguaje, y por qué Bot -> Bot es la escogida. Explicar que de todas formas sería un parámetro configurable de la herramienta.
+
+\section{Generación de constraints de subtyping}
+Se muestra en palabras la generación de constraints para las distintas expresiones.
+
+\section{Resolución de constraints}
+Se explica el uso de las operaciones \texttt{join} y \texttt{meet} sobre la lattice, simplificación de constraints y otros.
 
 \section{Extensión de propuesta teórica}
+Mostrar los cambios y extensiones necesarias para ajustarse a un lenguaje como Dart y el subconjunto soportado.
 
-Se propone extender el lenguaje $\text{Ob}_{\text{SEC}}$ para soportar instrucciones de asignación y condicionales (\texttt{if}, \texttt{while} y \texttt{for}). La sintaxis del nuevo lenguaje, denominado $\text{Ob}_{\text{SEC}}$*, se muestra en la figura.
-
-\subsection{Reglas de subtyping}
-
-\subsection{Reglas semánticas}
-
-\section{Inferencia de facetas de seguridad}
-
-Como $\text{Ob}_{\text{SEC}}$* posee instrucciones condicionales, es vulnerable a flujos implícitos de información, por lo que se usa \textit{program counter} para seguridad como mecanismo para su detección.
-
-
-
-\section{DRAFT de ejemplos}
-
-Inferencia completa basado en uso de distintas variables.
- \begin{lstlisting}
-int foo(String a, String b) {
-  return a.length + b.indexOf("a");
-}
-->
-@IntPlus int foo(@StringLength String a, @StringIndexOf String b) {
-  return a.length + b.indexOf("a");
-}
- \end{lstlisting}
-
-¿Qué pasa si se llama a un metodo que retorna High?
-
- \begin{lstlisting}
-class int {
-  @High int operator +(int b);
-  ...
-}
-
-int foo(String a, String b) {
-  return a.length + b.indexOf("a");
-}
-->
-@High int foo(@StringLength String a, @StringIndexOf String b) {
-  return a.length + b.indexOf("a");
-}
- \end{lstlisting}
-
- Inferencia en condicionales.
-
- \begin{lstlisting}
-int foo(bool a) {
- bool b = !a;
- int ret = 0;
- if (a) {
-   ret = 4;
- }
- else {
-   ret = 5;
- }
- return ret;
-}
-
-@High int foo(@BoolNot bool a) {
- @High bool b = !a;
- @High int ret = 0;
- if (a) {
-   ret = 4;
- }
- else {
-   ret = 5;
- }
- return ret;
-}
- \end{lstlisting}
-
-  Si la variable retornada no tiene ninguna llamada a método, retornará High. En este caso las asignaciones son válidas, pues se puede asignar cualquier cosa a High (si los tipos de implementación son válidos).
-
-  \begin{lstlisting}
- @High int foo(@Bool bool a) {
-  @Int int ret = 0;
-  if (a) {
-    ret = 4;
-  }
-  else {
-    ret = 5;
-  }
-  return ret;
- }
-  \end{lstlisting}
-
-  Si forzamos la declaración de \texttt{ret} como pública, la asignación será inválida, puesto que el contexto de seguridad del \texttt{if} es \texttt{BoolNot}, lo cual no tiene una relación de subtyping válida con \texttt{int} para realizar la asignación.
+\section{Interacción con el usuario}
+Cuál es la interacción con el usuario deseada.
