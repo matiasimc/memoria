@@ -11,26 +11,32 @@ Se explica en que consiste, se muestra la lattice de dos niveles de seguridad y 
 Se muestra un ejemplo de flujo explicito.
 \subsubsection{Flujo implicito}
 Se muestra un ejemplo de flujo implicito.
+\subsubsection{Trabajos relacionados}
+Se muestran distintas herramientas de tipado de seguridad, como Jif.
 \subsection{No-interferencia}
 Se formaliza la propiedad de confidencialidad con noninterference. Se muestra un ejemplo, o se hace referencia a ejemplos anteriores.
 
 \subsection{Declasificación}
 Se explica por qué es necesario tener un mecanismo de declasificación, y cómo se puede controlar. Aquí se da el pase-gol a TYPE-BASED DECLASSIFICATION.
 \section{Type-based declassification}
-Se explican:
-\begin{itemize}
-	\item Tipos de dos facetas, relación de subtyping y lattice que conforman
-	\item Explicar las reglas del sistema de tipos, y como fue formalizado
-	\item Mostrar propiedades que cumple el sistema de tipos (safe, relaxed noninterference)
-\end{itemize}
+Breve introducción.
+\subsection{Tipos de dos facetas}
+\subsection{Sistema de tipos}
+\subsection{Propiedades}
+Safe, relaxed noninterference
 
 \section{Inferencia de tipos}
-Se explica qué es y los beneficios que otorgan los mecanismos de inferencia. Explicar que los lenguajes de programación realizan inferencia basada en constraints (explicar qué es una constraint), que pueden ser de subtyping. Mencionar que este problema es NO DECIDIBLE. Mostrar un pequeño ejemplo de generación de constraints y explicar cómo los lenguajes reales manejan la indecidibilidad.
-
-Además se explica brevemente la resolución de constraints. Algoritmos de unificación, síntesis.
+\subsection{Objetivo y usos}
+\subsection{Constraints}
+\subsection{Unificación}
+\subsection{Decidibilidad}
 
 \subsection{Inferencia de tipos de seguridad}
-Mencionar por qué es posible y trabajos relacionados al respecto. Explicar el uso de PC, y mostrar el ejemplo del \texttt{if}.
+Mencionar por qué es posible y trabajos relacionados al respecto. Explicar y ejemplificar el uso de PC.
 
 \section{Lenguaje Dart}
-Qué es Dart, para qué se usa, cuáles son sus características principales y por qué fue escogido. Además, en subsecciones se muestran las librerías y herramientas más relevantes utilizadas en este trabajo (Dart Analyzer, Analyzer Plugin).
+Qué es Dart, para qué se usa, cuáles son sus características principales y por qué fue escogido.
+\subsection{Dart Analyzer}
+\subsection{Analyzer Plugin}
+\subsection{Otras herramientas}
+Se menciona librería de unit test, manejo de dependencias y versión de Dart.

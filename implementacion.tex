@@ -3,14 +3,42 @@ En esta sección se detalla la implementación de este trabajo, que se dividió 
 
 \section{Implementación de sistema de inferencia}
 
+\subsection{Diagrama de componentes y descripción general}
+Se explica el funcionamiento general de la inferencia.
+
+\subsection{Dart Analyzer}
+Explicar funcionalidades utilizadas de la librería Dart Analyzer. Información contenida en AST, en especial inferencia de tipos. Limitaciones (si es que tiene alguna relevante).
+
 \subsection{Representación de tipos}
 Cómo se representaron los distintos tipos (type variables, arrow types, object types, Top, Bot, OrType).
 
 \subsection{Representación de constraints}
-En qué consiste una constraint de subtyping.
+En qué consisten las constraint de subtyping implementadas.
+
+\subsection{Representación de facetas de declasificación}
+Uso de anotaciones para indicar las facetas. Abstract classes de Dart en archivo sec.dart para declararlas. Mencionar el parsing de facetas declaradas a object types.
 
 \subsection{Almacenamiento de información relevante}
 Uso de diccionarios para llevar registro del tipo de ciertos elementos o expresiones.
 
 \subsection{Fase de generación de constraints}
-Uso del patrón visitor para recorrer el AST que provee Dart Analyzer.
+Uso del patrón visitor para recorrer el AST.
+
+\subsubsection{Recolección de errores}
+
+\subsection{Fase de resolución de constraints}
+
+\subsubsection{Recolección de errores}
+
+\subsection{Testing}
+Cómo se testea la inferencia.
+
+\section{Implementación de plugin}
+
+\subsection{Diagrama de componentes y descripción general}
+Explicar funcionamiento general e integración con sistema de inferencia.
+
+\subsection{Configuración inicial}
+Uso de la herramienta y creación del archivo sec.dart en primera ejecución del análisis.
+
+\subsection{Tipos de errores e información}

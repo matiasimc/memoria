@@ -1,6 +1,6 @@
 \chapter{Propuesta}
 
-En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas de declasificación, que incluya el análisis de \textit{Type-based Relaxed Noninterference}, mediante la realización de un plugin para Dart Analyzer. En este capítulo se detallan los problemas de inferencia a resolver, las estrategias utilizadas para resolverlos, los cambios al trabajo original y el subconjunto del lenguaje soportado.
+En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas de declasificación, que incluya el análisis de \textit{Type-based Relaxed Noninterference}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detallan los problemas de inferencia a resolver, las estrategias utilizadas para resolverlos, los cambios al trabajo original y el subconjunto del lenguaje soportado.
 
 \section{Problema de inferencia}
 Se discute el problema de inferencia a resolver y ejemplos de lo que se busca del sistema a implementar.
@@ -10,12 +10,28 @@ Se discuten las alternativas disponibles respecto a la decisión sobre las facet
 
 \section{Generación de constraints de subtyping}
 Se muestra en palabras la generación de constraints para las distintas expresiones.
+\subsection{Declaración de métodos}
+\subsection{Llamadas a métodos}
+\subsubsection{Retorno}
+\subsubsection{Argumentos}
+\subsubsection{Encadenamiento de llamados}
+\subsection{Expresión de retorno}
+\subsection{Declaración y asignación a variables}
+\subsection{Expresiones condicionales}
+
+
 
 \section{Resolución de constraints}
-Se explica el uso de las operaciones \texttt{join} y \texttt{meet} sobre la lattice, simplificación de constraints y otros.
+
+\subsection{Simplificación y eliminación de constraints}
+\subsection{Agrupación de constraints}
+\subsubsection{Join}
+\subsubsection{Meet}
+\subsection{Unificación y substitución}
+
 
 \section{Extensión de propuesta teórica}
-Mostrar los cambios y extensiones necesarias para ajustarse a un lenguaje como Dart y el subconjunto soportado.
+Mostrar los cambios y extensiones necesarias al trabajo de type-based declassification para ajustarse a un lenguaje como Dart, y el subconjunto de Dart soportado.
 
 \section{Interacción con el usuario}
 Cuál es la interacción con el usuario deseada.

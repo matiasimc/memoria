@@ -18,14 +18,12 @@
 	Se considera que la realización de este trabajo es relevante para demostrar y materializar en un lenguaje de uso general la investigación de type-based declassification. Dicha materalización constituye un desafío importante en términos de complejidad, al tener que entender la teoría subyacente de tipado de seguridad, así como extender un lenguaje real y sus herramientas de análisis estático con nuevas funcionalidades.
 
 		\section{Objetivos}
-	El objetivo de la memoria es realizar la implementación de type-based declassification en Dart. Dentro de los objetivos específicos del trabajo, podemos encontrar:
+	El objetivo de la memoria es realizar la implementación de un sistema de inferencia para \textit{type-based declassification}. Dentro de los objetivos específicos del trabajo, podemos encontrar:
 
 	\begin{itemize}
-	\item \textbf{Verificación estática de type-based declassification}. Se entiende coma la implementación del sistema de tipos de \textit{type-based declassification} en un herramienta de análisis estático para un subconjunto del lenguaje Dart.
+	\item \textbf{Inferencia y verificación estática de type-based declassification}. Se entiende coma la implementación de un sistema de inferencia de facetas de declasificación para \textit{type-based declassification}, en el lenguaje de programación Dart. Dentro del análisis de la inferencia se incluye la verificación de las reglas del sistema de tipos de \textit{type-based declassification}.
 
-	\item \textbf{Inferencia de tipos de declasificacion}. Desarrollar una herramienta, que dado un código fuente de Dart, realice una inferencia de las facetas de declasificación, evitando así que el programador tenga que anotarlas inicialmente. Luego del proceso de inferencia se generara un código equivalente con los tipos inferidos. Sobre este nuevo código el programador podrá realizar las modificaciones que considere pertinentes y usar las herramienta de verificación.
-
-	\item \textbf{Plugin para editores}. Integrar los objetivos anteriores mediante un plugin para los editores de texto que soporten servidores de análisis estático de Dart, con el objetivo de mostrar al usuario el resultado del análisis estático de type-based declassification, y ofrecerle acciones al respecto.
+	\item \textbf{Plugin para editores}. Mostrar al programador el resultado de la inferencia, por medio de un plugin para los editores de texto que soporten servidores de análisis estático de Dart, ofreciéndole acciones al respecto.
 
 	\end{itemize}
 
@@ -35,6 +33,7 @@
 
 	Los detalles de diseño de implementación de la propuesta son revisados en el capítulo 4.
 
+	% TODO
 	Por terminar.
 
 
