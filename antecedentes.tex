@@ -3,23 +3,97 @@
 En este capítulo se discuten los antecedentes y el marco teórico necesario para poder entender este trabajo. Además, se muestran las definiciones formales utilizadas en el resto del documento.
 
 \section{Protección de confidencialidad en computación}
-Se nombran y caracterizan brevemente distintas técnicas: criptografía, control de acceso, language-based security (LBS). Por qué LBS es más expresivo y/o efectivo.
+El problema de la protección de confidencialidad en computación puede ser abordado con diversas técnicas:
+
+\begin{itemize}
+  \item Criptografía: Se entiende como el cifrado de información, descifrable solo con la clave adecuada.
+  \item Control de acceso: Es la restricción selectiva al acceso de informacion confidencial.
+  \item \textit{Language-based security} (LBS): Conjunto de técnicas utilizadas para fortalecer la seguridad utilizando propiedades de los lenguajes de programación.
+\end{itemize}
+
+Estas técnicas no son excluyentes, pero por si solas no garantizan efectivamente la protección de confidencialidad. Por ejemplo, control de acceso no restringe la propagación de información~\cite{myers-phd}.
+
+Este trabajo se contextualiza dentro de LBS, debido a que se implementa una verificación estática de que un programa protege la confidencialidad de su información.
 
 \subsection{Tipado de seguridad y control de flujo}
-Se explica en que consiste, se muestra la lattice de dos niveles de seguridad y se introduce el concepto de information flow control.
-\subsubsection{Flujo explicito}
-Se muestra un ejemplo de flujo explicito.
-\subsubsection{Flujo implicito}
-Se muestra un ejemplo de flujo implicito.
-\subsubsection{Trabajos relacionados}
-Se muestran distintas herramientas de tipado de seguridad, como Jif.
-\subsection{No-interferencia}
-Se formaliza la propiedad de confidencialidad con noninterference. Se muestra un ejemplo, o se hace referencia a ejemplos anteriores.
+Una de las técnicas más efectivas de LBS con análisis estático es \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}. En un lenguaje de seguridad, los valores y los tipos son anotados con niveles de seguridad para clasificar la información que el programa manipula. Dichos niveles de seguridad forman una \textit{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo}.
 
-\subsection{Declasificación}
-Se explica por qué es necesario tener un mecanismo de declasificación, y cómo se puede controlar. Aquí se da el pase-gol a TYPE-BASED DECLASSIFICATION.
+	\begin{figure}[ht]
+		\centering
+		\begin{tikzpicture}
+			\node(H) 												{$H$};
+			\node(L)      [below of=H]       {$L$};
+			\draw(H)      -- (L);
+		\end{tikzpicture}
+		\caption{\textit{lattice} de dos niveles de seguridad}
+	\end{figure}
+
+
+  	Por ejemplo con la \textit{lattice} de dos niveles de seguridad $L \sqsubseteq H$, se puede distinguir entre valores enteros públicos o de baja confidencialidad ($Int_L$) y valores enteros privados o de alta confidencialidad ($Int_H$). El sistema de tipos usa estos niveles de seguridad para prevenir que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}, técnica que en general se denomina \textit{information flow control}.
+
+  	\begin{lstlisting}
+  String @H login(String @L guess, String @H password) {
+  	if (password == login) return "Login successful";
+  	else return "Login failed";
+  }
+  	\end{lstlisting}
+
+    En el código anterior, los tipos de los parámetros y el tipo de retorno de la función están etiquetados con niveles de seguridad. En este ejemplo, la operación \texttt{password == login} tiene un nivel de seguridad \texttt{@H}, debido a que las operaciones binarias tienen un nivel de seguridad que corresponde a la operación \texttt{join} en la \textit{lattice} a la cual pertenecen los elementos. Como el nivel de seguridad se propaga desde la condición del \texttt{if} hacia ambas ramas, el tipo de retorno de la función también tiene un nivel de seguridad \texttt{@H}.
+
+\subsubsection{Flujo explicito}
+Se denomina flujo explícito a las instrucciones del programa que directamente asignan un valor a una variable con distintos niveles de seguridad. El siguiente programa ilustra el flujo explícito.
+
+\begin{lstlisting}
+void @L foo(int @H highVar, int @L lowVar) {
+  int @H v1 = lowVar;
+  int @L v2 = highVar;
+}
+\end{lstlisting}
+
+En el ejemplo, la primera asignación no representa un riesgo de seguridad, puesto que se asigna un valor público a una variable confidencial. Por otra parte, la segunda asignación es insegura, debido a que se asigna un valor confidencial a una variable pública, que luego puede ser utilizada en contextos no deseados.
+
+\subsubsection{Flujo implicito}
+Se denomina flujo implícito a las instrucciones del programa que indirectamente dan conocimiento de algún aspecto de una variable, usualmente mediante instrucciones condicionales. Podemos adaptar el mismo programa de \texttt{login} visto anteriormente para ilustrar el flujo implícito.
+
+\begin{lstlisting}
+String @L login(String @L guess, String @H password) {
+String @L ret;
+if (password == login) ret = "Login successful";
+else ret = "Login failed";
+return ret;
+}
+\end{lstlisting}
+
+En este ejemplo, las instrucciones de asignación a la variable \texttt{ret} son seguras por si solas, pero no lo son considerando que su ejecución depende del valor de una variable confidencial, en este caso \texttt{password}.
+
+\subsubsection{No-interferencia}
+La propiedad para formalizar y caracterizar la seguridad y confidencialidad en los lenguajes con tipado de seguridad se denomina \textit{no-interferencia (noninterference)}. A grandes rasgos noninterference expresa que para dos ejecuciones realizadas por el adversario de un programa seguro, con valores confidenciales equivalentes, las salidas del programa deben ser equivalentes para el adversario. Esto caracteriza que el adversario no aprende nada sobre los valores confidenciales de un programa.
+
+El programa de \texttt{login} es un buen ejemplo para ilustrar el concepto de noninterference.
+
+\begin{lstlisting}
+String @H login(String @L guess, String @H password) {
+if (password == login) return "Login successful";
+else return "Login failed";
+}
+\end{lstlisting}
+
+Este programa no cumple con noninterference, debido a que el adversario puede aprender sobre la variable confidencial \texttt{password} observando el valor de retorno del método para distintas ejecuciones.
+
+\subsubsection{Declasificación}
+En una aplicación real y práctica deseamos que el programa anterior sea aceptado a pesar de violar la propiedad de no-interferencia, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para \textit{declasificar} la información confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif (un lenguaje de seguridad)~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, declasificando la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess} %TODO citation needed.
+
+\begin{lstlisting}
+String login(String password, String guess) {
+if (declassify(password == guess)) return "Login Successful";
+else return "Login failed";
+}
+\end{lstlisting}
+
+Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información, como por ejemplo \texttt{declassify(password)}.
+
 \section{Type-based declassification}
-Breve introducción.
+Varios mecanismos se han explorado para controlar el uso de declasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification} como un mecanismo de declasificación que conecta la abstracción de tipos con una forma controlada de declasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
 \subsection{Tipos de dos facetas}
 \subsection{Sistema de tipos}
 \subsection{Propiedades}
