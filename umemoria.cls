@@ -213,5 +213,5 @@ PROF. GUÍA: \foreach \x in \@guia { \MakeUppercase\x }
 \renewcommand{\S}{\mathcal{S}}
 \newcommand{\T}{\mathcal{T}}
 \newcommand{\Z}{\mathbb{Z}}
-\newcommand{\1}{\mathbf{1}}
+%\newcommand{\1}{\mathbf{1}}
 \let\epsilon\varepsilon
