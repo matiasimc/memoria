@@ -18,7 +18,7 @@ Los sistemas computacionales abordan la protección de confidencialidad con dive
 
 Existe un conjunto de técnicas más efectivas para fortalecer la seguridad de un sistema, utilizando propiedades de los lenguajes de programación. A este conjunto se le denomina \textit{Language-based security} (LBS).
 
-\subsection{Tipado de seguridad y control de flujo}
+\subsection{Tipado de seguridad y control de flujo} \label{sectype}
 Una de las técnicas más efectivas de LBS con análisis estático es \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}. En un lenguaje de seguridad, los valores y los tipos son anotados con niveles de seguridad para clasificar la información que el programa manipula. Dichos niveles de seguridad forman una \textit{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo}.
 
 	\begin{figure}[ht]
@@ -143,30 +143,71 @@ La inferencia de tipos es el proceso de determinar los tipos para las expresione
   }
 \end{lstlisting}
 
-Aquí, se considera redundante declarar el tipo de la variable \texttt{c}, debido a que la suma de dos números enteros siempre da como resultado un número entero. De la misma forma, podría ser considerado redundante declarar los tipos de los parámetros \texttt{a} y \texttt{b}, debido a que son utilizados como sumando en la asignación a la variable \texttt{c}, que fue declarada como \texttt{int}.
+Supongamos que la suma solo está definida para números. Aquí, se considera redundante declarar el tipo de la variable \texttt{c}, debido a que la suma de dos números enteros siempre da como resultado un número entero. De la misma forma, podría ser considerado redundante declarar los tipos de los parámetros \texttt{a} y \texttt{b}, debido a que son utilizados como sumando en la asignación a la variable \texttt{c}, que fue declarada como \texttt{int}.
 
-Las reglas de un sistema de tipos poseen \textit{side conditions}, que expresan condiciones adicionales que se cumplen para que determinada expresión esté bien tipada. Por ejemplo, consideremos la siguiente regla:
-
-\begin{center}
-      \[\infer{n1+n2 : int}{n1: \ int,\ n2: int}\]
-    \end{center}
-
-Esta regla expresa que la suma de dos variables tendrá tipo \texttt{int} si cada sumando tiene tipo \texttt{int}. Una \textit{side condition} de esta regla es que el tipo de \texttt{n1}, \texttt{n2} y \texttt{n1 + n2} es el mismo.
 \subsection{Variables de tipo}
-Los lenguajes de programación que poseen inferencia de tipos, poseen en su sistema de tipos \textit{type schemes}, los cuales pueden incluir variables de tipo. Una variable de tipo es un tipo que no ha sido determinado.
-\subsection{Constraints}
-\subsection{Unificación}
-\subsection{Decidibilidad}
-También se podría considerar innecesaria la declaración de los tipos de la función. Sin embargo, si quitamos toda declaración:
+Los lenguajes de programación que tienen un mecanismo de inferencia de tipos, expresan sus tipos mediante \textit{type schemes}, los cuales pueden incluir variables de tipo y tipos concretos. Una variable de tipo es un tipo que no ha sido determinado.
+
+Consideremos el mismo ejemplo, pero ahora omitiendo la declaración del tipo de la variable \texttt{c}.
 
 \begin{lstlisting}
-  foo(a, b) {
-    c = a + b;
+  int foo(int a, int b) {
+    var c = a + b;
     return c;
   }
 \end{lstlisting}
 
-No se puede saber de forma precisa el tipo de las expresiones, puesto que el operador \texttt{+} está definido para el tipo \texttt{int} y también para el tipo \texttt{String}.
+Para tipar la variable \texttt{c}, el sistema de tipos le asignará una variable de tipo $\alpha$, y generará \textit{side conditions} al aplicar las reglas del sistema de tipos. En este caso, la \textit{side condition} dice que el tipo de \texttt{c}, es decir, $\alpha$, tiene que ser igual al tipo del lado derecho de la asignación, es decir, \texttt{int}.
 
+\subsection{Constraints}
+En el ejemplo anterior, se expresó la \textit{side condition} con lenguaje natural. Como el objetivo es automatizar el proceso de inferencia, se utilizan constraints para expresar las \textit{side conditions} generadas por la aplicación de una regla del sistema de tipos.
+
+Las constraints sirven para expresar una relación entre dos tipos. Esta relación puede ser de igualdad o de subtyping. En el ejemplo anterior, la \textit{side condition} puede ser representada mediante la constraint $\{\alpha = int\}$.
+
+El uso de constraints permite la presentación de un algoritmo de inferencia de forma modular, como un generador de constraints y un solucionador de constraints. Veamos el siguiente ejemplo, suponiendo que el tipo \texttt{num} es heredado por otros tipos numéricos.
+
+\begin{lstlisting}
+  foo(int a, float b, bool cond) {
+    var c;
+    if (cond) c = a;
+    else c = b;
+    return c;
+  }
+\end{lstlisting}
+
+El sistema de tipos asignará los siguientes tipos al programa:
+\begin{lstlisting}[mathescape=true]
+  $\alpha$ foo(int a, float b, bool cond) {
+    $\beta$ c;
+    if (cond) c = a;
+    else c = b;
+    return c;
+  }
+\end{lstlisting}
+Y generará el set de constraints de subtyping $C: \{\beta <: \alpha, int <: \beta, float <: \beta\}$, de donde se deben resolver los tipos de las dos variables de tipo generadas. Notemos que $\beta$ debe ser supertipo de \texttt{int} y \texttt{float}. El mejor tipo que cumple con ambas constraints es \texttt{num}.
+\subsection{Unificación}
+La unificación es el proceso de encontrar una substitución que hace iguales a dos términos. Aplicado a un set de constraints, se genera un mapeo de variables de tipo a tipos concretos, que satisfacen cada una de las constraints.
+
+Si las constraints son de igualdad, la unificación consiste en realizar substituciones sucesivas hasta resolver cada uno de los tipos. En cambio, si las constraints son de subtyping, se deben realizar las operaciones \texttt{meet} (el ínfimo entre dos elementos, $a \wedge b$) y \texttt{join} (el supremo entre dos elementos, $a \vee b$) sobre la lattice que conforma la jerarquía de tipos, cuando sea pertinente.
+
+Por ejemplo, en el set de constraints generado en el ejemplo anterior $C: \{\beta <: \alpha, int <: \beta, float <: \beta\}$, para resolver el tipo de $\beta$ se debe realizar la operación \texttt{join} entre \texttt{int} y \texttt{float}, lo que da como resultado \texttt{num}. Luego, el set de constraints se reduce a $C: \{\beta <: \alpha, num <: \beta\}$, donde ahora se puede substituir $\beta$ por \texttt{num}, lo que genera finalmente el mapeo $S: \{\beta \rightarrow num, \alpha \rightarrow num\}$.
+\subsection{Decidibilidad}
+Los algoritmos de unificación no siempre son capaces de encontrar un tipo concreto para cada variable de tipo. Esto puede ser debido a alguna infracción de las reglas del sistema de tipos, o a la falta de tipos declarados suficientes para que el algoritmo de una respuesta correcta.
+
+En efecto, es conocido que el problema de la inferencia completa de tipos es no decidible~\cite{WELLS1999111}. Veamos el siguiente ejemplo:
+
+\begin{lstlisting}
+  foo(x) {
+    return x;
+  }
+\end{lstlisting}
+
+En este caso, no hay forma de saber cuál es el tipo de la variable \texttt{x} y del retorno del método \texttt{foo}. Lo único que se sabe es que tienen el mismo tipo.
+
+Los lenguajes de programación manejan la no-decidibilidad de distintas formas. Por ejemplo, en Scala se exige que los tipos de los parámetros sean declarados, y también los tipos de retorno de métodos recursivos.
+
+Otros lenguajes introducen cuantificadores universales para tipar las expresiones. En el ejemplo, se puede decir que el tipo de \texttt{x} y el tipo de retorno de \texttt{foo} es \texttt{t}, $\forall t$.
 \subsection{Inferencia de tipos de seguridad}
-Mencionar por qué es posible y trabajos relacionados al respecto. Explicar y ejemplificar el uso de PC.
+Como vimos en la sección \ref{sectype}, los tipos de seguridad conforman una lattice con relaciones de subtyping, al igual que la jerarquía de tipos. En consecuencia, es posible formular un algoritmo de inferencia basado en constraints para tipos de seguridad.
+
+En efecto, Pottier \textit{et al.}~\cite{Pottier} estudiaron un análisis de control de flujo basado en tipos para un lenguaje con referencias, excepciones y polimorfismo, en donde el sistema de tipos es basado en constraints y tiene inferencia de tipos decidible.
