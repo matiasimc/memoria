@@ -16,7 +16,7 @@ Si consideramos que un sistema maneja dos niveles de seguridad, \textit{low} o d
 \subsection{Language-based security}
 Los sistemas computacionales abordan la protección de confidencialidad con diversas técnicas, tales como criptografía y control de acceso. Ninguna de estas técnicas garantiza efectivamente la protección de confidencialidad. En efecto, los esquemas de encriptación tienen que ser actualizados constantemente debido al descubrimiento de vulnerabilidades, y control de acceso no restringe la propagación de información~\cite{myers-phd}.
 
-Existe un conjunto de técnicas más efectivas para fortalecer la seguridad de un sistema, utilizando propiedades de los lenguajes de programación. A este conjunto se le denomina \textit{Language-based security} (LBS).
+Existe un conjunto de técnicas complementarias para fortalecer la seguridad de un sistema, utilizando propiedades de los lenguajes de programación. A este conjunto se le denomina \textit{Language-based security} (LBS).
 
 \subsection{Tipado de seguridad y control de flujo} \label{sectype}
 Una de las técnicas más efectivas de LBS con análisis estático es \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}. En un lenguaje de seguridad, los valores y los tipos son anotados con niveles de seguridad para clasificar la información que el programa manipula. Dichos niveles de seguridad forman una \textit{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo}.
@@ -55,7 +55,10 @@ void @L foo(int @H highVar, int @L lowVar) {
 
 En el ejemplo, la primera asignación no representa un riesgo de seguridad, puesto que se asigna un valor público a una variable confidencial. Por otra parte, la segunda asignación es insegura, debido a que se asigna un valor confidencial a una variable pública, que luego puede ser utilizada en contextos no deseados.
 
+En un intento por formalizar la regla anterior, podríamos decir que una asignación será válida si y solo si el nivel de seguridad del lado izquierdo es igual o más confidencial que el nivel de seguridad del lado derecho.
 \subsubsection{Flujo implicito}
+Sin embargo, existen casos en que, aún cumpliéndose esta regla, existe un flujo de información no deseado.
+
 Se denomina flujo implícito a las instrucciones del programa que indirectamente dan conocimiento de algún aspecto de una variable, usualmente mediante instrucciones condicionales. Podemos adaptar el mismo programa de \texttt{login} visto anteriormente para ilustrar el flujo implícito.
 
 \begin{lstlisting}
@@ -69,12 +72,16 @@ Se denomina flujo implícito a las instrucciones del programa que indirectamente
 
 En este ejemplo, las instrucciones de asignación a la variable \texttt{ret} son seguras por si solas, pero no lo son considerando que su ejecución depende del valor de una variable confidencial, en este caso \texttt{password}.
 
+Para detectar un flujo implícito, los lenguajes de seguridad utilizan el concepto de \textit{program counter} (PC) para seguridad~\cite{pc}. Cuando ocurre una instrucción condicional, la ejecución de las ramas del condicional tiene un PC cuyo valor corresponde al nivel de seguridad de la condición. En el ejemplo, la condición \texttt{password == login} tiene un nivel de seguridad \texttt{@H}. Luego, este nivel es propagado hacia ambas ramas mediante el PC, lo que luego se propaga a cada expresión de las ramas.
+
+Bajo este nuevo escenario, una asignación será válida si y solo si el nivel de seguridad del lado izquierdo es igual o más confidencial que el nivel de seguridad del lado derecho, y es igual o más confidencial que el PC.
+
 \subsection{Declasificación}
-Noninterference se considera una propiedad muy estricta, debido a que aplicaciones reales y prácticas la vulneran fácilmente. En efecto, el programa de \texttt{login} es un buen ejemplo.
+La detección de flujos explícitos e implícitos de información se relaciona directamente con la detección de infracciones a la propiedad de Noninterference. Sin embargo, noninterference se considera una propiedad muy estricta, debido a que aplicaciones reales y prácticas la vulneran fácilmente. En efecto, el programa de \texttt{login} es un buen ejemplo.
 
 \begin{lstlisting}
-  String @H login(String @L guess, String @H password) {
-    if (password == login) return "Login successful";
+  String @L login(String @H password, String @L guess) {
+    if (guess == password) return "Login successful";
     else return "Login failed";
   }
 \end{lstlisting}
@@ -84,8 +91,8 @@ Este programa no cumple con noninterference, debido a que el adversario puede ap
 Sin embargo, deseamos que el programa anterior sea aceptado a pesar de violar noninterference, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para \textit{declasificar} la información confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif (un lenguaje de seguridad)~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, declasificando la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess}
 
 \begin{lstlisting}
-  String login(String password, String guess) {
-    if (declassify(password == guess)) return "Login Successful";
+  String @L login(String @H password, String @L guess) {
+    if (declassify(guess == password)) return "Login Successful";
     else return "Login failed";
   }
 \end{lstlisting}
@@ -126,7 +133,7 @@ Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna 
 
 En estricto rigor, los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo StringEq visto anteriormente se define como  $\text{StringEq} \triangleq [\text{eq} : \text{String<String} \rightarrow \text{Bool<Bool}]$.
 
-Existen dos reglas principales para comprobar que un programa con facetas de declasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna la faceta pública que haya sido declarada como retorno para aquella operación. Por ejemplo, si tenemos el tipo $\text{StringHashEq} \triangleq [\text{hash} : \text{String<String} \rightarrow \text{String<StringEq}]$ y llamamos al método $\text{hash}$ sobre un valor que declara la faceta pública $\text{StringHashEq}$, la faceta de retorno de esa llamada será $\text{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
+Existen dos reglas principales para comprobar que un programa con facetas de declasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna la faceta pública que haya sido declarada como retorno para aquella operación. Por ejemplo, si tenemos un valor con faceta pública $\text{StringHashEq} \triangleq [\text{hash} : \text{String<String} \rightarrow \text{String<StringEq}]$, y llamamos al método $\text{hash}$ sobre este valor, la faceta de retorno de esa llamada será $\text{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
 
 La segunda regla expresa que la llamada a un método sobre un valor cuya faceta pública no autoriza la operación, retorna \texttt{Top}. Esto ocurre, por ejemplo, si llamamos al método $\text{hash}$ sobre un valor que declara la faceta pública $\text{StringEq}$. A esta regla se le llama \texttt{TmH}.
 
@@ -145,7 +152,7 @@ La inferencia de tipos es el proceso de determinar los tipos para las expresione
 
 Supongamos que la suma solo está definida para números. Aquí, se considera redundante declarar el tipo de la variable \texttt{c}, debido a que la suma de dos números enteros siempre da como resultado un número entero. De la misma forma, podría ser considerado redundante declarar los tipos de los parámetros \texttt{a} y \texttt{b}, debido a que son utilizados como sumando en la asignación a la variable \texttt{c}, que fue declarada como \texttt{int}.
 
-\subsection{Variables de tipo}
+\subsection{Variables de tipo} \label{schemes}
 Los lenguajes de programación que tienen un mecanismo de inferencia de tipos, expresan sus tipos mediante \textit{type schemes}, los cuales pueden incluir variables de tipo y tipos concretos. Una variable de tipo es un tipo que no ha sido determinado.
 
 Consideremos el mismo ejemplo, pero ahora omitiendo la declaración del tipo de la variable \texttt{c}.
@@ -159,7 +166,7 @@ Consideremos el mismo ejemplo, pero ahora omitiendo la declaración del tipo de 
 
 Para tipar la variable \texttt{c}, el sistema de tipos le asignará una variable de tipo $\alpha$, y generará \textit{side conditions} al aplicar las reglas del sistema de tipos. En este caso, la \textit{side condition} dice que el tipo de \texttt{c}, es decir, $\alpha$, tiene que ser igual al tipo del lado derecho de la asignación, es decir, \texttt{int}.
 
-\subsection{Constraints}
+\subsection{Constraints} \label{constraints}
 En el ejemplo anterior, se expresó la \textit{side condition} con lenguaje natural. Como el objetivo es automatizar el proceso de inferencia, se utilizan constraints para expresar las \textit{side conditions} generadas por la aplicación de una regla del sistema de tipos.
 
 Las constraints sirven para expresar una relación entre dos tipos. Esta relación puede ser de igualdad o de subtyping. En el ejemplo anterior, la \textit{side condition} puede ser representada mediante la constraint $\{\alpha = int\}$.
@@ -194,20 +201,8 @@ Por ejemplo, en el set de constraints generado en el ejemplo anterior $C: \{\bet
 \subsection{Decidibilidad}
 Los algoritmos de unificación no siempre son capaces de encontrar un tipo concreto para cada variable de tipo. Esto puede ser debido a alguna infracción de las reglas del sistema de tipos, o a la falta de tipos declarados suficientes para que el algoritmo de una respuesta correcta.
 
-En efecto, es conocido que el problema de la inferencia completa de tipos es no decidible~\cite{WELLS1999111}. Veamos el siguiente ejemplo:
-
-\begin{lstlisting}
-  foo(x) {
-    return x;
-  }
-\end{lstlisting}
-
-En este caso, no hay forma de saber cuál es el tipo de la variable \texttt{x} y del retorno del método \texttt{foo}. Lo único que se sabe es que tienen el mismo tipo.
-
-Los lenguajes de programación manejan la no-decidibilidad de distintas formas. Por ejemplo, en Scala se exige que los tipos de los parámetros sean declarados, y también los tipos de retorno de métodos recursivos.
-
-Otros lenguajes introducen cuantificadores universales para tipar las expresiones. En el ejemplo, se puede decir que el tipo de \texttt{x} y el tipo de retorno de \texttt{foo} es \texttt{t}, $\forall t$.
+En efecto, dependiendo de las características del lenguaje, la inferencia completa puede ser un problema no decidible. Un ejemplo es System F~\cite{WELLS1999111}.
 \subsection{Inferencia de tipos de seguridad}
 Como vimos en la sección \ref{sectype}, los tipos de seguridad conforman una lattice con relaciones de subtyping, al igual que la jerarquía de tipos. En consecuencia, es posible formular un algoritmo de inferencia basado en constraints para tipos de seguridad.
 
-En efecto, Pottier \textit{et al.}~\cite{Pottier} estudiaron un análisis de control de flujo basado en tipos para un lenguaje con referencias, excepciones y polimorfismo, en donde el sistema de tipos es basado en constraints y tiene inferencia de tipos decidible.
+En esta dirección, Pottier \textit{et al.}~\cite{Pottier} estudiaron un análisis de control de flujo basado en tipos para un lenguaje con referencias, excepciones y polimorfismo, con un sistema de tipos basado en constraints e inferencia de tipos decidible.

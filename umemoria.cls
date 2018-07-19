@@ -97,14 +97,15 @@ PROF. GUÍA: \foreach \x in \@guia { \MakeUppercase\x }
 \newtheorem{cor}[defn]{Corolario}
 \newtheorem{lema}[defn]{Lema}
 \newtheorem{prop}[defn]{Proposición}
+\newtheorem{ej}[defn]{Ejemplo}
 \else
 \newtheorem{teo}{Teorema}[chapter]
 \newtheorem{cor}{Corolario}[chapter]
 \newtheorem{lema}{Lema}[chapter]
 \newtheorem{prop}{Proposición}[chapter]
+\newtheorem{ej}{Ejemplo}[chapter]
 \fi
 \theoremstyle{miobs}
-\newtheorem*{ej}{Ejemplo}
 \newtheorem*{obs}{Observación}
 
 %% Comandos para la portada

@@ -1,33 +1,124 @@
 \chapter{Propuesta}
 
-En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas de declasificación, que incluya el análisis de \textit{Type-based Relaxed Noninterference}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detallan los problemas de inferencia a resolver, las estrategias utilizadas para resolverlos, los cambios al trabajo original y el subconjunto del lenguaje soportado.
+En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas de declasificación, que incluya el análisis de \textit{Type-based declassification}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detalla el problema de inferencia a resolver, las estrategias utilizadas para resolverlo y las restricciones de la solución.
 
 \section{Problema de inferencia}
-Se discute el problema de inferencia a resolver y ejemplos de lo que se busca del sistema a implementar.
+Para la formulación del problema, es posible asumir que la información de las facetas privadas de \textit{type-based declassification} se encuentra a disposición, debido a que algunos lenguajes de programación poseen herramientas para obtener dicha información.
+
+\begin{defn}[Problema de inferencia]
+  Dado un programa parcialmente tipado con facetas de declasificación, y completamente tipado con facetas privadas, encontrar la faceta de declasificación más confidencial posible de las expresiones no tipadas, tal que se cumplan las reglas del sistema de tipos de type-based declassification.
+\end{defn}
+
+A continuación, se muestran algunos ejemplos de código parcialmente anotado con facetas de declasificación, con el objetivo de ilustrar la solución esperada al problema de inferencia.
+
+\begin{ej} \ \\
+  \label{ej1}
+  \normalfont
+\begin{lstlisting}
+  bool login(String password, String guess) {
+    return password.eq(guess);
+  }
+\end{lstlisting}
+\end{ej}
+
+En este caso, se quiere inferir que \texttt{password} tiene una faceta de declasificación que contiene al método \texttt{eq}, y que tanto el retorno de \texttt{login} como el parámetro \texttt{guess} dependen de la decisión que se tome sobre las facetas públicas por defecto que tendrán los métodos del \textit{core} del lenguaje.
+
+\begin{ej} \ \\
+  \normalfont
+\begin{lstlisting}
+  bool login(String<Top password, String guess) {
+    return password.eq(guess);
+  }
+\end{lstlisting}
+\end{ej}
+
+
+Acá, se quiere inferir que el método \texttt{login} tiene a \texttt{Top} como faceta de declasificación, debido a la aplicación de la regla \texttt{TmH} de \textit{type-based declassification}.
+
+\begin{ej} \ \\
+  \normalfont
+\begin{lstlisting}
+  bool login(String password, String guess) {
+    return password.hash().eq(guess);
+  }
+\end{lstlisting}
+\end{ej}
+
+En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{password}. La faceta de declasificación para \texttt{password} que resuelve el problema de inferencia contiene al método \texttt{hash}, al cual se le infiere una faceta de declasificación de retorno que contiene al método \texttt{eq}. Si se declara una faceta de declasificación de retorno para el método \texttt{eq}, entonces se infere esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de \textit{type-based declassification}.
+
+\begin{ej} \ \\
+  \normalfont
+\begin{lstlisting}
+  void check(String<Bot s);
+
+  bool<Top login(String<Top password, String guess) {
+    check(password);
+    return password.eq(guess);
+  }
+\end{lstlisting}
+\end{ej}
+
+En este caso, se debe reportar un error de flujo en el llamado a la función \texttt{check}, debido a que la faceta del argumento debe ser subtipo de la faceta del parámetro, esto es, \texttt{Top <: Bot} es una relación no válida.
+
+\section{Gramática de tipos}
+Como se vió en la sección \ref{schemes}, es necesario introducir variables de tipo para poder hacer inferencia. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis.
+
+\begin{defn}[Gramática de tipos]
+  \normalfont
+  $\tau := \alpha\ |\ \text{Obj}(\overline{l: \tau})\ |\ \tau \rightarrow \tau \ |\ \tau \vee \tau\ |\ \tau \wedge \tau \ |\ \text{Bot}\ |\ \text{Top}$
+\end{defn}
+
+Donde $\alpha$ es cualquier variable de tipo, $\text{Obj}(\overline{l: \tau \rightarrow \tau})$ representa el tipo de un objeto y $l$ es un nombre de método.
 
 \section{Consideraciones de diseño}
-Se discuten las alternativas disponibles respecto a la decisión sobre las facetas de métodos que pertenecen al core del lenguaje, y por qué Bot -> Bot es la escogida. Explicar que de todas formas sería un parámetro configurable de la herramienta.
+
+En el ejemplo \ref{ej1}, se mencionó sobre la decisión acerca de las facetas de declasificación de los métodos que pertenecen al \textit{core} de un lenguaje de programación. Para ilustrar la necesidad de esta decisión, veamos el siguiente ejemplo:
+
+\begin{lstlisting}
+  int<Bot getLength(String password) {
+    return password.length
+  }
+\end{lstlisting}
+
+Este método será aceptado o rechazado por las reglas del sistema de tipos, si la faceta de declasificación de retorno del campo \texttt{length} es \texttt{Bot} o \texttt{Top} respectivamente.
+
+Si decidimos que la faceta de declasificación de retorno para métodos del \texttt{core} del lenguaje es \texttt{Top}, entonces cualquier operación que realicemos sobre el valor de retorno, retornará \texttt{Top}, lo cual es poco útil. Por lo tanto la decisión por defecto es que la faceta de declasificación de retorno para métodos del \textit{core} del lenguaje es \texttt{Bot}.
+
+Ahora, analicemos ambas posibilidades para la faceta de declasificación por defecto de los parámetros:
+
+\begin{itemize}
+  \item \texttt{Top} $\rightarrow$ \texttt{Bot}: Supongamos que el \textit{core} del lenguaje posee un método \texttt{identity}, que dado un \texttt{x}, retorna \texttt{x}. Si tomamos esta decisión, entonces el método \texttt{identity} podrá ser usado como declasificador universal, como por ejemplo \texttt{identity(password)}.
+  \item \texttt{Bot} $\rightarrow$ \texttt{Bot}: Esta elección restringe las facetas de declasificación de los argumentos utilizados a \texttt{Bot}, lo cual también podría ser considerado poco útil. Sin embargo, al retornar un valor con faceta de declasificación \texttt{Bot}, cualquier operación podrá ser utilizada sobre ese valor.
+\end{itemize}
+
+Haciendo un balance, se considera que la opción \texttt{Bot} $\rightarrow$ \texttt{Bot} tiene el mejor equilibrio entre utilidad y seguridad, por lo que es la opción por defecto considerada. Sin embargo, es deseable que la herramienta se pueda configurar para elegir otra alternativa.
 
 \section{Generación de constraints de subtyping}
-Se muestra en palabras la generación de constraints para las distintas expresiones.
-\subsection{Declaración de métodos}
-\subsection{Llamadas a métodos}
-\subsubsection{Retorno}
-\subsubsection{Argumentos}
-\subsubsection{Encadenamiento de llamados}
-\subsection{Expresión de retorno}
-\subsection{Declaración y asignación a variables}
-\subsection{Expresiones condicionales}
+Como se mencionó en la sección \ref{constraints}, el uso de constraints permite presentar un algoritmo de inferencia como una fase de generación de constraints, y una fase de resolución de constraints. A continuación se mostrarán ejemplos de la generación de constraints para distintas expresiones, y luego se mostrará un algoritmo en pseudo-lenguaje.
 
+\begin{ej}\ \\
+  \normalfont
+\begin{lstlisting}[mathescape=true]
+  int<$\alpha$ login(String<Top password, String<$\beta$ guess) {
+    return password.compareTo(guess); // $\gamma$
+  }
+\end{lstlisting}
 
+\begin{enumerate}
+  \item $\{\text{Top} <: \text{Obj}(\text{compareTo: }\text{Bot} \rightarrow \text{Bot}), \gamma \}$
+  \item $\{\gamma <: \alpha\}$
+  \item $\{\beta <: \text{Bot}\}$
+  \item $\{\text{Bot} <: \gamma\}$
+\end{enumerate}
+\end{ej}
+
+En este ejemplo, la constraint 1 se genera por la invocación método
 
 \section{Resolución de constraints}
 
 \subsection{Simplificación y eliminación de constraints}
-\subsection{Agrupación de constraints}
-\subsubsection{Join}
-\subsubsection{Meet}
-\subsection{Unificación y substitución}
+\subsection{Agrupación de constraints: Join y Meet}
+\subsection{Unificación}
 
 
 \section{Extensión de propuesta teórica}
