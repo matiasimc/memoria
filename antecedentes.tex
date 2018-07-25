@@ -32,7 +32,7 @@ Una de las técnicas más efectivas de LBS con análisis estático es \textit{ti
 	\end{figure}
 
 
-  	Por ejemplo con la \textit{lattice} de dos niveles de seguridad $L \sqsubseteq H$, se puede distinguir entre valores enteros públicos o de baja confidencialidad ($Int_L$) y valores enteros privados o de alta confidencialidad ($Int_H$). El sistema de tipos usa estos niveles de seguridad para prevenir que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}, técnica que en general se denomina \textit{information flow control}.
+  	Por ejemplo con la \textit{lattice} de dos niveles de seguridad $L \sqsubseteq H$, se puede distinguir entre valores enteros públicos o de baja confidencialidad ($Int_L$) y valores enteros privados o de alta confidencialidad ($Int_H$). El sistema de tipos usa estos niveles de seguridad para prevenir que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}, técnica denominada \textit{information flow control}.
 
   	\begin{lstlisting}
   String @H login(String @L guess, String @H password) {
@@ -47,17 +47,16 @@ Una de las técnicas más efectivas de LBS con análisis estático es \textit{ti
 Se denomina flujo explícito a las instrucciones del programa que directamente asignan un valor a una variable con distintos niveles de seguridad. El siguiente programa ilustra el flujo explícito.
 
 \begin{lstlisting}
-void @L foo(int @H highVar, int @L lowVar) {
+int @L foo(int @H highVar, int @L lowVar) {
   int @H v1 = lowVar;
   int @L v2 = highVar;
+  return v2 + v1;
 }
 \end{lstlisting}
 
 En el ejemplo, la primera asignación no representa un riesgo de seguridad, puesto que se asigna un valor público a una variable confidencial. Por otra parte, la segunda asignación es insegura, debido a que se asigna un valor confidencial a una variable pública, que luego puede ser utilizada en contextos no deseados.
-
-En un intento por formalizar la regla anterior, podríamos decir que una asignación será válida si y solo si el nivel de seguridad del lado izquierdo es igual o más confidencial que el nivel de seguridad del lado derecho.
 \subsubsection{Flujo implicito}
-Sin embargo, existen casos en que, aún cumpliéndose esta regla, existe un flujo de información no deseado.
+En un intento por formalizar la regla de asignación en el ejemplo anterior, podríamos decir que una asignación será válida si y solo si el nivel de seguridad del lado izquierdo es igual o más confidencial que el nivel de seguridad del lado derecho. Sin embargo, existen casos en que, aún cumpliéndose esta regla, existe un flujo de información no deseado.
 
 Se denomina flujo implícito a las instrucciones del programa que indirectamente dan conocimiento de algún aspecto de una variable, usualmente mediante instrucciones condicionales. Podemos adaptar el mismo programa de \texttt{login} visto anteriormente para ilustrar el flujo implícito.
 
@@ -76,8 +75,8 @@ Para detectar un flujo implícito, los lenguajes de seguridad utilizan el concep
 
 Bajo este nuevo escenario, una asignación será válida si y solo si el nivel de seguridad del lado izquierdo es igual o más confidencial que el nivel de seguridad del lado derecho, y es igual o más confidencial que el PC.
 
-\subsection{Declasificación}
-La detección de flujos explícitos e implícitos de información se relaciona directamente con la detección de infracciones a la propiedad de Noninterference. Sin embargo, noninterference se considera una propiedad muy estricta, debido a que aplicaciones reales y prácticas la vulneran fácilmente. En efecto, el programa de \texttt{login} es un buen ejemplo.
+\subsection{Desclasificación}
+La detección de flujos explícitos e implícitos de información se relaciona directamente con la detección de infracciones a la propiedad de noninterference. Sin embargo, noninterference se considera una propiedad muy estricta, debido a que aplicaciones reales y prácticas la vulneran fácilmente. En efecto, el programa de \texttt{login} es un buen ejemplo.
 
 \begin{lstlisting}
   String @L login(String @H password, String @L guess) {
@@ -88,7 +87,7 @@ La detección de flujos explícitos e implícitos de información se relaciona d
 
 Este programa no cumple con noninterference, debido a que el adversario puede aprender sobre la variable confidencial \texttt{password} observando el valor de retorno del método para distintas ejecuciones.
 
-Sin embargo, deseamos que el programa anterior sea aceptado a pesar de violar noninterference, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para \textit{declasificar} la información confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif (un lenguaje de seguridad)~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, declasificando la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess}
+Sin embargo, deseamos que el programa anterior sea aceptado a pesar de violar noninterference, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para \textit{desclasificar} la información confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif (un lenguaje de seguridad)~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, desclasificando la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess}
 
 \begin{lstlisting}
   String @L login(String @H password, String @L guess) {
@@ -99,9 +98,9 @@ Sin embargo, deseamos que el programa anterior sea aceptado a pesar de violar no
 
 Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información, como por ejemplo \texttt{declassify(password)}.
 \section{Type-based declassification}
-Varios mecanismos se han explorado para controlar el uso de declasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification} como un mecanismo de declasificación que conecta la abstracción de tipos con una forma controlada de declasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
+Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification} como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
 
-En \textit{type-based declassification} los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de declasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\text{StringEq} \triangleq [\text{eq} : \text{String} \rightarrow \text{Bool}]$ autoriza la operación \texttt{eq} sobre un String. Entonces se puede usar el tipo de dos facetas $\text{String} < \text{StringEq}$, en donde String es un subtipo de StringEq, para controlar la operación de declasificación de la igualdad sobre \texttt{password}.
+En \textit{type-based declassification} los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\text{StringEq} \triangleq [\text{eq} : \text{String} \rightarrow \text{Bool}]$ autoriza la operación \texttt{eq} sobre un String. Entonces se puede usar el tipo de dos facetas $\text{String} < \text{StringEq}$, en donde String es un subtipo de StringEq, para controlar la operación de desclasificación de la igualdad sobre \texttt{password}.
 
 \begin{lstlisting}
   String<String login(String<StringEq password, String<String guess) {
@@ -110,7 +109,7 @@ En \textit{type-based declassification} los tipos tienen dos facetas; la faceta 
   }
 \end{lstlisting}
 
-Al igual que en tipado de seguridad con etiquetas (@L y @H), la faceta de declasificación es parte de la jerarquía de tipos, la que forma una \textit{lattice} como se muestra en la figura \ref{latticeTBD}. Si la faceta pública coincide con la faceta privada, entonces toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la \textit{lattice}.
+Al igual que en tipado de seguridad con etiquetas (@L y @H), la faceta de desclasificación es parte de la jerarquía de tipos, la que forma una \textit{lattice} como se muestra en la figura \ref{latticeTBD}. Si la faceta pública coincide con la faceta privada, entonces toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la \textit{lattice}.
 
 	\begin{figure}[ht]
 		\centering
@@ -133,11 +132,11 @@ Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna 
 
 En estricto rigor, los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo StringEq visto anteriormente se define como  $\text{StringEq} \triangleq [\text{eq} : \text{String<String} \rightarrow \text{Bool<Bool}]$.
 
-Existen dos reglas principales para comprobar que un programa con facetas de declasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna la faceta pública que haya sido declarada como retorno para aquella operación. Por ejemplo, si tenemos un valor con faceta pública $\text{StringHashEq} \triangleq [\text{hash} : \text{String<String} \rightarrow \text{String<StringEq}]$, y llamamos al método $\text{hash}$ sobre este valor, la faceta de retorno de esa llamada será $\text{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
+Existen dos reglas principales para comprobar que un programa con facetas de desclasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna la faceta pública que haya sido declarada como retorno para aquella operación. Por ejemplo, si tenemos un valor con faceta pública $\text{StringHashEq} \triangleq [\text{hash} : \text{String<String} \rightarrow \text{String<StringEq}]$, y llamamos al método $\text{hash}$ sobre este valor, la faceta de retorno de esa llamada será $\text{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
 
 La segunda regla expresa que la llamada a un método sobre un valor cuya faceta pública no autoriza la operación, retorna \texttt{Top}. Esto ocurre, por ejemplo, si llamamos al método $\text{hash}$ sobre un valor que declara la faceta pública $\text{StringEq}$. A esta regla se le llama \texttt{TmH}.
 
-La propiedad de seguridad que se demuestra para el sistema de tipos de \textit{type-based declassification} es una forma de noninterference con políticas de declasificación, denominada \textit{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de declasificación.
+La propiedad de seguridad que se demuestra para el sistema de tipos de \textit{type-based declassification} es una forma de noninterference con políticas de desclasificación, denominada \textit{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
 \section{Inferencia de tipos}
 \subsection{Objetivo y usos}
@@ -171,7 +170,7 @@ En el ejemplo anterior, se expresó la \textit{side condition} con lenguaje natu
 
 Las constraints sirven para expresar una relación entre dos tipos. Esta relación puede ser de igualdad o de subtyping. En el ejemplo anterior, la \textit{side condition} puede ser representada mediante la constraint $\{\alpha = int\}$.
 
-El uso de constraints permite la presentación de un algoritmo de inferencia de forma modular, como un generador de constraints y un solucionador de constraints. Veamos el siguiente ejemplo, suponiendo que el tipo \texttt{num} es heredado por otros tipos numéricos.
+El uso de constraints permite la presentación de un algoritmo de inferencia de forma modular, como un generador de constraints y un solucionador de constraints. En el siguiente ejemplo, se supone que \texttt{num} es heredado por otros tipos numéricos.
 
 \begin{lstlisting}
   foo(int a, float b, bool cond) {
@@ -203,6 +202,6 @@ Los algoritmos de unificación no siempre son capaces de encontrar un tipo concr
 
 En efecto, dependiendo de las características del lenguaje, la inferencia completa puede ser un problema no decidible. Un ejemplo es System F~\cite{WELLS1999111}.
 \subsection{Inferencia de tipos de seguridad}
-Como vimos en la sección \ref{sectype}, los tipos de seguridad conforman una lattice con relaciones de subtyping, al igual que la jerarquía de tipos. En consecuencia, es posible formular un algoritmo de inferencia basado en constraints para tipos de seguridad.
+Como se vio en la sección \ref{sectype}, los tipos de seguridad conforman una lattice con relaciones de subtyping, al igual que la jerarquía de tipos. En consecuencia, es posible formular un algoritmo de inferencia basado en constraints para tipos de seguridad.
 
 En esta dirección, Pottier \textit{et al.}~\cite{Pottier} estudiaron un análisis de control de flujo basado en tipos para un lenguaje con referencias, excepciones y polimorfismo, con un sistema de tipos basado en constraints e inferencia de tipos decidible.

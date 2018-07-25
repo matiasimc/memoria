@@ -6,11 +6,11 @@
 
 	Formas más expresivas y efectivas de proteger la confidencialidad se basan en un análisis estático sobre el código del programa, y se categorizan dentro de \textit{language-based security}. Una de las técnicas más efectivas se denomina \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}, donde los tipos son anotados con niveles de seguridad para clasificar la información manipulada por el programa.
 
-	Los lenguajes de seguridad formalizan la protección de confidencialidad mediante una propiedad de no-interferencia~\cite{noninterference}, la cual puede ser muy restrictiva para aplicaciones reales y prácticas. Es por ello que los lenguajes de seguridad ofrecen mecanismos para declasificar la información, y a su vez asegurar el cumplimiento de la propiedad.
+	Los lenguajes de seguridad formalizan la protección de confidencialidad mediante una propiedad de no-interferencia~\cite{noninterference}, la cual puede ser muy restrictiva para aplicaciones reales y prácticas. Es por ello que los lenguajes de seguridad ofrecen mecanismos para desclasificar la información, y a su vez asegurar el cumplimiento de la propiedad.
 
-	Uno de los mayores desafíos de los lenguajes de seguridad es ofrecer mecanismos de declasificación utilizando técnicas más expresivas, y de esta forma facilitar el trabajo del programador. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification}, una variación de tipado de seguridad que utiliza el sistema de tipos del lenguaje para controlar la declasificación de la información.
+	Uno de los mayores desafíos de los lenguajes de seguridad es ofrecer mecanismos de desclasificación utilizando técnicas más expresivas, y de esta forma facilitar el trabajo del programador. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification}, una variación de tipado de seguridad que utiliza el sistema de tipos del lenguaje para controlar la desclasificación de la información.
 
-	El fundamento teórico de \textit{type-based declassification} está bien descrito, pero carece de una implementación que permita comprobar la utilidad práctica de la propuesta. Además, se considera que el análisis estático de \textit{type-based declassification} no es suficiente por sí solo, ya que el programador tendría que anotar completamente el código fuente con facetas de declasificación.
+	El fundamento teórico de \textit{type-based declassification} está bien descrito, pero carece de una implementación que permita comprobar la utilidad práctica de la propuesta. Además, se considera que el análisis estático de \textit{type-based declassification} no es suficiente por sí solo, ya que el programador tendría que anotar completamente el código fuente con facetas de desclasificación.
 
 	Un problema similar es el que resuelven los lenguajes de programación utilizando mecanismos de inferencia de tipos, con el fin de facilitar el trabajo al programador. En esta dirección, se han propuesto mecanismos de inferencia para tipos de seguridad~\cite{Pottier}, lo que motiva una proposición similar para \textit{type-based declassification}.
 
@@ -20,7 +20,7 @@
 	El objetivo de la memoria es realizar la implementación de un sistema de inferencia para \textit{type-based declassification}. Dentro de los objetivos específicos del trabajo, podemos encontrar:
 
 	\begin{itemize}
-	\item \textbf{Inferencia y verificación estática de type-based declassification}. Se entiende coma la implementación de un sistema de inferencia de facetas de declasificación para \textit{type-based declassification}, en el lenguaje de programación Dart. Dentro de la inferencia se incluye la verificación de las reglas del sistema de tipos de \textit{type-based declassification}.
+	\item \textbf{Inferencia y verificación estática de type-based declassification}. Se entiende coma la implementación de un sistema de inferencia de facetas de desclasificación para \textit{type-based declassification}, en el lenguaje de programación Dart. Dentro de la inferencia se incluye la verificación de las reglas del sistema de tipos de \textit{type-based declassification}.
 
 	\item \textbf{Plugin para editores}. Mostrar al programador el resultado de la inferencia, por medio de un plugin para los IDE que soporten servidores de análisis estático de Dart, ofreciéndole acciones al respecto.
 

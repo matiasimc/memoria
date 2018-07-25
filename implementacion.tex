@@ -1,30 +1,42 @@
 \chapter{Implementación}
-En esta sección se detalla la implementación de este trabajo, que se dividió en dos componentes principales. Primero, se implementó un sistema de inferencia para type-based declassification. Segundo, se elaboró un plugin para los editores de texto más populares que integra el resultado de la inferencia.
+En esta sección se detalla la implementación de este trabajo, que se dividió en dos componentes principales. Primero, se implementó un sistema de inferencia para type-based declassification. Segundo, se elaboró un plugin para editores de texto que integra el resultado de la inferencia.
+
+\section{Lenguaje Dart}
+Dart es un lenguaje de programación de propósito general, orientado a objetos y de código abierto desarrollado por Google. Es usado para construir aplicaciones web, móviles y dispositivos IoT (Internet of Things).
+
+La implementación de este trabajo fue realizada en Dart, debido a que proporciona las herramientas necesarias para realizar el análisis requerido, como el AST (Abstract Syntax Tree) resuelto con la información completa de tipos. Además, los investigadores que realizaron el trabajo de \textit{type-based declassification} estudian este lenguaje como parte de un proyecto de investigación mayor en el área de seguridad.
+
+\subsection{Dart Analyzer}
+\textit{Dart Analyer} es una herramienta incluida en Dart, que permite realizar análisis estático de código Dart. Entre otros servicios, esta herramienta permite obtener un AST (Abstract Syntax Tree) dado un código Dart. Dicho AST contiene la información relevante del programa, incluyendo el resultado del análisis de tipos.
+
+Análisis personalizados de programas en Dart pueden ser realizados usando la información del AST. En efecto, Dart Analyzer utiliza el patrón Visitor para incorporar un nuevo análisis sobre el AST.
+
+\subsection{Analyzer Plugin}
+La herramienta \textit{Analyzer Plugin} sirve para integrar un análisis personalizado sobre el AST generado por \textit{Dart Analyzer}, con los IDE que tengan soporte para servidores de análisis estático de Dart, como IntelliJ, Eclipse, Atom, entre otros. Con esta librería es posible mostrar errores, \textit{warnings}, sugerencias de edición, sugerencias de navegación  y resaltado de sintaxis.
 
 \section{Implementación de sistema de inferencia}
 
-\subsection{Diagrama de componentes y descripción general}
-Se explica el funcionamiento general de la inferencia.
+\subsection{Representación de facetas de desclasificación}
+Para declarar las facetas de desclasificación, se usarán las anotaciones de Dart. Por ejemplo, \texttt{@S("Top") bool check(@S("StringCompareTo") String password);} es una declaración de un método de Dart anotado con facetas de desclasificación.
 
-\subsection{Dart Analyzer}
-Explicar funcionalidades utilizadas de la librería Dart Analyzer. Información contenida en AST, en especial inferencia de tipos. Limitaciones (si es que tiene alguna relevante).
+La definición de las facetas de desclasificación se hace mediante clases abstractas de Dart. Por ejemplo, la faceta \texttt{StringCompareTo} se define mediante la clase abstracta del mismo nombre:
 
-\subsection{Representación de tipos}
-Cómo se representaron los distintos tipos (type variables, arrow types, object types, Top, Bot, OrType).
+\begin{lstlisting}
+  abstract class StringCompareTo {
+    int compareTo(String other);
+  }
+\end{lstlisting}
 
-\subsection{Representación de constraints}
-En qué consisten las constraint de subtyping implementadas.
-
-\subsection{Representación de facetas de declasificación}
-Uso de anotaciones para indicar las facetas. Abstract classes de Dart en archivo sec.dart para declararlas. Mencionar el parsing de facetas declaradas a object types.
-
-\subsection{Almacenamiento de información relevante}
-Uso de diccionarios para llevar registro del tipo de ciertos elementos o expresiones.
+Antes de la generación de constraints sobre un archivo, se realiza una etapa de \textit{parsing} de facetas de desclasificación, en donde se leen las clases abstractas del archivo. Esto se implementa mediante el \textit{visitor} \texttt{DeclaredFacetVisitor}, que se muestra en el diagrama de la figura XXX. Las facetas de desclasificación procesadas se almacenan en el diccionario \texttt{declaredStore}, en donde se asocia el nombre de la faceta con su tipo de objeto correspondiente.
 
 \subsection{Fase de generación de constraints}
-Uso del patrón visitor para recorrer el AST.
+Una vez que se procesan las facetas de desclasificación, se procede a la generación de constraints. Esto se realiza implementando varios \textit{visitors} mostrados en el diagrama de la figura XXX.
 
-\subsubsection{Recolección de errores}
+La clase encargada de procesar un archivo es \texttt{CompilationUnitVisitor}, en donde se procesa cada clase declarada en el archivo. Mediante el \textit{visitor} \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el \textit{visitor} implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de constraints de la sección \ref{propuestaGen}.
+
+La clase \texttt{Store} es la encargada de la generación de variables de tipo, y el almacenamiento en diccionarios del tipo de las expresiones. Cada visita a los nodos del AST puede agregar constraints al set de constraints, y agregar o actualizar elementos en el store. Ambos se muestran en el diagrama YYY.
+
+En la fase de generación de constraints se pueden generar warnings, al declarar una faceta no definida. Esto se recolecta mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante el plugin.
 
 \subsection{Fase de resolución de constraints}
 
