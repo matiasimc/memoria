@@ -60,16 +60,6 @@ En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{pas
 
 En este caso, se debe reportar un error de flujo en el llamado a la función \texttt{check}, debido a que la faceta del argumento debe ser subtipo de la faceta del parámetro, esto es, \texttt{Top <: Bot} es una relación no válida.
 
-\section{Gramática de tipos}
-Como se vió en la sección \ref{schemes}, es necesario introducir variables de tipo para poder hacer inferencia. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis.
-
-\begin{defn}[Gramática de tipos]
-  \normalfont
-  $\tau := \alpha\ |\ \text{Obj}(\overline{l: \tau})\ |\ \tau \rightarrow \tau \ |\ \tau \vee \tau\ |\ \tau \wedge \tau \ |\ \text{Bot}\ |\ \text{Top}$
-\end{defn}
-
-Donde $\alpha$ es cualquier variable de tipo, $\text{Obj}(\overline{l: \tau})$ representa el tipo de un objeto, $l$ es un nombre de método, $\vee$ representa la operación \texttt{join} en la lattice, y $\wedge$ representa la operación \texttt{meet}.
-
 \section{Consideraciones de diseño}
 
 En el ejemplo \ref{ej1}, se mencionó sobre la decisión acerca de las facetas de desclasificación de los métodos que pertenecen al \textit{core} de un lenguaje de programación. Para ilustrar la necesidad de esta decisión, veamos el siguiente ejemplo:
@@ -92,6 +82,16 @@ Ahora, analicemos ambas posibilidades para la faceta de desclasificación por de
 \end{itemize}
 
 Haciendo un balance, se considera que la opción \texttt{Bot} $\rightarrow$ \texttt{Bot} tiene el mejor equilibrio entre utilidad y seguridad, por lo que es la opción por defecto considerada. Sin embargo, es deseable que la herramienta se pueda configurar para elegir otra alternativa.
+
+\section{Gramática de tipos}
+Como se vió en la sección \ref{schemes}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis.
+
+\begin{defn}[Gramática de tipos]
+  \normalfont
+  $\tau := \alpha\ |\ \text{Obj}(\overline{l: \tau})\ |\ \tau \rightarrow \tau \ |\ \tau \vee \tau\ |\ \tau \wedge \tau \ |\ \text{Bot}\ |\ \text{Top}$
+\end{defn}
+
+Donde $\alpha$ es cualquier variable de tipo, $\text{Obj}(\overline{l: \tau})$ representa el tipo de un objeto, $l$ es un nombre de método, $\vee$ representa la operación \texttt{join} en la lattice, y $\wedge$ representa la operación \texttt{meet}.
 
 \section{Generación de constraints de subtyping} \label{propuestaGen}
 Como se mencionó en la sección \ref{constraints}, el uso de constraints permite presentar un algoritmo de inferencia como una fase de generación de constraints, y una fase de resolución de constraints. A continuación se muestran ejemplos de la generación de constraints para distintas expresiones, y luego un algoritmo en pseudo-lenguaje. De ahora en adelante, se usará el término \textit{faceta} para referirse a las facetas de desclasificación.
@@ -199,7 +199,7 @@ En la figura 3.1 se muestra el algoritmo para la generación de constraints de u
   \caption{Algoritmo de generación de constraints}
 \end{figure}
 
-\section{Resolución de constraints}
+\section{Resolución de constraints} \label{propuestaRes}
 
 El siguiente paso del algoritmo de inferencia es la resolución del set de constraints obtenido en la fase de generación de constraints.
 
@@ -263,7 +263,30 @@ En el ejemplo \ref{gen3} reducido, se materializa la operación \texttt{meet} de
   \item $\text{Top} <: \alpha$
 \end{enumerate}
 
-\subsubsection{Comprobación de constraints}
+\begin{figure}[ht]
+  \centering
+  \label{pseudoperations}
+  \begin{mdframed}
+    \begin{algorithmic}
+      \Function{performOperations}{cs}
+          \For {c in cs}
+            \If {c.right is MeetType and c.right.isConcrete()}
+              \State c.right $\gets$ meet(c.right)
+            \EndIf
+            \If {c.left is JoinType and c.left.isConcrete()}
+              \State c.left $\gets$ join(c.left)
+            \EndIf
+          \EndFor
+      \EndFunction
+    \end{algorithmic}
+  \end{mdframed}
+  \caption{Algoritmo de materialización de operaciones}
+\end{figure}
+
+La figura 3.3 muestra el algoritmo de materialización de operaciones sobre un set de constraints. Notar que se asume que MeetType aparece a la izquierda de las constraints, y JoinType a la derecha, debido a las reglas de agrupación.
+
+
+\subsubsection{Verificación de constraints}
 Cuando una constraint representa una relación no válida, existen dos posibilidades:
 
 \begin{enumerate}
@@ -281,8 +304,54 @@ En el ejemplo \ref{gen1}, la constraint 3 proviene de invocación a método y re
 
 En cambio, en el ejemplo \ref{gen2} simplificado, la constraint \texttt{Top <: Bot} representa una relación no válida que no proviene de invocación a método, por lo que un error debe ser reportado.
 
+La figura 3.4 muestra el algoritmo de verificación de constraints. El método \texttt{substitueXForY(x,y)} busca \texttt{x} en todo el set de constraints, y lo substituye por \texttt{y}.
+
+\begin{figure}[ht]
+  \centering
+  \label{pseudocheck}
+  \begin{mdframed}
+    \begin{algorithmic}
+      \Function{checkConstraints}{cs}
+          \For {c in cs}
+            \If {c.isNotValid() and c.isFromMethodInvocation}
+              \State cs.substituteXForY(c.expressionType, Top)
+            \EndIf
+            \If {c.isNotValid() and !c.isFromMethodInvocation}
+              \State add SubtypingError
+            \EndIf
+          \EndFor
+      \EndFunction
+    \end{algorithmic}
+  \end{mdframed}
+  \caption{Algoritmo de verificación de constraints}
+\end{figure}
+
+
 \subsubsection{Substitución}
 Cuando se tiene una constraint que relaciona una variable de tipo y un tipo concreto (sin variables de tipo), se debe substituir en el set de constraint toda aparición de la variable de tipo, por el tipo concreto. Como este proceso puede generar nuevas constraints que sean candidatas a materialización de operaciones, a comprobación o a substitución, se debe iterar hasta que no queden constrainst candidatas.
+
+La figura 3.5 muestra el algoritmo de substitución, mientras que la figura 3.6 muestra el algoritmo de unificación.
+
+\begin{figure}[ht]
+  \centering
+  \label{pseudosubst}
+  \begin{mdframed}
+    \begin{algorithmic}
+      \Function{performSubstitutions}{cs}
+          \For {c in cs}
+            \If {c.right.isConcrete() and c.left.isVariable()}
+              \State cs.substituteXForY(c.left, c.right)
+            \EndIf
+            \If {c.left.isConcrete() and c.right.isVariable()}
+              \State cs.substituteXForY(c.right, c.left)
+            \EndIf
+          \EndFor
+      \EndFunction
+    \end{algorithmic}
+  \end{mdframed}
+  \caption{Algoritmo de substitución}
+\end{figure}
+
 
 \begin{figure}[ht]
   \centering
@@ -291,9 +360,9 @@ Cuando se tiene una constraint que relaciona una variable de tipo y un tipo conc
     \begin{algorithmic}
       \Function{Unify}{cs}
           \While {cs.hasOperationCandidates or cs.hasSubstCandidates}
-            \State cs.performOperations()
-            \State cs.checkConstraints()
-            \State cs.performSubstitutions()
+            \State performOperations(cs)
+            \State checkConstraints(cs)
+            \State performSubstitutions(cs)
           \EndWhile
       \EndFunction
     \end{algorithmic}

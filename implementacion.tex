@@ -27,30 +27,63 @@ La definición de las facetas de desclasificación se hace mediante clases abstr
   }
 \end{lstlisting}
 
-Antes de la generación de constraints sobre un archivo, se realiza una etapa de \textit{parsing} de facetas de desclasificación, en donde se leen las clases abstractas del archivo. Esto se implementa mediante el \textit{visitor} \texttt{DeclaredFacetVisitor}, que se muestra en el diagrama de la figura XXX. Las facetas de desclasificación procesadas se almacenan en el diccionario \texttt{declaredStore}, en donde se asocia el nombre de la faceta con su tipo de objeto correspondiente.
+Antes de la generación de constraints sobre un archivo, se realiza una etapa de \textit{parsing} de facetas de desclasificación, en donde se leen las clases abstractas del archivo. Esto se implementa mediante el \textit{visitor} \texttt{DeclaredFacetVisitor}, que se muestra en el diagrama de la figura \ref{visitors}. Las facetas de desclasificación procesadas se almacenan en el diccionario \texttt{declaredStore}, en donde se asocia el nombre de la faceta con su tipo de objeto correspondiente.
+
+\subsection{Tipos de errores}
+Durante el proceso de inferencia, se pueden generar varios tipos de errores, los cuales difieren en el mensaje que será desplegado en la interfaz de usuario, y el resaltado que aplicarán en la ubicación correspondiente del código fuente.
+
+\begin{itemize}
+  \item \texttt{SubtypingError:} Se genera por la presencia de una constraint con una relación de subtyping no válida, que no proviene de invocación a método. Es un error, por lo que aplica un resaltado de color rojo en la ubicación correspondiente.
+  \item \texttt{UndefinedFacetWarning:} Se genera por la declaración de una faceta de desclasificación que no ha sido definida. Es un \textit{warning}, por lo que aplica un resaltado de color amarillo en la ubicación correspondiente.
+  \item \texttt{UnableToResolveInfo:} Se genera por la incapacidad de inferir un tipo concreto para una variable de tipo. Es de caracter informativo, por lo que solo aplica un leve resaltado de sintaxis en el código, y muestra un mensaje cuando el cursor se posiciona sobre la ubicación correspondiente.
+  \item \texttt{InferredFacetInfo:} Se genera en toda expresión que no posee una faceta de desclasificación declarada, con la información de la faceta inferida. Al igual que el error anterior, es de caracter informativo.
+\end{itemize}
 
 \subsection{Fase de generación de constraints}
-Una vez que se procesan las facetas de desclasificación, se procede a la generación de constraints. Esto se realiza implementando varios \textit{visitors} mostrados en el diagrama de la figura XXX.
+Una vez que se procesan las facetas de desclasificación, se procede a la generación de constraints. Esto se realiza implementando varios \textit{visitors} mostrados en el diagrama de la figura \ref{visitors}.
 
 La clase encargada de procesar un archivo es \texttt{CompilationUnitVisitor}, en donde se procesa cada clase declarada en el archivo. Mediante el \textit{visitor} \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el \textit{visitor} implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de constraints de la sección \ref{propuestaGen}.
 
-La clase \texttt{Store} es la encargada de la generación de variables de tipo, y el almacenamiento en diccionarios del tipo de las expresiones. Cada visita a los nodos del AST puede agregar constraints al set de constraints, y agregar o actualizar elementos en el store. Ambos se muestran en el diagrama YYY.
+La clase \texttt{Store} es la encargada de la generación de variables de tipo, y el almacenamiento en diccionarios del tipo de las expresiones. Cada visita a los nodos del AST puede agregar constraints al set de constraints, y agregar o actualizar elementos en el store. Ambos se muestran en el diagrama \ref{others}.
 
-En la fase de generación de constraints se pueden generar warnings, al declarar una faceta no definida. Esto se recolecta mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante el plugin.
+En esta fase se pueden generar errores de tipo \texttt{UndefinedFacetWarning}, los cuales son recolectados mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante el plugin.
+
+Los errores que son generados pueden ser de los tipos \texttt{SubtypingError}, \texttt{UnableToResolveInfo} y \texttt{InferredFacetInfo}, los cuales son recolectados mediante el mismo \texttt{ErrorCollector} de la fase de generación de constraints.
 
 \subsection{Fase de resolución de constraints}
+En esta fase, la clase \texttt{ConstraintSolver}, que se muestra en el diagrama \ref{visitors}, se encarga de convertir el set de constraints en un mapeo entre variables de tipos y tipos concretos, implementando las operaciones descritas en la sección \ref{propuestaRes}.
 
-\subsubsection{Recolección de errores}
-
-\subsection{Testing}
-Cómo se testea la inferencia.
+\begin{figure}[ht]
+  \includegraphics[width=\textwidth]{imagenes/visitors.pdf}
+  \caption{Diagrama de las clases encargadas de la generación de constraints}
+  \label{visitors}
+\end{figure}
+\clearpage
+\begin{figure}[ht]
+  \includegraphics[width=\textwidth]{imagenes/others.pdf}
+  \caption{Diagrama de las clases relevantes del análisis interno y resolución de constraints}
+  \label{others}
+\end{figure}
+\clearpage
 
 \section{Implementación de plugin}
 
-\subsection{Diagrama de componentes y descripción general}
-Explicar funcionamiento general e integración con sistema de inferencia.
+\subsection{Descripción general}
+El plugin implementa una API para establecer comunicación con el servidor de análisis de un IDE, respondiendo con el análisis de inferencia ante las peticiones recibidas desde el servidor.
 
-\subsection{Configuración inicial}
-Uso de la herramienta y creación del archivo sec.dart en primera ejecución del análisis.
+Cuando el servidor de análisis detecta un cambio en un archivo, envía un mensaje al plugin, el cual gatilla la inferencia para todos los archivos del proyecto activo. Además, el plugin se encarga de recolectar los errores generados en las fases del proceso de inferencia, para enviárselos al servidor de análisis, el cual los despliega ante el usuario.
 
-\subsection{Tipos de errores e información}
+Para la implementación de la API, se siguió el tutorial oficial de la herramienta \textit{Analyzer Plugin}, presente en el repositorio de GitHub oficial del lenguaje Dart~\cite{plugin}.
+
+\subsection{Configuración del plugin}
+Para activar el análisis sobre un proyecto, se debe agregar el paquete del plugin como dependencia al proyecto, y agregar el plugin al archivo de configuración del análisis del proyecto \texttt{analysis\_options.yaml}, ubicado en la raiz del proyecto.
+
+\begin{verbatim}
+  analyzer:
+    plugins:
+      TRNIdart:
+        default_core_return: Bot
+        default_core_parameter: Bot
+\end{verbatim}
+
+Las opciones \texttt{default\_core\_return} y \texttt{default\_core\_parameter} corresponden a las facetas de desclasificación por defecto que tendrán los métodos del \textit{core} de Dart.

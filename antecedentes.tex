@@ -14,9 +14,9 @@ Si consideramos que un sistema maneja dos niveles de seguridad, \textit{low} o d
 \end{defn}
 
 \subsection{Language-based security}
-Los sistemas computacionales abordan la protección de confidencialidad con diversas técnicas, tales como criptografía y control de acceso. Ninguna de estas técnicas garantiza efectivamente la protección de confidencialidad. En efecto, los esquemas de encriptación tienen que ser actualizados constantemente debido al descubrimiento de vulnerabilidades, y control de acceso no restringe la propagación de información~\cite{myers-phd}.
+Noninterference es utilizado para el análisis de la seguridad en diversas técnicas de protección de confidencialidad, tales como criptografía y control de acceso. Ninguna de estas técnicas garantiza, por si sola, la protección de confidencialidad. Por ejemplo, control de acceso no restringe la propagación de información~\cite{myers-phd}. Es por ello que los sistemas seguros implementan varias capas de seguridad.
 
-Existe un conjunto de técnicas complementarias para fortalecer la seguridad de un sistema, utilizando propiedades de los lenguajes de programación. A este conjunto se le denomina \textit{Language-based security} (LBS).
+Existe un conjunto de técnicas para fortalecer la seguridad de un sistema a nivel de software, utilizando propiedades de los lenguajes de programación. A este conjunto se le denomina \textit{Language-based security} (LBS).
 
 \subsection{Tipado de seguridad y control de flujo} \label{sectype}
 Una de las técnicas más efectivas de LBS con análisis estático es \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}. En un lenguaje de seguridad, los valores y los tipos son anotados con niveles de seguridad para clasificar la información que el programa manipula. Dichos niveles de seguridad forman una \textit{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo}.
@@ -42,6 +42,8 @@ Una de las técnicas más efectivas de LBS con análisis estático es \textit{ti
   	\end{lstlisting}
 
     En el código anterior, los tipos de los parámetros y el tipo de retorno de la función están etiquetados con niveles de seguridad.
+
+    Podemos categorizar el flujo de la información, dependiendo de qué tan directo es, en flujo explícito y flujo implícito.
 
 \subsubsection{Flujo explicito}
 Se denomina flujo explícito a las instrucciones del programa que directamente asignan un valor a una variable con distintos niveles de seguridad. El siguiente programa ilustra el flujo explícito.
@@ -138,6 +140,8 @@ La segunda regla expresa que la llamada a un método sobre un valor cuya faceta 
 
 La propiedad de seguridad que se demuestra para el sistema de tipos de \textit{type-based declassification} es una forma de noninterference con políticas de desclasificación, denominada \textit{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
+Pese a que los fundamentos de \textit{type-based declassification} se encuentran bien descritos, se considera tedioso y poco realista que un programador anote completamente un programa con facetas de desclasificación. Es deseable que el programador anote solo las facetas que son relevantes para la seguridad, y el resto que sean inferidas siguiendo las reglas del sistema de tipos.
+
 \section{Inferencia de tipos}
 \subsection{Objetivo y usos}
 La inferencia de tipos es el proceso de determinar los tipos para las expresiones de un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores. Consideremos el siguiente ejemplo:
@@ -152,7 +156,7 @@ La inferencia de tipos es el proceso de determinar los tipos para las expresione
 Supongamos que la suma solo está definida para números. Aquí, se considera redundante declarar el tipo de la variable \texttt{c}, debido a que la suma de dos números enteros siempre da como resultado un número entero. De la misma forma, podría ser considerado redundante declarar los tipos de los parámetros \texttt{a} y \texttt{b}, debido a que son utilizados como sumando en la asignación a la variable \texttt{c}, que fue declarada como \texttt{int}.
 
 \subsection{Variables de tipo} \label{schemes}
-Los lenguajes de programación que tienen un mecanismo de inferencia de tipos, expresan sus tipos mediante \textit{type schemes}, los cuales pueden incluir variables de tipo y tipos concretos. Una variable de tipo es un tipo que no ha sido determinado.
+Los lenguajes de programación que tienen un mecanismo de inferencia de tipos, pueden expresar sus tipos mediante \textit{type schemes}, los cuales incluyen variables de tipo y tipos concretos. Una variable de tipo es un tipo que no ha sido determinado.
 
 Consideremos el mismo ejemplo, pero ahora omitiendo la declaración del tipo de la variable \texttt{c}.
 
@@ -196,11 +200,7 @@ La unificación es el proceso de encontrar una substitución que hace iguales a 
 
 Si las constraints son de igualdad, la unificación consiste en realizar substituciones sucesivas hasta resolver cada uno de los tipos. En cambio, si las constraints son de subtyping, se deben realizar las operaciones \texttt{meet} (el ínfimo entre dos elementos, $a \wedge b$) y \texttt{join} (el supremo entre dos elementos, $a \vee b$) sobre la lattice que conforma la jerarquía de tipos, cuando sea pertinente.
 
-Por ejemplo, en el set de constraints generado en el ejemplo anterior $C: \{\beta <: \alpha, int <: \beta, float <: \beta\}$, para resolver el tipo de $\beta$ se debe realizar la operación \texttt{join} entre \texttt{int} y \texttt{float}, lo que da como resultado \texttt{num}. Luego, el set de constraints se reduce a $C: \{\beta <: \alpha, num <: \beta\}$, donde ahora se puede substituir $\beta$ por \texttt{num}, lo que genera finalmente el mapeo $S: \{\beta \rightarrow num, \alpha \rightarrow num\}$.
-\subsection{Decidibilidad}
-Los algoritmos de unificación no siempre son capaces de encontrar un tipo concreto para cada variable de tipo. Esto puede ser debido a alguna infracción de las reglas del sistema de tipos, o a la falta de tipos declarados suficientes para que el algoritmo de una respuesta correcta.
-
-En efecto, dependiendo de las características del lenguaje, la inferencia completa puede ser un problema no decidible. Un ejemplo es System F~\cite{WELLS1999111}.
+Por ejemplo, en el set de constraints generado en el ejemplo anterior, para resolver el tipo de $\beta$ se debe realizar la operación \texttt{join} entre \texttt{int} y \texttt{float}, lo que da como resultado \texttt{num}. Luego, el set de constraints se reduce a $C: \{\beta <: \alpha, num <: \beta\}$, donde ahora se puede substituir $\beta$ por \texttt{num}, lo que genera finalmente el mapeo $S: \{\beta \rightarrow num, \alpha \rightarrow num\}$.
 \subsection{Inferencia de tipos de seguridad}
 Como se vio en la sección \ref{sectype}, los tipos de seguridad conforman una lattice con relaciones de subtyping, al igual que la jerarquía de tipos. En consecuencia, es posible formular un algoritmo de inferencia basado en constraints para tipos de seguridad.
 
