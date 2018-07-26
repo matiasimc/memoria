@@ -6,6 +6,7 @@ Los lenguajes con tipado de seguridad para el control del flujo de la informaci�
 En el siguiente ejemplo se muestra un código anotado con niveles de seguridad:
 
 \begin{ej} \ \\
+  \normalfont
   \label{ej2-1}
 \begin{lstlisting}
   String@L login(String@L guess, String@H password) {
@@ -21,7 +22,7 @@ Para detectar un flujo implícito, se utiliza el concepto de \textit{program cou
 
 A pesar de que noninterference es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que previene que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, el programa de \texttt{login} del ejemplo \ref{ej2-1} rompe con la propiedad, debido a que un observador público puede aprender acerca de la variable confidencial \texttt{password} observando la salida del programa para distintas ejecuciones.
 
-Sin embargo, deseamos que el programa anterior sea aceptado, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para disminuir el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, \emph{desclasificando} la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess}
+Sin embargo, deseamos que el programa de \texttt{login} sea aceptado, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para disminuir el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, \emph{desclasificando} la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess}
 
 \begin{lstlisting}
   String@L login(String@L guess, String@H password) {
