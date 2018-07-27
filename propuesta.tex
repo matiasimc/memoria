@@ -3,25 +3,13 @@
 En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas de desclasificación, que incluya el análisis de \textit{Type-based declassification}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detalla el problema de inferencia a resolver y las estrategias utilizadas para resolverlo.
 
 \section{Problema de inferencia}
-Para la formulación del problema, es posible asumir que la información de las facetas privadas de \textit{type-based declassification} se encuentra a disposición, debido a que algunos lenguajes de programación poseen herramientas para obtener dicha información.
+Para la formulación del problema, es posible asumir que la información de las facetas privadas de type-based declassification se encuentra a disposición, debido a que algunos lenguajes de programación poseen herramientas para obtener dicha información.
 
 \begin{defn}[Problema de inferencia]
-  Dado un programa parcialmente tipado con facetas de desclasificación, y completamente tipado con facetas privadas, encontrar la faceta de desclasificación de las expresiones no tipadas, tal que se cumplan las reglas del sistema de tipos de type-based declassification.
+  Dado un programa parcialmente tipado con facetas de desclasificación, y completamente tipado con facetas privadas, encontrar la faceta de desclasificación de las expresiones no tipadas que más se ajuste al uso de las expresiones, tal que se cumplan las reglas del sistema de tipos de type-based declassification.
 \end{defn}
 
-A continuación, se muestran algunos ejemplos de código parcialmente anotado con facetas de desclasificación, con el objetivo de ilustrar la solución esperada al problema de inferencia.
-
-\begin{ej} \ \\
-  \label{ej1}
-  \normalfont
-\begin{lstlisting}
-  bool login(String password, String guess) {
-    return password.eq(guess);
-  }
-\end{lstlisting}
-\end{ej}
-
-En este caso, se quiere inferir que \texttt{password} tiene una faceta de desclasificación que contiene al método \texttt{eq}, y que tanto el retorno de \texttt{login} como el parámetro \texttt{guess} dependen de la decisión que se tome sobre las facetas públicas por defecto que tendrán los métodos del \textit{core} del lenguaje.
+A continuación, se muestran algunos ejemplos con casos que no fueron cubiertos en el capítulo 2, con el objetivo de ilustrar la solución esperada al problema de inferencia.
 
 \begin{ej} \ \\
   \normalfont
@@ -33,7 +21,7 @@ En este caso, se quiere inferir que \texttt{password} tiene una faceta de descla
 \end{ej}
 
 
-Acá, se quiere inferir que el método \texttt{login} tiene a \texttt{Top} como faceta de desclasificación, debido a la aplicación de la regla \texttt{TmH} de \textit{type-based declassification}.
+En este ejemplo, se quiere inferir que el método \texttt{login} tiene a \texttt{Top} como faceta de desclasificación, debido a la aplicación de la regla \texttt{TmH} de type-based declassification.
 
 \begin{ej} \ \\
   \normalfont
@@ -44,7 +32,7 @@ Acá, se quiere inferir que el método \texttt{login} tiene a \texttt{Top} como 
 \end{lstlisting}
 \end{ej}
 
-En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{password}. La faceta de desclasificación para \texttt{password} que resuelve el problema de inferencia contiene al método \texttt{hash}, al cual se le infiere una faceta de desclasificación de retorno que contiene al método \texttt{eq}. Si se declara una faceta de desclasificación de retorno para el método \texttt{eq}, entonces se infere esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de \textit{type-based declassification}.
+En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{password}. La faceta de desclasificación para \texttt{password} que resuelve el problema de inferencia contiene al método \texttt{hash}, al cual se le infiere una faceta de desclasificación de retorno que contiene al método \texttt{eq}. Si se declara una faceta de desclasificación de retorno para el método \texttt{eq}, entonces se infere esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de type-based declassification.
 
 \begin{ej} \ \\
   \normalfont
@@ -62,7 +50,7 @@ En este caso, se debe reportar un error de flujo en el llamado a la función \te
 
 \section{Consideraciones de diseño}
 
-En el ejemplo \ref{ej1}, se mencionó sobre la decisión acerca de las facetas de desclasificación de los métodos que pertenecen al \textit{core} de un lenguaje de programación. Para ilustrar la necesidad de esta decisión, veamos el siguiente ejemplo:
+Se debe tomar una decisión acerca de las facetas de desclasificación de los métodos que pertenecen al \textit{core} de un lenguaje de programación. Para ilustrar la necesidad de esta decisión, veamos el siguiente ejemplo:
 
 \begin{lstlisting}
   int<Bot getLength(String password) {
@@ -84,207 +72,171 @@ Ahora, analicemos ambas posibilidades para la faceta de desclasificación por de
 Haciendo un balance, se considera que la opción \texttt{Bot} $\rightarrow$ \texttt{Bot} tiene el mejor equilibrio entre utilidad y seguridad, por lo que es la opción por defecto considerada. Sin embargo, es deseable que la herramienta se pueda configurar para elegir otra alternativa.
 
 \section{Gramática de tipos}
-Como se vió en la sección \ref{schemes}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis.
+Como se vió en la sección \ref{inference}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis. Esto se hace definiendo la gramática de tipos que usará el sistema de inferencia:
 
-\begin{defn}[Gramática de tipos]
-  \normalfont
-  $\tau := \alpha\ |\ \text{Obj}(\overline{l: \tau})\ |\ \tau \rightarrow \tau \ |\ \tau \vee \tau\ |\ \tau \wedge \tau \ |\ \text{Bot}\ |\ \text{Top}$
-\end{defn}
+  $\mathtt{\tau := \alpha\ |\ Obj(\overline{l: \tau})\ |\ [\overline{\tau}] \rightarrow \tau \ |\ Join(\overline{\tau})\ |\ Meet(\overline{\tau})\ |\ Bot\ |\ Top}$
 
-Donde $\alpha$ es cualquier variable de tipo, $\text{Obj}(\overline{l: \tau})$ representa el tipo de un objeto, $l$ es un nombre de método, $\vee$ representa la operación \texttt{join} en la lattice, y $\wedge$ representa la operación \texttt{meet}.
+Donde $\alpha$ es cualquier variable de tipo, $\mathtt{Obj(\overline{l: \tau}})$ representa el tipo de un objeto y $\mathtt{l}$ es un nombre de método.
 
 \section{Generación de constraints de subtyping} \label{propuestaGen}
-Como se mencionó en la sección \ref{constraints}, el uso de constraints permite presentar un algoritmo de inferencia como una fase de generación de constraints, y una fase de resolución de constraints. A continuación se muestran ejemplos de la generación de constraints para distintas expresiones, y luego un algoritmo en pseudo-lenguaje. De ahora en adelante, se usará el término \textit{faceta} para referirse a las facetas de desclasificación.
+Como se mencionó en la sección \ref{constraints}, el uso de constraints permite presentar un algoritmo de inferencia como una fase de generación de constraints, y una fase de resolución de constraints. En el algoritmo \ref{pseudogen} se muestra la generación de constraints para un nodo determinado del árbol de sintaxis abstracta (AST).
 
-\begin{ej}\ \\
-  \normalfont
-  \label{gen1}
-\begin{lstlisting}[mathescape=true]
-  bool<$\alpha$ check(String<Top password, String<$\beta$ guess) {
-    return password == guess; /* $\gamma$ */
-  }
-\end{lstlisting}
-
-\begin{enumerate}
-  \item $\gamma <: \alpha$
-  \item $\beta <: \text{Bot}$
-  \item $\text{Top} <: \text{Obj}(\text{==: }\text{Bot} \rightarrow \text{Bot}), \gamma$
-\end{enumerate}
-\end{ej}
-
-En este ejemplo, la constraint 1 se genera por la regla que indica que la faceta de la expresión de retorno del método ($\gamma$) debe ser subtipo de la faceta de retorno del método ($\alpha$). La constraint 2 se genera por la regla que indica que la faceta del argumento en una llamada a método ($\beta$), debe ser subtipo de la faceta del parámetro correspondiente de ese método ($\text{Bot}$, ya que el método \texttt{==} es parte del \textit{core} del lenguaje).
-
-La constraint 3 se genera por la llamada al método \texttt{==}, indicando que la faceta del objetivo de la llamada (\texttt{Top}) debe ser subtipo de un objeto que contenga al método. Las constraints que se generan por llamadas a métodos, poseen además la faceta que corresponde a la expresión de esa llamada ($\gamma$), debido a la posible aplicación de la regla \texttt{TmH} en caso de que la relación de subtyping no sea válida. En este caso, la relación no es válida pues \texttt{Top} no es subtipo de $\text{Obj}(\text{==: }\text{Bot} \rightarrow \text{Bot})$.
-
-\begin{ej}\ \\
-  \normalfont
-  \label{gen2}
-\begin{lstlisting}[mathescape=true]
-  class Person {
-    bool<Top permission => true;
-  }
-
-  class Foo {
-    String<$\alpha$ foo(Person<$\beta$ p) {
-      String<Bot ret = "denied";
-      if (p.permission /* $\gamma$ */) ret = "success";
-      return ret;
-    }
-  }
-\end{lstlisting}
-
-\begin{enumerate}
-  \item $\text{Bot} <: \text{Top}$
-  \item $\text{Bot} <: \text{Bot}$
-  \item $\beta <:\text{Obj}(\text{permission: }\text{Top}), \gamma$
-  \item $\text{Bot} <: \text{Bot}$
-  \item $\text{Top} <: \text{Bot}$
-  \item $\text{Bot} <: \alpha$
-\end{enumerate}
-\end{ej}
-
-En este ejemplo, la constraint 1 se genera por la relación entre la expresión de retorno y la faceta de retorno del método \texttt{permission}. Notar que el literal \texttt{true} tiene una faceta por defecto \texttt{Bot}. La constraint 2 se genera por la relación entre los lados izquierdo y derecho de la asignación a la variable \texttt{ret}. La constraint 3 se genera por la llamada al método \texttt{permission} sobre el parámetro \texttt{p}. Las constraints 4 y 5 se generan por la asignación a la variable \texttt{ret} en el cuerpo del condicional. La primera, expresa la relación entre el lado derecho de la asignación y el lado izquierdo, y la segunda expresa la relación entre el PC y el lado izquierdo de la asignación. La constraint 6 se genera por la relación entre la expresión de retorno del método y el retorno del método.
-
-\begin{ej}\ \\
-  \normalfont
-  \label{gen3}
-\begin{lstlisting}[mathescape=true]
-  int<$\alpha$ calc(num<$\beta$ n) {
-    int<$\text{Top}$ ret = 1 + n.ceil() /* $\gamma$ */;
-    ret = ret + n.floor() /* $\delta$ */;
-    return ret;
-  }
-\end{lstlisting}
-
-\begin{enumerate}
-  \item $\text{Bot} <: \text{Top}$
-  \item $\beta <: \text{Obj}(\text{ceil}: [\ ] \rightarrow \text{Bot}),\ \gamma$
-  \item $\text{Top} <: \text{Top}$
-  \item $\beta <: \text{Obj}(\text{floor}: [\ ] \rightarrow \text{Bot}),\ \delta$
-  \item $\text{Top} <: \alpha$
-\end{enumerate}
-\end{ej}
-
-En este ejemplo, las constraints 1 y 3 se generan por la asignación a la variable \texttt{ret}. En cambio, las constraints 2 y 4 se generan por la llamada a los métodos \texttt{ceil} y \texttt{floor} del parámetro \texttt{n}. Este ejemplo es útil para mostrar el uso de la operación \texttt{meet} en el paso de resolución de constraints, debido a que la faceta de la variable $\beta$ se debe resolver considerando la intersección entre dos facetas.
-
-% TODO arreglar esa ref
-En la figura 3.1 se muestra el algoritmo para la generación de constraints de un nodo determinado del árbol de sintaxis abstracta.
-
-\begin{figure}[ht]
+Es importante notar que la constraint generada por la invocación a un método almacena el tipo de la expresión, debido a la posible aplicación de la regla \texttt{TmH} del sistema de tipos de type-based declassification.
+\clearpage % TODO
+\begin{algorithm}\captionsetup{labelsep=newline}
   \centering
+  \caption{Generación de constraints}
   \label{pseudogen}
-  \begin{mdframed}
-    \begin{algorithmic}
-      \Function{Constraint\_Generator}{node, pc}
-          \State $\text{cs}\gets \{\}$
-          \If {node is MethodInvocation}
-            \State cs.insert(methodTarget <: Obj(methodName: methodSignature), callExpression)
-            \State cs.insert(callExpression <: methodReturn)
-            \For {argument$\gets$ callArguments}
-              \State cs.insert(argument <: correspondingParameter)
-            \EndFor
-          \ElsIf {node is ReturnStatement}
-            \State cs.insert(returnExpression <: methodReturn)
-            \State cs.insert(pc <: methodReturn)
-          \ElsIf {node is AssignmentExpression}
-            \State cs.insert(rightHand <: LeftHand)
-            \State cs.insert(pc <: LeftHand)
-          \ElsIf {node is IfExpression}
-            \State $\text{pc}\gets \text{conditionExpression}$
-          \EndIf
-          \State \Return cs,pc
+    \begin{algorithmic}[1]
+      \Function{Constraint\_Generation}{\texttt{node, pc}}
+          \State $\mathtt{cs\gets \{\}}$
+          \Switch{\texttt{node}}
+            \Case{\texttt{MethodInvocation(name, target, signature, expression, arguments)}}
+              \State \texttt{cs.insert(target <: Obj(name: signature), expression)}
+              \For {$\mathtt{argument,correspondingParameter\ \mathbf{in}\ arguments}$}
+                \State \texttt{cs.insert(argument <: correspondingParameter})
+              \EndFor
+            \EndCase
+            \Case{\texttt{ReturnStatement(expression, methodReturn)}}
+              \State \texttt{cs.insert(expression <: methodReturn)}
+              \State \texttt{cs.insert(pc <: methodReturn)}
+            \EndCase
+            \Case{\texttt{AssignmentExpression(leftHand, rightHand)}}
+              \State \texttt{cs.insert(rightHand <: LeftHand)}
+              \State \texttt{cs.insert(pc <: LeftHand)}
+            \EndCase
+            \Case{\texttt{IfExpression(conditionExpression)}}
+              \State $\mathtt{pc\gets conditionExpression}$
+            \EndCase
+          \EndSwitch
+          \State \Return \texttt{cs, pc}
       \EndFunction
     \end{algorithmic}
-  \end{mdframed}
-  \caption{Algoritmo de generación de constraints}
-\end{figure}
+\end{algorithm}
+Ejecutando la función del algoritmo \ref{pseudogen} en todos los nodos del AST y uniendo los resultados, se obtiene el set de constraints.
 
-\section{Resolución de constraints} \label{propuestaRes}
+A modo de ejemplo, se muestran las constraints generadas para el ejemplo \ref{ej2-5}.
+
+\begin{ej}\ \\
+  \label{ej3-1}
+  \begin{enumerate}
+    \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta\}}$
+    \item $\mathtt{\{\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma\}}$
+    \item $\mathtt{\{Bot <: Bot\}}$
+    \item $\mathtt{\{Bot <: Bot\}}$
+    \item $\mathtt{\{\gamma <: Bot\}}$
+    \item $\mathtt{\{Bot <: Bot\}}$
+  \end{enumerate}
+\end{ej}
+
+
+Las constraints 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password} ($\alpha$). Las constraints 3 y 4 se generan por la relación entre el \texttt{pc} (\texttt{Bot}) y el retorno del método (\texttt{Bot}), y las constraint 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método.
+
+\clearpage % TODO
+
+\section{Resolución de constraints de subtyping} \label{propuestaRes}
 
 El siguiente paso del algoritmo de inferencia es la resolución del set de constraints obtenido en la fase de generación de constraints.
 
-\subsection{Simplificación y eliminación de constraints}
-El primer paso en la resolución de constraints es la eliminación de constraints \textit{obvias}. Esto es, la eliminación de las constraints \texttt{Bot <: X} y \texttt{X <: Top}. Así, en el ejemplo \ref{gen2}, las constraints resultantes son:
+El primer paso en la resolución de constraints es la eliminación de constraints \textit{obvias}. Esto es, la eliminación de las constraints \texttt{Bot <: X} y \texttt{X <: Top}, ya que no aportan información útil al algoritmo de inferencia.
+
+\begin{algorithm}\captionsetup{labelsep=newline}
+  \centering
+  \caption{Simplificación de constraints}
+  \label{pseudosimplify}
+    \begin{algorithmic}[1]
+      \Function{Simplify}{\texttt{cs}}
+          \For {\texttt{constraint \textbf{in} cs}}
+            \If {\texttt{constraint.left \textbf{is} Bot}}
+              \State \texttt{cs.remove(constraint)}
+            \ElsIf {\texttt{constraint.right \textbf{is} Top}}
+              \State \texttt{cs.remove(constraint)}
+            \EndIf
+          \EndFor
+      \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+Aplicando el algoritmo \ref{pseudosimplify}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo dos constraints.
 
 \begin{enumerate}
-  \item $\beta <:\text{Obj}(\text{permission: }\text{Top}), \gamma$
-  \item $\text{Top} <: \text{Bot}$
+  \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta\}}$
+  \item $\mathtt{\{\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma\}}$
 \end{enumerate}
 
-Y para el ejemplo \ref{gen3}:
+El siguiente paso es agrupar las constraints sobre la misma variable de tipo, usando las reglas del teorema \ref{teo1}. Aplicando el algoritmo \ref{pseudogroup}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo una constraint.
 
-\begin{enumerate}
-  \item $\beta <: \text{Obj}(\text{ceil}: [\ ] \rightarrow \text{Bot}),\ \gamma$
-  \item $\beta <: \text{Obj}(\text{floor}: [\ ] \rightarrow \text{Bot}),\ \delta$
-  \item $\text{Top} <: \alpha$
-\end{enumerate}
-\subsection{Agrupación de constraints}
-El siguiente paso es agrupar las constraints sobre la misma variable de tipo, usando las siguientes reglas:
+\begin{ej}\ \\
+  \normalfont
+  \label{ej3-2}
+  \begin{enumerate}
+    \item $\mathtt{\{\alpha <: Meet(Obj(eq : [Bot] \rightarrow Bot),\ Obj(hash : [\ ] \rightarrow Bot))\}}$
+  \end{enumerate}
+\end{ej}
 
-\begin{itemize}
-  \item \texttt{x <: y}, \texttt{x <: z} $\rightarrow$ \texttt{x <: y }$\wedge$\texttt{ z}
-  \item \texttt{y <: x}, \texttt{z <: x} $\rightarrow$ \texttt{y }$\vee$\texttt{ z <: x}
-\end{itemize}
-
-Luego, el ejemplo \ref{gen3} simplificado se reduce a dos constraints:
-
-\begin{enumerate}
-  \item $\beta <: \text{Obj}(\text{ceil}: [\ ] \rightarrow \text{Bot})\ \wedge\ \text{Obj}(\text{floor}: [\ ] \rightarrow \text{Bot})$
-  \item $\text{Top} <: \alpha$
-\end{enumerate}
+\clearpage % TODO
+\begin{algorithm}\captionsetup{labelsep=newline}
+  \centering
+  \caption{Agrupación de constraints}
+  \label{pseudogroup}
+    \begin{algorithmic}[1]
+      \Function{Group}{\texttt{cs, typeVariables}}
+          \State $\mathtt{toRemove\gets \{\}}$
+          \For {\texttt{tvar \textbf{in} typeVariables}}
+            \State $\mathtt{c_1\gets Constraint(tvar, Meet())}$
+            \State $\mathtt{c_2\gets Constraint(Join(), tvar)}$
+            \For {\texttt{constraint \textbf{in} cs}}
+              \If {$\mathtt{constraint.left == tvar}$}
+                \State $\mathtt{c_1.right.insert(constraint.right)}$
+                \State $\mathtt{toRemove.insert(constraint)}$
+              \EndIf
+              \If {$\mathtt{constraint.right == tvar}$}
+                \State $\mathtt{c_2.left.insert(constraint.left)}$
+                \State $\mathtt{toRemove.insert(constraint)}$
+              \EndIf
+            \EndFor
+            \If {$\mathtt{c_1.right.notEmpty()}$}
+              \State $\mathtt{cs.insert(c_1)}$
+            \EndIf
+            \If {$\mathtt{c_2.left.notEmpty()}$}
+              \State $\mathtt{cs.insert(c_2)}$
+            \EndIf
+          \EndFor
+          \State $\mathtt{cs.removeAll(toRemove)}$
+      \EndFunction
+    \end{algorithmic}
+\end{algorithm}
 
 
 \subsection{Unificación}
 En este paso, se materializan las operaciones \texttt{meet} y \texttt{join}, se comprueba la validez de las constraints y se realizan substituciones, de forma iterativa.
 
 \subsubsection{Meet y Join}
-Cuando se tiene un tipo $x \wedge y$ o $x \vee y$, donde $x$ e $y$ no tienen variables de tipo, entonces se puede materializar la operación sobre la lattice correspondiente.
+Cuando se tiene un tipo $\mathtt{Meet(\overline{\tau}})$ o $\mathtt{Join(\overline{\tau}})$, donde $\tau$ no tiene variables de tipo, entonces se puede materializar la operación sobre la lattice correspondiente. Este procedimiento se muestra en el algoritmo \ref{pseudoperations}.
 
-\begin{figure}[ht]
+\begin{algorithm}\captionsetup{labelsep=newline}
   \centering
-  \begin{tikzpicture}[node distance=2cm]
-    \node(Top) 												{$x \vee y$ (\texttt{join})};
-    \node(y)		[below right of=Top]			{$y$};
-    \node(x)					[below left of=Top] 			{$x$};
-    \node(Bot)  [below right of=x] {$x \wedge y$ (\texttt{meet})};
-    \draw(Top)      -- (y);
-    \draw(Top)      -- (x);
-    \draw(x)      -- (Bot);
-    \draw(y)      -- (Bot);
-  \end{tikzpicture}
-  \label{latticexy}
-  \caption{Operaciones sobre lattice}
-\end{figure}
-
-En el ejemplo \ref{gen3} reducido, se materializa la operación \texttt{meet} del lado derecho de la constraint 1, por lo que las constraints quedan como sigue:
-
-\begin{enumerate}
-  \item $\beta <: \text{Obj}(\text{ceil}: [\ ] \rightarrow \text{Bot},\ \text{floor}: [\ ] \rightarrow \text{Bot})$
-  \item $\text{Top} <: \alpha$
-\end{enumerate}
-
-\begin{figure}[ht]
-  \centering
+  \caption{Materialización de operaciones}
   \label{pseudoperations}
-  \begin{mdframed}
-    \begin{algorithmic}
-      \Function{performOperations}{cs}
-          \For {c in cs}
-            \If {c.right is MeetType and c.right.isConcrete()}
-              \State c.right $\gets$ meet(c.right)
+    \begin{algorithmic}[1]
+      \Function{performOperations}{\texttt{cs}}
+          \For {\texttt{constraint \textbf{in} cs}}
+            \If {\texttt{constraint.right \textbf{is} Meet \textbf{and} constraint.right.isConcrete()}}
+              \State $\mathtt{constraint.right\gets meet(constraint.right)}$
             \EndIf
-            \If {c.left is JoinType and c.left.isConcrete()}
-              \State c.left $\gets$ join(c.left)
+            \If {\texttt{constraint.left \textbf{is} Join \textbf{and} constraint.left.isConcrete()}}
+              \State $\mathtt{constraint.left\gets join(constraint.left)}$
             \EndIf
           \EndFor
       \EndFunction
     \end{algorithmic}
-  \end{mdframed}
-  \caption{Algoritmo de materialización de operaciones}
-\end{figure}
+\end{algorithm}
 
-La figura 3.3 muestra el algoritmo de materialización de operaciones sobre un set de constraints. Notar que se asume que MeetType aparece a la izquierda de las constraints, y JoinType a la derecha, debido a las reglas de agrupación.
+Si aplicamos el algoritmo \ref{pseudoperations} al ejemplo \ref{ej3-2}, se materializa la operación de la constraint.
 
+\begin{enumerate}
+  \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot, hash : [\ ] \rightarrow Bot)\}}$
+\end{enumerate}
 
 \subsubsection{Verificación de constraints}
 Cuando una constraint representa una relación no válida, existen dos posibilidades:

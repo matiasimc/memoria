@@ -83,7 +83,7 @@ La segunda regla expresa que la llamada a un método sobre un valor cuya faceta 
 
 La propiedad de seguridad que se demuestra para el sistema de tipos de type-based declassification es una forma de noninterference con políticas de desclasificación, denominada \emph{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
-\section{Inferencia de tipos}
+\section{Inferencia de tipos} \label{inference}
 La inferencia de tipos es el proceso de determinar los tipos para las expresiones de un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores.
 
 Consideremos el siguiente ejemplo, donde se quita la anotación de la faceta pública del parámetro \texttt{password} del ejemplo \ref{ej2-3}:
@@ -103,7 +103,7 @@ Basado en el uso del parámetro \texttt{password}, el sistema de tipos podría \
 
 Para razonar acerca de expresiones con tipos desconocidos, los lenguajes de programación incluyen \emph{variables de tipo} en sus sistemas de tipos. En el ejemplo \ref{ej2-4}, se asigna un tipo $\mathtt{\alpha}$ a la faceta pública del parámetro \texttt{password}.
 
-\subsection{Constraints}
+\subsection{Constraints} \label{constraints}
 Cuando un sistema de tipos aplica una determinada regla para tipar una expresión, puede imponer condiciones que los tipos deben cumplir para que la expresión esté bien tipada. En el ejemplo \ref{ej2-4}, se puede decir que \texttt{password} tiene una faceta pública $\mathtt{\alpha}$ si y solo si $\mathtt{\alpha}$ posee el método \texttt{eq}.
 
 Para razonar acerca de estas condiciones, el sistema de tipos las representa mediante \emph{constraints}, que expresan una relación entre dos tipos. En el ejemplo \ref{ej2-4}, la condición sobre la faceta pública de \texttt{password} puede ser representada mediante la constraint de subtyping $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$.
@@ -145,3 +145,12 @@ Consideremos el siguiente ejemplo, en donde se modifica una expresión de retorn
 \end{ej}
 
 Supongamos que \texttt{hash} retorna un \texttt{String}. Ahora se generan dos constraints sobre \texttt{password}, $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$ y $\{\alpha <: [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$. El tipo $\alpha$ se resuelve con la operación \texttt{meet} entre ambos tipos de objeto, cuyo resultado $\mathtt{StringHashEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}, \mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$ se muestra en la figura \ref{latticeInference}.
+
+En general, se aplican las siguientes reglas para la aplicación de las operaciones sobre la lattice:
+
+\begin{teo} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una lattice de subtyping, se cumple lo siguiente: \\
+  \begin{itemize}
+    \item \texttt{x <: y}, \texttt{x <: z} $\implies$ \texttt{x <: y }$\wedge$\texttt{ z}
+    \item \texttt{y <: x}, \texttt{z <: x} $\implies$ \texttt{y }$\vee$\texttt{ z <: x}
+  \end{itemize}
+\end{teo}
