@@ -1,7 +1,7 @@
 \chapter{Antecedentes}
 
 \section{Control de flujo de información}
-Los lenguajes con tipado de seguridad para el control del flujo de la información clasifican los valores de un programa con respecto a sus niveles de confidencialidad, expresado mediante una \textit{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo} de etiquetas de seguridad. Por ejemplo, con la \textit{lattice} de dos niveles de seguridad \texttt{L} $\sqsubseteq$ \texttt{H} se puede distinguir entre valores públicos o de baja confidencialidad (\texttt{L}) y valores privados o de alta confidencialidad (\texttt{H}). Un sistema de tipos con control de flujo asegura de forma estática el cumplimiento de la propiedad \emph{noninterference}~\cite{noninterference}, esto es, que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}.
+Los lenguajes con tipado de seguridad para el control del flujo de la información clasifican los valores de un programa con respecto a sus niveles de confidencialidad, expresado mediante una \emph{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo} de etiquetas de seguridad. Por ejemplo, con la lattice de dos niveles de seguridad \texttt{L} $\sqsubseteq$ \texttt{H} se puede distinguir entre valores públicos o de baja confidencialidad (\texttt{L}) y valores privados o de alta confidencialidad (\texttt{H}). Un sistema de tipos con control de flujo asegura de forma estática el cumplimiento de la propiedad \emph{noninterference}~\cite{noninterference}, esto es, que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}.
 
 En el siguiente ejemplo se muestra un código anotado con niveles de seguridad:
 
@@ -16,13 +16,13 @@ En el siguiente ejemplo se muestra un código anotado con niveles de seguridad:
 \end{lstlisting}
 \end{ej}
 
-Se dice que ocurrió un \emph{flujo implícito} cuando un programa da conocimiento de una variable de baja confidencialidad, en un contexto de alta confidencialidad. En el ejemplo \ref{ej2-1}, se da conocimiento de un literal (que por convención es considerado de baja confidencialidad) en un contexto determinado por la operación de comparación en la condición del \texttt{if}, la cual retorna un valor de alta confidencialidad.
+Se dice que ocurrió un \emph{flujo implícito} cuando un programa da conocimiento de una variable de baja confidencialidad, en un contexto de alta confidencialidad. En el ejemplo \ref{ej2-1}, se da conocimiento de un literal\footnote{Un literal es considerado de baja confidencialidad} en un contexto determinado por la operación de comparación del condicional, la cual retorna un valor de alta confidencialidad.
 
-Para detectar un flujo implícito, se utiliza el concepto de \textit{program counter} (PC) para seguridad~\cite{pc}, el cual permite considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos. En el ejemplo \ref{ej2-1}, las instrucciones de retorno se ejecutan con un PC igual al nivel de seguridad de retorno de la condición.
+La ocurrencia de un flujo implícito significa una infracción a noninterference. Para su detección, se utiliza el concepto de \textit{program counter} (PC) para seguridad~\cite{pc}, el cual permite considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos. En el ejemplo \ref{ej2-1}, las instrucciones de retorno se ejecutan con un PC igual al nivel de seguridad de retorno de la condición.
 
-A pesar de que noninterference es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que previene que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, el programa de \texttt{login} del ejemplo \ref{ej2-1} rompe con la propiedad, debido a que un observador público puede aprender acerca de la variable confidencial \texttt{password} observando la salida del programa para distintas ejecuciones.
+A pesar de que noninterference es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que impide que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, queremos que el programa de \texttt{login} sea aceptado a pesar de infringir noninterference, pues de otra forma no tendríamos cómo realizar la autenticación.
 
-Sin embargo, deseamos que el programa de \texttt{login} sea aceptado, pues de otra forma no tendríamos cómo realizar la autenticación. Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para disminuir el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, como se indica en el siguiente ejemplo, \emph{desclasificando} la comparación de igualdad del parámetro confidencial \texttt{password} con el parámetro público \texttt{guess}
+Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para disminuir el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, que \emph{desclasifica} un valor de alta confidencialidad retornando un valor de baja confidencialidad. En el siguiente ejemplo, se utiliza para desclasificar el resultado de la operación de comparación:
 
 \begin{lstlisting}
   String@L login(String@L guess, String@H password) {
@@ -31,11 +31,11 @@ Sin embargo, deseamos que el programa de \texttt{login} sea aceptado, pues de ot
   }
 \end{lstlisting}
 
-Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información; por ejemplo, \texttt{declassify(password)} da conocimiento absoluto sobre el valor de la variable.
+Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información. Por ejemplo, \texttt{declassify(password)} da conocimiento absoluto sobre el valor de la variable a un observador público.
 
-Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \textit{type-based declassification} como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
+Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \emph{type-based declassification} como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
 
-En \textit{type-based declassification} los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ autoriza la operación \texttt{eq} sobre un String. Entonces se puede usar el tipo de dos facetas $\mathtt{String} < \mathtt{StringEq}$, en donde String es un subtipo de StringEq, para controlar la operación de desclasificación de la igualdad sobre \texttt{password}.
+En type-based declassification los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas $\mathtt{String} < \mathtt{StringEq}$, en donde \texttt{String} es un subtipo de \texttt{StringEq}, para controlar la operación de desclasificación de la igualdad sobre \texttt{password}.
 
 \begin{lstlisting}
   String<String login(String<StringEq password, String<String guess) {
@@ -44,30 +44,30 @@ En \textit{type-based declassification} los tipos tienen dos facetas; la faceta 
   }
 \end{lstlisting}
 
-Al igual que en tipado de seguridad con etiquetas (\texttt{L} y \texttt{H}), la faceta de desclasificación es parte de la jerarquía de tipos, la que forma una lattice como se muestra en la figura \ref{latticeTBD}. Si la faceta pública coincide con la faceta privada, entonces toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la lattice.
+Las facetas de desclasificación son parte de la jerarquía de tipos, por lo que forman una lattice como se muestra en la figura \ref{latticeTBD}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
 
 	\begin{figure}[ht]
 		\centering
-		\begin{tikzpicture}[node distance=2cm]
+		\begin{tikzpicture}[node distance=2.3cm]
 			\node(Top) 												{\texttt{Top}};
 			\node(StringEq)		[below right of=Top]			{\texttt{StringEq}};
-			\node(StringHashEq)      [below of=StringEq]       {\texttt{StringHashEq}};
-			\node(String)				[below of=StringHashEq]       {\texttt{String}};
+			\node(StringEqLength)      [below of=StringEq]       {\texttt{StringEqLength}};
+			\node(String)				[below of=StringEqLength]       {\texttt{String}};
 			\node(int)					[below left of=Top] 			{\texttt{int}};
 			\draw(Top)      -- (StringEq);
 			\draw(Top)      -- (int);
-			\draw(StringEq)      -- (StringHashEq);
-			\draw(StringHashEq)      -- (String);
+			\draw(StringEq)      -- (StringEqLength);
+			\draw(StringEqLength)      -- (String);
 		\end{tikzpicture}
     \label{latticeTBD}
-		\caption{lattice de tipos de dos facetas}
+		\caption{lattice de facetas de desclasificación}
 	\end{figure}
 
-Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna operación, se usa \texttt{Top}, por encontrarse en la parte superior de la lattice.
+Si la faceta pública coincide con la faceta privada, toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la lattice. Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna operación, se usa \texttt{Top}, por encontrarse en la parte superior de la lattice.
 
 En estricto rigor, los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo StringEq visto anteriormente se define como $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]$.
 
-Existen dos reglas principales para comprobar que un programa con facetas de desclasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna la faceta pública que haya sido declarada como retorno para aquella operación. Por ejemplo, si tenemos un valor con faceta pública $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{String<String} \rightarrow \mathtt{String<StringEq}]$, y llamamos al método $\mathtt{hash}$ sobre este valor, la faceta de retorno de esa llamada será $\mathtt{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
+Existen dos reglas principales para comprobar que un programa con facetas de desclasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna la faceta pública que haya sido declarada como retorno para aquella operación. Por ejemplo, si tenemos un valor con faceta pública $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<StringEq}]$, y llamamos al método $\mathtt{hash}$ sobre este valor, la faceta de retorno de esa llamada será $\mathtt{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
 
 La segunda regla expresa que la llamada a un método sobre un valor cuya faceta pública no autoriza la operación, retorna \texttt{Top}. Esto ocurre, por ejemplo, si llamamos al método $\mathtt{hash}$ sobre un valor que declara la faceta pública $\mathtt{StringEq}$. A esta regla se le llama \texttt{TmH}.
 
