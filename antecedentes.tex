@@ -3,7 +3,7 @@
 \section{Control de flujo de información}
 Los lenguajes con tipado de seguridad para el control del flujo de la información clasifican los valores de un programa con respecto a sus niveles de confidencialidad, expresado mediante una \emph{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo} de etiquetas de seguridad. Por ejemplo, con la lattice de dos niveles de seguridad \texttt{L} $\sqsubseteq$ \texttt{H} se puede distinguir entre valores públicos o de baja confidencialidad (\texttt{L}) y valores privados o de alta confidencialidad (\texttt{H}). Un sistema de tipos con control de flujo asegura de forma estática el cumplimiento de la propiedad \emph{noninterference}~\cite{noninterference}, esto es, que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}.
 
-En el siguiente ejemplo se muestra un código anotado con niveles de seguridad:
+En el siguiente ejemplo se muestra un código anotado con niveles de seguridad, en donde el parámetro \texttt{guess} y el retorno del método se declaran de baja confidencialidad, y el parámetro \texttt{password} se declara de alta confidencialidad.
 
 \begin{ej} \ \\
   \normalfont
@@ -67,9 +67,9 @@ Si la faceta pública coincide con la faceta privada, toda operación sobre el v
 
 En estricto rigor, los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo StringEq visto anteriormente se define como $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]$.
 
-Existen dos reglas principales para comprobar que un programa con facetas de desclasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna la faceta pública que haya sido declarada como retorno para aquella operación. Por ejemplo, si tenemos un valor con faceta pública $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<StringEq}]$, y llamamos al método $\mathtt{hash}$ sobre este valor, la faceta de retorno de esa llamada será $\mathtt{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
+Existen dos reglas principales para comprobar que un programa con facetas de desclasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna un valor del tipo declarado como retorno para aquella operación en la faceta pública. Por ejemplo, si tenemos un valor con faceta pública $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<StringEq}]$, y llamamos al método $\mathtt{hash}$ sobre este valor, el tipo de retorno de esa llamada será $\mathtt{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
 
-La segunda regla expresa que la llamada a un método sobre un valor cuya faceta pública no autoriza la operación, retorna \texttt{Top}. Esto ocurre, por ejemplo, si llamamos al método $\mathtt{hash}$ sobre un valor que declara la faceta pública $\mathtt{StringEq}$. A esta regla se le llama \texttt{TmH}.
+La segunda regla expresa que la llamada a un método sobre un valor cuya faceta pública no autoriza la operación, retorna un valor con faceta pública \texttt{Top}. Esto ocurre, por ejemplo, si llamamos al método $\mathtt{hash}$ sobre un valor que declara la faceta pública $\mathtt{StringEq}$. A esta regla se le llama \texttt{TmH}.
 
 La propiedad de seguridad que se demuestra para el sistema de tipos de \textit{type-based declassification} es una forma de noninterference con políticas de desclasificación, denominada \textit{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
