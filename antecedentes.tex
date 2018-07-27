@@ -24,12 +24,18 @@ A pesar de que noninterference es una propiedad atractiva para la especificació
 
 Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos para disminuir el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, que \emph{desclasifica} un valor de alta confidencialidad retornando un valor de baja confidencialidad. En el siguiente ejemplo, se utiliza para desclasificar el resultado de la operación de comparación:
 
+\begin{ej} \ \\
+  \normalfont
+  \label{ej2-2}
 \begin{lstlisting}
   String@L login(String@L guess, String@H password) {
     if (declassify(password == guess)) return "Login Successful";
     else return "Login failed";
   }
 \end{lstlisting}
+\end{ej}
+
+
 
 Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información. Por ejemplo, \texttt{declassify(password)} da conocimiento absoluto sobre el valor de la variable a un observador público.
 
@@ -37,12 +43,16 @@ Varios mecanismos se han explorado para controlar el uso de desclasificación, y
 
 En type-based declassification los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas $\mathtt{String} < \mathtt{StringEq}$, en donde \texttt{String} es un subtipo de \texttt{StringEq}, para controlar la operación de desclasificación de la igualdad sobre \texttt{password}.
 
+\begin{ej} \ \\
+  \normalfont
+  \label{ej2-3}
 \begin{lstlisting}
-  String<String login(String<StringEq password, String<String guess) {
+  String<String login(String<String guess, String<StringEq password) {
   	if (password.eq(guess)) return "Login successful";
   	else return "Login failed";
   }
 \end{lstlisting}
+\end{ej}
 
 Las facetas de desclasificación son parte de la jerarquía de tipos, por lo que forman una lattice como se muestra en la figura \ref{latticeTBD}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
 
@@ -60,7 +70,7 @@ Las facetas de desclasificación son parte de la jerarquía de tipos, por lo que
 			\draw(StringEqLength)      -- (String);
 		\end{tikzpicture}
     \label{latticeTBD}
-		\caption{lattice de facetas de desclasificación}
+		\caption{lattice de subtyping}
 	\end{figure}
 
 Si la faceta pública coincide con la faceta privada, toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la lattice. Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna operación, se usa \texttt{Top}, por encontrarse en la parte superior de la lattice.
@@ -71,68 +81,67 @@ Existen dos reglas principales para comprobar que un programa con facetas de des
 
 La segunda regla expresa que la llamada a un método sobre un valor cuya faceta pública no autoriza la operación, retorna un valor con faceta pública \texttt{Top}. Esto ocurre, por ejemplo, si llamamos al método $\mathtt{hash}$ sobre un valor que declara la faceta pública $\mathtt{StringEq}$. A esta regla se le llama \texttt{TmH}.
 
-La propiedad de seguridad que se demuestra para el sistema de tipos de \textit{type-based declassification} es una forma de noninterference con políticas de desclasificación, denominada \textit{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
+La propiedad de seguridad que se demuestra para el sistema de tipos de type-based declassification es una forma de noninterference con políticas de desclasificación, denominada \emph{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
 \section{Inferencia de tipos}
-\subsection{Objetivo y usos}
-La inferencia de tipos es el proceso de determinar los tipos para las expresiones de un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores. Consideremos el siguiente ejemplo:
+La inferencia de tipos es el proceso de determinar los tipos para las expresiones de un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores.
 
+Consideremos el siguiente ejemplo, donde se quita la anotación de la faceta pública del parámetro \texttt{password} del ejemplo \ref{ej2-3}:
+
+\begin{ej} \ \\
+  \normalfont
+  \label{ej2-4}
 \begin{lstlisting}
-  int foo(int a, int b) {
-    int c = a + b;
-    return c;
+  String<String login(String<String guess, String password) {
+  	if (password.eq(guess)) return "Login successful";
+  	else return "Login failed";
   }
 \end{lstlisting}
+\end{ej}
 
-Supongamos que la suma solo está definida para números. Aquí, se considera redundante declarar el tipo de la variable \texttt{c}, debido a que la suma de dos números enteros siempre da como resultado un número entero. De la misma forma, podría ser considerado redundante declarar los tipos de los parámetros \texttt{a} y \texttt{b}, debido a que son utilizados como sumando en la asignación a la variable \texttt{c}, que fue declarada como \texttt{int}.
+Basado en el uso del parámetro \texttt{password}, el sistema de tipos podría \emph{inferir} que su faceta pública contiene al menos el método \texttt{eq}.
 
-\subsection{Variables de tipo} \label{schemes}
-Los lenguajes de programación que tienen un mecanismo de inferencia de tipos, pueden expresar sus tipos mediante \textit{type schemes}, los cuales incluyen variables de tipo y tipos concretos. Una variable de tipo es un tipo que no ha sido determinado.
+Para razonar acerca de expresiones con tipos desconocidos, los lenguajes de programación incluyen \emph{variables de tipo} en sus sistemas de tipos. En el ejemplo \ref{ej2-4}, se asigna un tipo $\mathtt{\alpha}$ a la faceta pública del parámetro \texttt{password}.
 
-Consideremos el mismo ejemplo, pero ahora omitiendo la declaración del tipo de la variable \texttt{c}.
+\subsection{Constraints}
+Cuando un sistema de tipos aplica una determinada regla para tipar una expresión, puede imponer condiciones que los tipos deben cumplir para que la expresión esté bien tipada. En el ejemplo \ref{ej2-4}, se puede decir que \texttt{password} tiene una faceta pública $\mathtt{\alpha}$ si y solo si $\mathtt{\alpha}$ posee el método \texttt{eq}.
 
-\begin{lstlisting}
-  int foo(int a, int b) {
-    var c = a + b;
-    return c;
-  }
-\end{lstlisting}
+Para razonar acerca de estas condiciones, el sistema de tipos las representa mediante \emph{constraints}, que expresan una relación entre dos tipos. En el ejemplo \ref{ej2-4}, la condición sobre la faceta pública de \texttt{password} puede ser representada mediante la constraint de subtyping $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$.
 
-Para tipar la variable \texttt{c}, el sistema de tipos le asignará una variable de tipo $\alpha$, y generará \textit{side conditions} al aplicar las reglas del sistema de tipos. En este caso, la \textit{side condition} dice que el tipo de \texttt{c}, es decir, $\alpha$, tiene que ser igual al tipo del lado derecho de la asignación, es decir, \texttt{int}.
+El uso de constraints permite la presentación de un algoritmo de inferencia de forma modular, como un generador de constraints y un solucionador de constraints. El \emph{set de constraints} generado se asemeja a un sistema de ecuaciones que siempre tendrá solución dependiendo de las características del lenguaje de programación. Por ejemplo, System F~\cite{WELLS1999111} es un lenguaje con inferencia de tipos completa no decidible.
 
-\subsection{Constraints} \label{constraints}
-En el ejemplo anterior, se expresó la \textit{side condition} con lenguaje natural. Como el objetivo es automatizar el proceso de inferencia, se utilizan constraints para expresar las \textit{side conditions} generadas por la aplicación de una regla del sistema de tipos.
-
-Las constraints sirven para expresar una relación entre dos tipos. Esta relación puede ser de igualdad o de subtyping. En el ejemplo anterior, la \textit{side condition} puede ser representada mediante la constraint $\{\alpha = int\}$.
-
-El uso de constraints permite la presentación de un algoritmo de inferencia de forma modular, como un generador de constraints y un solucionador de constraints. En el siguiente ejemplo, se supone que \texttt{num} es heredado por otros tipos numéricos.
-
-\begin{lstlisting}
-  foo(int a, float b, bool cond) {
-    var c;
-    if (cond) c = a;
-    else c = b;
-    return c;
-  }
-\end{lstlisting}
-
-El sistema de tipos asignará los siguientes tipos al programa:
-\begin{lstlisting}[mathescape=true]
-  $\alpha$ foo(int a, float b, bool cond) {
-    $\beta$ c;
-    if (cond) c = a;
-    else c = b;
-    return c;
-  }
-\end{lstlisting}
-Y generará el set de constraints de subtyping $C: \{\beta <: \alpha, int <: \beta, float <: \beta\}$, de donde se deben resolver los tipos de las dos variables de tipo generadas. Notemos que $\beta$ debe ser supertipo de \texttt{int} y \texttt{float}. El mejor tipo que cumple con ambas constraints es \texttt{num}.
 \subsection{Unificación}
-La unificación es el proceso de encontrar una substitución que hace iguales a dos términos. Aplicado a un set de constraints, se genera un mapeo de variables de tipo a tipos concretos, que satisfacen cada una de las constraints.
+La unificación es el proceso de encontrar una solución a las variables de tipo del set de constraints. Si las constraints son de igualdad, la unificación realiza substituciones sucesivas hasta resolver cada uno de los tipos. En cambio, si las constraints son de subtyping, se deben realizar las operaciones \texttt{meet} (el ínfimo entre dos elementos, $a \wedge b$) y \texttt{join} (el supremo entre dos elementos, $a \vee b$) sobre la lattice que conforma la jerarquía de tipos, cuando sea pertinente.
 
-Si las constraints son de igualdad, la unificación consiste en realizar substituciones sucesivas hasta resolver cada uno de los tipos. En cambio, si las constraints son de subtyping, se deben realizar las operaciones \texttt{meet} (el ínfimo entre dos elementos, $a \wedge b$) y \texttt{join} (el supremo entre dos elementos, $a \vee b$) sobre la lattice que conforma la jerarquía de tipos, cuando sea pertinente.
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[node distance=2.3cm]
+    \node(Top) 												{\texttt{Top}};
+    \node(StringEq)		[below right of=Top]			{\texttt{StringEq}};
+    \node(StringHash)					[below left of=Top] 			{\texttt{StringHash}};
+    \node(StringHashEq) [below left of=StringEq] {\texttt{StringHashEq}};
+    \node(String) [below of=StringHashEq] {\texttt{String}};
+    \draw(Top)      -- (StringEq);
+    \draw(Top)      -- (StringHash);
+    \draw(StringEq)      -- (StringHashEq);
+    \draw(StringHash)      -- (StringHashEq);
+    \draw(StringHashEq) -- (String);
+  \end{tikzpicture}
+  \caption{Operación \texttt{meet} entre \texttt{StringEq} y \texttt{StringHash}}
+  \label{latticeInference}
+\end{figure}
 
-Por ejemplo, en el set de constraints generado en el ejemplo anterior, para resolver el tipo de $\beta$ se debe realizar la operación \texttt{join} entre \texttt{int} y \texttt{float}, lo que da como resultado \texttt{num}. Luego, el set de constraints se reduce a $C: \{\beta <: \alpha, num <: \beta\}$, donde ahora se puede substituir $\beta$ por \texttt{num}, lo que genera finalmente el mapeo $S: \{\beta \rightarrow num, \alpha \rightarrow num\}$.
-\subsection{Inferencia de tipos de seguridad}
-Como se vio en la sección \ref{sectype}, los tipos de seguridad conforman una lattice con relaciones de subtyping, al igual que la jerarquía de tipos. En consecuencia, es posible formular un algoritmo de inferencia basado en constraints para tipos de seguridad.
+Consideremos el siguiente ejemplo, en donde se modifica una expresión de retorno del ejemplo \ref{ej2-4} con otro uso del parámetro \texttt{password}.
 
-En esta dirección, Pottier \textit{et al.}~\cite{Pottier} estudiaron un análisis de control de flujo basado en tipos para un lenguaje con referencias, excepciones y polimorfismo, con un sistema de tipos basado en constraints e inferencia de tipos decidible.
+\begin{ej} \ \\
+  \normalfont
+  \label{ej2-5}
+\begin{lstlisting}
+  String<String login(String<String guess, String password) {
+  	if (password.eq(guess)) return password.hash();
+  	else return "Login failed";
+  }
+\end{lstlisting}
+\end{ej}
+
+Supongamos que \texttt{hash} retorna un \texttt{String}. Ahora se generan dos constraints sobre \texttt{password}, $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$ y $\{\alpha <: [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$. El tipo $\alpha$ se resuelve con la operación \texttt{meet} entre ambos tipos de objeto, cuyo resultado $\mathtt{StringHashEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}, \mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$ se muestra en la figura \ref{latticeInference}.
