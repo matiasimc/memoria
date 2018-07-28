@@ -1,27 +1,28 @@
 \chapter{Propuesta}
 
-En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas de desclasificación, que incluya el análisis de \textit{Type-based declassification}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detalla el problema de inferencia a resolver y las estrategias utilizadas para resolverlo.
+En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas públicas, que incluya el análisis de \textit{Type-based declassification}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detalla el problema de inferencia a resolver y las estrategias utilizadas para resolverlo.
 
 \section{Problema de inferencia}
 Para la formulación del problema, es posible asumir que la información de las facetas privadas de type-based declassification se encuentra a disposición, debido a que algunos lenguajes de programación poseen herramientas para obtener dicha información.
 
 \begin{defn}[Problema de inferencia]
-  Dado un programa parcialmente tipado con facetas de desclasificación, y completamente tipado con facetas privadas, encontrar la faceta de desclasificación de las expresiones no tipadas que más se ajuste al uso de las expresiones, tal que se cumplan las reglas del sistema de tipos de type-based declassification.
+  Dado un programa parcialmente tipado con facetas públicas, y completamente tipado con facetas privadas, encontrar la faceta pública de las expresiones no tipadas que más se ajuste al uso de las expresiones, tal que se cumplan las reglas del sistema de tipos de type-based declassification.
 \end{defn}
 
 A continuación, se muestran algunos ejemplos con casos que no fueron cubiertos en el capítulo 2, con el objetivo de ilustrar la solución esperada al problema de inferencia.
 
 \begin{ej} \ \\
+  \label{ej-tmh}
   \normalfont
 \begin{lstlisting}
-  bool login(String<Top password, String guess) {
+  bool login(String<Top password, String<String guess) {
     return password.eq(guess);
   }
 \end{lstlisting}
 \end{ej}
 
 
-En este ejemplo, se quiere inferir que el método \texttt{login} tiene a \texttt{Top} como faceta de desclasificación, debido a la aplicación de la regla \texttt{TmH} de type-based declassification.
+En este ejemplo, se quiere inferir que el método \texttt{login} tiene a \texttt{Top} como faceta pública, debido a la aplicación de la regla \texttt{TmH} de type-based declassification.
 
 \begin{ej} \ \\
   \normalfont
@@ -32,7 +33,7 @@ En este ejemplo, se quiere inferir que el método \texttt{login} tiene a \texttt
 \end{lstlisting}
 \end{ej}
 
-En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{password}. La faceta de desclasificación para \texttt{password} que resuelve el problema de inferencia contiene al método \texttt{hash}, al cual se le infiere una faceta de desclasificación de retorno que contiene al método \texttt{eq}. Si se declara una faceta de desclasificación de retorno para el método \texttt{eq}, entonces se infere esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de type-based declassification.
+En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{password}. La faceta pública para \texttt{password} que resuelve el problema de inferencia contiene al método \texttt{hash}, al cual se le infiere una faceta pública de retorno que contiene al método \texttt{eq}. Si se declara una faceta pública de retorno para el método \texttt{eq}, entonces se infiere esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de type-based declassification.
 
 \begin{ej} \ \\
   \normalfont
@@ -50,7 +51,7 @@ En este caso, se debe reportar un error de flujo en el llamado a la función \te
 
 \section{Consideraciones de diseño}
 
-Se debe tomar una decisión acerca de las facetas de desclasificación de los métodos que pertenecen al \textit{core} de un lenguaje de programación. Para ilustrar la necesidad de esta decisión, veamos el siguiente ejemplo:
+Se debe tomar una decisión acerca de las facetas públicas de los métodos que pertenecen al \textit{core} de un lenguaje de programación. Para ilustrar la necesidad de esta decisión, veamos el siguiente ejemplo:
 
 \begin{lstlisting}
   int<Bot getLength(String password) {
@@ -58,21 +59,21 @@ Se debe tomar una decisión acerca de las facetas de desclasificación de los m�
   }
 \end{lstlisting}
 
-Este método será aceptado o rechazado por las reglas del sistema de tipos, si la faceta de desclasificación de retorno del campo \texttt{length} es \texttt{Bot} o \texttt{Top} respectivamente.
+Este método será aceptado o rechazado por las reglas del sistema de tipos, si la faceta pública de retorno del campo \texttt{length} es \texttt{Bot} o \texttt{Top} respectivamente.
 
-Si decidimos que la faceta de desclasificación de retorno para métodos del \texttt{core} del lenguaje es \texttt{Top}, entonces cualquier operación que realicemos sobre el valor de retorno, retornará \texttt{Top}, lo cual es poco útil. Por lo tanto la decisión por defecto es que la faceta de desclasificación de retorno para métodos del \textit{core} del lenguaje sea \texttt{Bot}.
+Si decidimos que la faceta pública de retorno para métodos del \texttt{core} del lenguaje es \texttt{Top}, entonces cualquier operación que realicemos sobre el valor de retorno, retornará \texttt{Top}, lo cual es poco útil. Por lo tanto la decisión por defecto es que la faceta pública de retorno para métodos del \textit{core} del lenguaje sea \texttt{Bot}.
 
-Ahora, analicemos ambas posibilidades para la faceta de desclasificación por defecto de los parámetros:
+Ahora, analicemos ambas posibilidades para la faceta pública por defecto de los parámetros:
 
 \begin{itemize}
   \item \texttt{Top} $\rightarrow$ \texttt{Bot}: Supongamos que el \textit{core} del lenguaje posee un método \texttt{identity}, que dado un \texttt{x}, retorna \texttt{x}. Si tomamos esta decisión, entonces el método \texttt{identity} podrá ser usado como desclasificador universal, como por ejemplo \texttt{identity(password)}.
-  \item \texttt{Bot} $\rightarrow$ \texttt{Bot}: Esta elección restringe las facetas de desclasificación de los argumentos utilizados a \texttt{Bot}, lo cual también podría ser considerado poco útil. Sin embargo, al retornar un valor con faceta de desclasificación \texttt{Bot}, cualquier operación podrá ser utilizada sobre ese valor.
+  \item \texttt{Bot} $\rightarrow$ \texttt{Bot}: Esta elección restringe las facetas públicas de los argumentos utilizados a \texttt{Bot}, lo cual también podría ser considerado poco útil. Sin embargo, al retornar un valor con faceta pública \texttt{Bot}, cualquier operación podrá ser utilizada sobre ese valor.
 \end{itemize}
 
 Haciendo un balance, se considera que la opción \texttt{Bot} $\rightarrow$ \texttt{Bot} tiene el mejor equilibrio entre utilidad y seguridad, por lo que es la opción por defecto considerada. Sin embargo, es deseable que la herramienta se pueda configurar para elegir otra alternativa.
 
 \section{Gramática de tipos}
-Como se vió en la sección \ref{inference}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis. Esto se hace definiendo la gramática de tipos que usará el sistema de inferencia:
+Como se vio en la sección \ref{inference}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis. Esto se hace definiendo la gramática de tipos que usará el sistema de inferencia:
 
   $\mathtt{\tau := \alpha\ |\ Obj(\overline{l: \tau})\ |\ [\overline{\tau}] \rightarrow \tau \ |\ Join(\overline{\tau})\ |\ Meet(\overline{\tau})\ |\ Bot\ |\ Top}$
 
@@ -135,8 +136,6 @@ Las constraints 1 y 2 se generan por las llamadas a métodos sobre el parámetro
 \clearpage % TODO
 
 \section{Resolución de constraints de subtyping} \label{propuestaRes}
-
-El siguiente paso del algoritmo de inferencia es la resolución del set de constraints obtenido en la fase de generación de constraints.
 
 El primer paso en la resolución de constraints es la eliminación de constraints \textit{obvias}. Esto es, la eliminación de las constraints \texttt{Bot <: X} y \texttt{X <: Top}, ya que no aportan información útil al algoritmo de inferencia.
 
@@ -209,10 +208,10 @@ El siguiente paso es agrupar las constraints sobre la misma variable de tipo, us
 
 
 \subsection{Unificación}
-En este paso, se materializan las operaciones \texttt{meet} y \texttt{join}, se comprueba la validez de las constraints y se realizan substituciones, de forma iterativa.
+En este paso, se materializan las operaciones \texttt{meet} y \texttt{join}, se comprueba la validez de las constraints y se realizan substituciones de forma iterativa.
 
 \subsubsection{Meet y Join}
-Cuando se tiene un tipo $\mathtt{Meet(\overline{\tau}})$ o $\mathtt{Join(\overline{\tau}})$, donde $\tau$ no tiene variables de tipo, entonces se puede materializar la operación sobre la lattice correspondiente. Este procedimiento se muestra en el algoritmo \ref{pseudoperations}.
+Cuando se tiene un tipo $\mathtt{Meet(\overline{\tau}})$ o $\mathtt{Join(\overline{\tau}})$, donde $\tau$ no tiene variables de tipo, entonces se puede materializar la operación sobre la lattice correspondiente. Este procedimiento se muestra en el algoritmo \ref{pseudoperations}. La operación \texttt{meet} consiste en la unión de los miembros de cada tipo de objeto en el tipo \texttt{Meet}, y \texttt{join} consiste en la intersección de los miembros de cada tipo de objeto en el tipo \texttt{Join}.
 
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
@@ -222,10 +221,12 @@ Cuando se tiene un tipo $\mathtt{Meet(\overline{\tau}})$ o $\mathtt{Join(\overli
       \Function{performOperations}{\texttt{cs}}
           \For {\texttt{constraint \textbf{in} cs}}
             \If {\texttt{constraint.right \textbf{is} Meet \textbf{and} constraint.right.isConcrete()}}
-              \State $\mathtt{constraint.right\gets meet(constraint.right)}$
+              \State $\mathtt{constraint.right\gets}$
+              \State \ \ \ \ \ \ \ \ \ $\mathtt{constraint.right.reduce((t1,t2) => Obj(t1.members \cup t2.members))}$
             \EndIf
             \If {\texttt{constraint.left \textbf{is} Join \textbf{and} constraint.left.isConcrete()}}
-              \State $\mathtt{constraint.left\gets join(constraint.left)}$
+              \State $\mathtt{constraint.left\gets}$
+              \State \ \ \ \ \ \ \ \ \ $\mathtt{constraint.left.reduce((t1,t2) => Obj(t1.members \cap t2.members))}$
             \EndIf
           \EndFor
       \EndFunction
@@ -239,29 +240,27 @@ Si aplicamos el algoritmo \ref{pseudoperations} al ejemplo \ref{ej3-2}, se mater
 \end{enumerate}
 
 \subsubsection{Verificación de constraints}
-Cuando una constraint representa una relación no válida, existen dos posibilidades:
+Cuando una constraint representa una relación no válida, existen dos casos posibles:
 
 \begin{enumerate}
   \item Si la constraint no proviene de una invocación a método, se debe reportar un error.
-  \item En caso contrario, se debe reemplazar, en el set de constraints, toda aparición de la faceta de expresión de la constraint, por \texttt{Top}. En este caso no se debe reportar error.
+  \item En caso contrario, se debe reemplazar por \texttt{Top} toda aparición del tipo de expresión de la constraint, en el set de constraints. En este caso no se debe reportar error.
 \end{enumerate}
 
-En el ejemplo \ref{gen1}, la constraint 3 proviene de invocación a método y representa una relación de subtyping no válida. Luego, se debe reemplazar la variable de tipo $\gamma$ por \texttt{Top}:
+En el ejemplo \ref{ej-tmh}, las constraints relevantes generadas son:
 
 \begin{enumerate}
-  \item $\text{Top} <: \alpha$
-  \item $\beta <: \text{Bot}$
-  \item $\text{Top} <: \text{Obj}(\text{==: }\text{Bot} \rightarrow \text{Bot}), \gamma$
+  \item $\{\mathtt{Top <: Obj(eq: Bot \rightarrow Bot),\ \alpha}\}$
+  \item $\{\mathtt{\alpha <: \beta}\}$
 \end{enumerate}
 
-En cambio, en el ejemplo \ref{gen2} simplificado, la constraint \texttt{Top <: Bot} representa una relación no válida que no proviene de invocación a método, por lo que un error debe ser reportado.
+Donde $\beta$ es la faceta pública de retorno de \texttt{login}. Como la constraint 1 representa una relación no válida y proviene de invocación a método, el tipo de expresión $\alpha$ debe substituirse por \texttt{Top} en el set de constraint. Luego, la constraint 2 cambia a $\{\mathtt{Top <: \beta}\}$.
 
 La figura 3.4 muestra el algoritmo de verificación de constraints. El método \texttt{substitueXForY(x,y)} busca \texttt{x} en todo el set de constraints, y lo substituye por \texttt{y}.
 
 \begin{figure}[ht]
   \centering
   \label{pseudocheck}
-  \begin{mdframed}
     \begin{algorithmic}
       \Function{checkConstraints}{cs}
           \For {c in cs}
@@ -274,7 +273,6 @@ La figura 3.4 muestra el algoritmo de verificación de constraints. El método \
           \EndFor
       \EndFunction
     \end{algorithmic}
-  \end{mdframed}
   \caption{Algoritmo de verificación de constraints}
 \end{figure}
 
@@ -287,7 +285,6 @@ La figura 3.5 muestra el algoritmo de substitución, mientras que la figura 3.6 
 \begin{figure}[ht]
   \centering
   \label{pseudosubst}
-  \begin{mdframed}
     \begin{algorithmic}
       \Function{performSubstitutions}{cs}
           \For {c in cs}
@@ -300,7 +297,6 @@ La figura 3.5 muestra el algoritmo de substitución, mientras que la figura 3.6 
           \EndFor
       \EndFunction
     \end{algorithmic}
-  \end{mdframed}
   \caption{Algoritmo de substitución}
 \end{figure}
 
@@ -308,7 +304,6 @@ La figura 3.5 muestra el algoritmo de substitución, mientras que la figura 3.6 
 \begin{figure}[ht]
   \centering
   \label{pseudouni}
-  \begin{mdframed}
     \begin{algorithmic}
       \Function{Unify}{cs}
           \While {cs.hasOperationCandidates or cs.hasSubstCandidates}
@@ -318,7 +313,6 @@ La figura 3.5 muestra el algoritmo de substitución, mientras que la figura 3.6 
           \EndWhile
       \EndFunction
     \end{algorithmic}
-  \end{mdframed}
   \caption{Algoritmo de unificación}
 \end{figure}
 

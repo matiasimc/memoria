@@ -41,8 +41,8 @@ Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la 
 
 Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \emph{type-based declassification} como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
 
-En type-based declassification los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas $\mathtt{String} < \mathtt{StringEq}$, en donde \texttt{String} es un subtipo de \texttt{StringEq}, para controlar la operación de desclasificación de la igualdad sobre \texttt{password}.
-
+En type-based declassification los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas $\mathtt{String} < \mathtt{StringEq}$, en donde \texttt{String} es un subtipo de \texttt{StringEq}, para controlar la operación de desclasificación de la igualdad sobre \texttt{password}, lo que se muestra en el ejemplo \ref{ej2-3}
+\clearpage
 \begin{ej} \ \\
   \normalfont
   \label{ej2-3}
@@ -54,7 +54,7 @@ En type-based declassification los tipos tienen dos facetas; la faceta privada, 
 \end{lstlisting}
 \end{ej}
 
-Las facetas de desclasificación son parte de la jerarquía de tipos, por lo que forman una lattice como se muestra en la figura \ref{latticeTBD}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
+Las facetas públicas son parte de la jerarquía de tipos, por lo que forman una lattice como se muestra en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
 
 	\begin{figure}[ht]
 		\centering
@@ -69,8 +69,8 @@ Las facetas de desclasificación son parte de la jerarquía de tipos, por lo que
 			\draw(StringEq)      -- (StringEqLength);
 			\draw(StringEqLength)      -- (String);
 		\end{tikzpicture}
-    \label{latticeTBD}
 		\caption{lattice de subtyping}
+    \label{l1}
 	\end{figure}
 
 Si la faceta pública coincide con la faceta privada, toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la lattice. Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna operación, se usa \texttt{Top}, por encontrarse en la parte superior de la lattice.
@@ -84,7 +84,7 @@ La segunda regla expresa que la llamada a un método sobre un valor cuya faceta 
 La propiedad de seguridad que se demuestra para el sistema de tipos de type-based declassification es una forma de noninterference con políticas de desclasificación, denominada \emph{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
 \section{Inferencia de tipos} \label{inference}
-La inferencia de tipos es el proceso de determinar los tipos para las expresiones de un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores.
+La inferencia de tipos es el proceso de determinar los tipos de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores.
 
 Consideremos el siguiente ejemplo, donde se quita la anotación de la faceta pública del parámetro \texttt{password} del ejemplo \ref{ej2-3}:
 
@@ -99,9 +99,9 @@ Consideremos el siguiente ejemplo, donde se quita la anotación de la faceta pú
 \end{lstlisting}
 \end{ej}
 
-Basado en el uso del parámetro \texttt{password}, el sistema de tipos podría \emph{inferir} que su faceta pública contiene al menos el método \texttt{eq}.
+El sistema de tipos podría \emph{inferir} que la faceta pública ausente contiene \emph{al menos} el método \texttt{eq}. En efecto, \texttt{Bot} también es una faceta pública válida para \texttt{password}, pero no es la faceta pública que más se ajusta al uso del parámetro.
 
-Para razonar acerca de expresiones con tipos desconocidos, los lenguajes de programación incluyen \emph{variables de tipo} en sus sistemas de tipos. En el ejemplo \ref{ej2-4}, se asigna un tipo $\mathtt{\alpha}$ a la faceta pública del parámetro \texttt{password}.
+Para razonar acerca de la faceta pública del parámetro \texttt{password}, el sistema de tipos le asigna una \emph{variable de tipo} $\alpha$.
 
 \subsection{Constraints} \label{constraints}
 Cuando un sistema de tipos aplica una determinada regla para tipar una expresión, puede imponer condiciones que los tipos deben cumplir para que la expresión esté bien tipada. En el ejemplo \ref{ej2-4}, se puede decir que \texttt{password} tiene una faceta pública $\mathtt{\alpha}$ si y solo si $\mathtt{\alpha}$ posee el método \texttt{eq}.
@@ -144,9 +144,7 @@ Consideremos el siguiente ejemplo, en donde se modifica una expresión de retorn
 \end{lstlisting}
 \end{ej}
 
-Supongamos que \texttt{hash} retorna un \texttt{String}. Ahora se generan dos constraints sobre \texttt{password}, $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$ y $\{\alpha <: [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$. El tipo $\alpha$ se resuelve con la operación \texttt{meet} entre ambos tipos de objeto, cuyo resultado $\mathtt{StringHashEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}, \mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$ se muestra en la figura \ref{latticeInference}.
-
-En general, se aplican las siguientes reglas para la aplicación de las operaciones sobre la lattice:
+Supongamos que \texttt{hash} retorna un \texttt{String}. Ahora se generan dos constraints sobre \texttt{password}, $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$ y $\{\alpha <: [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$. El tipo $\alpha$ se resuelve con la operación \texttt{meet} entre ambos tipos de objeto, cuyo resultado $\mathtt{StringHashEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}, \mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$ se muestra en la figura \ref{latticeInference}. El teorema \ref{teo1} muestra las reglas utilizadas para la aplicación de operaciones sobre la lattice.
 
 \begin{teo} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una lattice de subtyping, se cumple lo siguiente: \\
   \begin{itemize}
