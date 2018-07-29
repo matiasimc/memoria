@@ -256,70 +256,120 @@ En el ejemplo \ref{ej-tmh}, las constraints relevantes generadas son:
 
 Donde $\beta$ es la faceta pública de retorno de \texttt{login}. Como la constraint 1 representa una relación no válida y proviene de invocación a método, el tipo de expresión $\alpha$ debe substituirse por \texttt{Top} en el set de constraint. Luego, la constraint 2 cambia a $\{\mathtt{Top <: \beta}\}$.
 
-La figura 3.4 muestra el algoritmo de verificación de constraints. El método \texttt{substitueXForY(x,y)} busca \texttt{x} en todo el set de constraints, y lo substituye por \texttt{y}.
+El algoritmo \ref{pseudocheck} muestra la verificación de constraints. Este algoritmo usa la función \texttt{substitute}, que se muestra en el algoritmo \ref{pseudosubstitute}.
 
-\begin{figure}[ht]
+\begin{algorithm}\captionsetup{labelsep=newline}
   \centering
+  \caption{Verificación de constraints}
   \label{pseudocheck}
-    \begin{algorithmic}
-      \Function{checkConstraints}{cs}
-          \For {c in cs}
-            \If {c.isNotValid() and c.isFromMethodInvocation}
-              \State cs.substituteXForY(c.expressionType, Top)
-            \EndIf
-            \If {c.isNotValid() and !c.isFromMethodInvocation}
-              \State add SubtypingError
+    \begin{algorithmic}[1]
+      \Function{checkConstraints}{\texttt{cs,errorCollector}}
+          \For {\texttt{constraint \textbf{in} cs}}
+            \If {\texttt{constraint.isNotValid() \textbf{and} constraint.isFromMethodInvocation()}}
+              \For {\texttt{c \textbf{in} cs}}
+                \State $\mathtt{c.left\gets substitute(c.left,\ constraint.expressionType,\ Top)}$
+                \State $\mathtt{c.right\gets substitute(c.right,\ constraint.expressionType,\ Top)}$
+              \EndFor
+            \ElsIf {\texttt{constraint.isNotValid()}}
+              \State \texttt{errorCollector.insert(SubtypingError)}
             \EndIf
           \EndFor
       \EndFunction
     \end{algorithmic}
-  \caption{Algoritmo de verificación de constraints}
-\end{figure}
+\end{algorithm}
 
+\begin{algorithm}\captionsetup{labelsep=newline}
+  \centering
+  \caption{Substitución dentro de tipos}
+  \label{pseudosubstitute}
+    \begin{algorithmic}[1]
+      \Function{substitute}{\texttt{source,target,newType}}
+          \If {\texttt{source == target}}
+            \State \Return \texttt{newType}
+          \EndIf
+          \Switch{\texttt{source}}
+            \Case{\texttt{Obj(members)}}
+              \State \Return \texttt{Obj(members.map((l,s) => {l: substitute(s,target,newType)}))}
+            \EndCase
+            \Case{$\mathtt{x \rightarrow y}$}
+              \State \Return $\mathtt{substitute(x,target,newType)\rightarrow substitute(y,target,newType)}$
+            \EndCase
+            \Case{\texttt{Meet(types)}}
+              \State \Return \texttt{Meet(Meet.map((t) => substitute(t,target,newType))}
+            \EndCase
+            \Case{\texttt{Join(types)}}
+              \State \Return \texttt{Join(Join.map((t) => substitute(t,target,newType)))}
+            \EndCase
+            \Case{\texttt{Bot}}
+              \State \Return \texttt{Bot}
+            \EndCase
+            \Case{\texttt{Top}}
+              \State \Return \texttt{Top}
+            \EndCase
+            \Case{$\alpha$}
+              \State \Return $\alpha$
+            \EndCase
+          \EndSwitch
+      \EndFunction
+    \end{algorithmic}
+\end{algorithm}
 
 \subsubsection{Substitución}
-Cuando se tiene una constraint que relaciona una variable de tipo y un tipo concreto (sin variables de tipo), se debe substituir en el set de constraint toda aparición de la variable de tipo, por el tipo concreto. Como este proceso puede generar nuevas constraints que sean candidatas a materialización de operaciones, a comprobación o a substitución, se debe iterar hasta que no queden constrainst candidatas.
+Cuando se tiene una constraint que relaciona una variable de tipo con un tipo concreto\footnote{Un tipo concreto no tiene variables de tipo}, se debe substituir en el set de constraint toda aparición de la variable de tipo, por el tipo concreto. Como este proceso puede generar nuevas constraints que sean candidatas a materialización de operaciones, a verificación o a substitución, se debe iterar hasta que no queden constrainst candidatas.
 
-La figura 3.5 muestra el algoritmo de substitución, mientras que la figura 3.6 muestra el algoritmo de unificación.
+El algoritmo \ref{pseudosubst} muestra la substitución de constraints resueltas, mientras que el algoritmo \ref{pseudouni} muestra el procedimiento completo de unificación.
 
-\begin{figure}[ht]
+\begin{algorithm}\captionsetup{labelsep=newline}
   \centering
+  \caption{Substitución de constraints}
   \label{pseudosubst}
-    \begin{algorithmic}
-      \Function{performSubstitutions}{cs}
-          \For {c in cs}
-            \If {c.right.isConcrete() and c.left.isVariable()}
-              \State cs.substituteXForY(c.left, c.right)
+    \begin{algorithmic}[1]
+      \Function{substituteResolved}{\texttt{cs}}
+          \State $\mathtt{m\gets \{\}}$
+          \For {\texttt{constraint \textbf{in} cs}}
+            \If {\texttt{constraint.right.isConcrete() \textbf{and} constraint.left.isVariable()}}
+              \For {\texttt{c \textbf{in} cs, c != constraint}}
+                \State $\mathtt{c.left\gets substitute(c.left,\ constraint.left,\ constraint.right)}$
+                \State $\mathtt{c.right\gets substitute(c.right,\ constraint.left,\ constraint.right)}$
+              \EndFor
+              \State $\mathtt{m[constraint.left]\gets constraint.right}$
+              \State \texttt{cs.remove(constraint)}
             \EndIf
-            \If {c.left.isConcrete() and c.right.isVariable()}
-              \State cs.substituteXForY(c.right, c.left)
+            \If {\texttt{constraint.left.isConcrete() \textbf{and} constraint.right.isVariable()}}
+              \For {\texttt{c \textbf{in} cs, c != constraint}}
+                \State $\mathtt{c.left\gets substitute(c.left,\ constraint.right,\ constraint.left)}$
+                \State $\mathtt{c.right\gets substitute(c.right,\ constraint.right,\ constraint.left)}$
+              \EndFor
+              \State $\mathtt{m[constraint.right]\gets constraint.left}$
+              \State \texttt{cs.remove(constraint)}
             \EndIf
           \EndFor
+          \State \Return \texttt{m}
       \EndFunction
     \end{algorithmic}
-  \caption{Algoritmo de substitución}
-\end{figure}
+\end{algorithm}
 
-
-\begin{figure}[ht]
+\begin{algorithm}\captionsetup{labelsep=newline}
   \centering
+  \caption{Unificación}
   \label{pseudouni}
-    \begin{algorithmic}
-      \Function{Unify}{cs}
-          \While {cs.hasOperationCandidates or cs.hasSubstCandidates}
-            \State performOperations(cs)
-            \State checkConstraints(cs)
-            \State performSubstitutions(cs)
+    \begin{algorithmic}[1]
+      \Function{Unify}{\texttt{cs,errorCollector}}
+          \State $\mathtt{m\gets \{\}}$
+          \While {\texttt{cs.hasOperationCandidates() \textbf{or} cs.hasSubstCandidates()}}
+            \State \texttt{performOperations(cs)}
+            \State \texttt{checkConstraints(cs, errorCollector)}
+            \State \texttt{m.addAll(substitueResolved(cs))}
           \EndWhile
+          \State \Return \texttt{m}
       \EndFunction
     \end{algorithmic}
-  \caption{Algoritmo de unificación}
-\end{figure}
+\end{algorithm}
 
-Al terminar el algoritmo, cada variable de tipo debe estar asociada a un tipo concreto. El caso de que queden variables de tipo sin resolver puede significar dos cosas:
+La función de unificación retorna un mapeo entre cada variable de tipo y un tipo concreto. El caso de que queden variables de tipo sin resolver puede significar dos cosas:
 
 \begin{itemize}
-  \item Falta información para determinar el tipo concreto de una expresión
+  \item Falta información para determinar el tipo concreto de una expresión, lo que no significa errores de tipos
   \item Cualquier faceta sirve para validar la expresión según las reglas del sistema de tipos
 \end{itemize}
 
