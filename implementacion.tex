@@ -12,7 +12,17 @@ La implementación de este trabajo fue realizada en Dart, debido a que proporcio
 Análisis personalizados de programas en Dart pueden ser realizados usando la información del AST. Para facilitar su integración, Dart Analyzer utiliza el patrón Visitor para incorporar un nuevo análisis sobre el AST.
 
 \subsection{Analyzer Plugin}
-La herramienta \emph{Analyzer Plugin} sirve para integrar un análisis personalizado sobre el AST generado por Dart Analyzer, con los IDE que tengan soporte para servidores de análisis estático de Dart, como IntelliJ, Eclipse, Atom, entre otros. Con esta librería es posible generar errores, \textit{warnings}, sugerencias de edición, sugerencias de navegación  y resaltado de sintaxis.
+La herramienta \emph{Analyzer Plugin} sirve para integrar un análisis personalizado sobre el AST generado por Dart Analyzer, con los IDE que tengan soporte para servidores de análisis estático de Dart, como IntelliJ, Eclipse, Atom, entre otros.
+
+Un plugin de Dart Analyzer se implementa en Dart, y utiliza una API para comunicarse con el servidor de análisis. La API consiste en tres tipos de comunicación:
+
+\begin{enumerate}
+  \item Cuando el servidor de análisis necesita enviar información al plugin, o necesita pedir información al plugin, envía un \emph{request}.
+  \item El plugin responde a toda request del servidor de análisis con un \emph{response}.
+  \item El plugin puede enviar \emph{notificaciones} al servidor de análisis con información.
+\end{enumerate}
+
+Mediante el envío de notificaciones o respondiendo a peticiones del servidor de análisis, el plugin puede enviar información respecto a errores, resaltado de sintaxis, sugerencias de navegación, sugerencias de edición y marcado de ocurrencias, las cuales serán desplegadas en la interfaz del IDE.
 
 \section{Implementación de sistema de inferencia}
 
@@ -67,13 +77,16 @@ Los errores que son generados pueden ser de los tipos \texttt{SubtypingError}, \
 \clearpage
 
 \section{Implementación de plugin}
+Para la implementación del plugin, se siguió el tutorial oficial de la herramienta Analyzer Plugin, presente en el repositorio de GitHub oficial del lenguaje Dart~\cite{plugin}.
 
-\subsection{Descripción general}
-Para la implementación del plugin se necesita implementar una API para establecer comunicación con el servidor de análisis de un IDE, respondiendo con el análisis de inferencia ante las peticiones recibidas desde el servidor.
+La comunicación entre el plugin y el sistema de inferencia se realiza mediante la implementación de un \emph{driver}, que administra los archivos que han sido modificados y solicita los resultados del análisis de inferencia a la clase \texttt{Analyzer}, que consiste en una lista de errores. Luego de obtener el resultado, el driver notifica al servidor de análisis para que pueda desplegar los errores en el IDE. La figura \ref{seq} muestra el diagrama de la secuencia de operaciones.
 
-Cuando el servidor de análisis detecta un cambio en un archivo, envía un mensaje al plugin, el cual gatilla la inferencia para todos los archivos del proyecto activo. Además, el plugin se encarga de recolectar los errores generados en las fases del proceso de inferencia, para enviárselos al servidor de análisis, el cual los despliega ante el usuario.
-
-Para la implementación de la API, se siguió el tutorial oficial de la herramienta Analyzer Plugin, presente en el repositorio de GitHub oficial del lenguaje Dart~\cite{plugin}.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{imagenes/sequence.pdf}
+  \caption{Diagrama de secuencia del plugin}
+  \label{seq}
+\end{figure}
 
 \subsection{Configuración del plugin}
 Para activar el análisis sobre un proyecto, se debe agregar el paquete del plugin como dependencia al proyecto, y agregar el plugin al archivo de configuración del análisis del proyecto \texttt{analysis\_options.yaml}, ubicado en la raiz del proyecto.

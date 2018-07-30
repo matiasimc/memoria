@@ -332,9 +332,7 @@ El algoritmo \ref{pseudocheck} muestra la verificación de constraints. Este alg
 \end{algorithm}
 
 \subsubsection{Substitución}
-Cuando se tiene una constraint que relaciona una variable de tipo con un tipo concreto\footnote{Un tipo concreto no tiene variables de tipo}, se debe substituir en el set de constraint toda aparición de la variable de tipo, por el tipo concreto. Como este proceso puede generar nuevas constraints que sean candidatas a materialización de operaciones, a verificación o a substitución, se debe iterar hasta que no queden constrainst candidatas.
-
-El algoritmo \ref{pseudosubst} muestra la substitución de constraints resueltas, mientras que el algoritmo \ref{pseudouni} muestra el procedimiento completo de unificación.
+Cuando se tiene una constraint que relaciona una variable de tipo con un tipo concreto\footnote{Un tipo concreto no tiene variables de tipo}, se debe substituir en el set de constraint toda aparición de la variable de tipo, por el tipo concreto. Como este proceso puede generar nuevas constraints que sean candidatas a materialización de operaciones, a verificación o a substitución, se debe iterar hasta que no queden constrainst candidatas. El algoritmo \ref{pseudosubst} muestra la substitución de constraints resueltas, mientras que el algoritmo \ref{pseudouni} muestra el procedimiento completo de unificación.
 
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
@@ -382,7 +380,6 @@ El algoritmo \ref{pseudosubst} muestra la substitución de constraints resueltas
       \EndFunction
     \end{algorithmic}
 \end{algorithm}
-
 La función de unificación retorna un mapeo entre cada variable de tipo y un tipo concreto. El caso de que queden variables de tipo sin resolver puede significar dos cosas:
 
 \begin{itemize}
