@@ -18,7 +18,7 @@ En el siguiente ejemplo se muestra un código anotado con niveles de seguridad, 
 
 Se dice que ocurrió un \emph{flujo implícito} cuando un programa da conocimiento de una variable de baja confidencialidad, en un contexto de alta confidencialidad. En el ejemplo \ref{ej2-1}, se da conocimiento de un literal\footnote{Un literal es considerado de baja confidencialidad} en un contexto determinado por la operación de comparación del condicional, la cual retorna un valor de alta confidencialidad.
 
-La ocurrencia de un flujo implícito significa una infracción a noninterference. Para su detección, se utiliza el concepto de \textit{program counter} (PC) para seguridad~\cite{pc}, el cual permite considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos. En el ejemplo \ref{ej2-1}, las instrucciones de retorno se ejecutan con un PC igual al nivel de seguridad de retorno de la condición.
+La ocurrencia de un flujo implícito significa una infracción a noninterference. Para su detección, se utiliza el concepto de \textit{program counter} (\texttt{pc}) para seguridad~\cite{pc}, el cual permite considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos. En el ejemplo \ref{ej2-1}, las instrucciones de retorno se ejecutan con un \texttt{pc} igual al nivel de seguridad de retorno de la condición.
 
 A pesar de que noninterference es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que impide que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, queremos que el programa de \texttt{login} sea aceptado a pesar de infringir noninterference, pues de otra forma no tendríamos cómo realizar la autenticación.
 
@@ -37,7 +37,7 @@ Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos p
 
 
 
-Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información. Por ejemplo, \texttt{declassify(password)} da conocimiento absoluto sobre el valor de la variable a un observador público.
+Esto no corresponde a una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información. Por ejemplo, \texttt{declassify(password)} puede dar conocimiento absoluto sobre el valor de la variable a un observador público.
 
 Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \emph{type-based declassification} como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
 
@@ -54,7 +54,7 @@ En type-based declassification los tipos tienen dos facetas; la faceta privada, 
 \end{lstlisting}
 \end{ej}
 
-Las facetas públicas son parte de la jerarquía de tipos, por lo que forman una lattice como se muestra en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
+El cumplimiento de la relación de subtyping entre la faceta pública y la faceta privada es requisito para el análisis de type-based declassification. Los tipos que cumplan con esta relación se denominan \emph{well-formed}. Esto permite considerar a las facetas públicas dentro de una lattice de subtyping, como se ejemplifica en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
 
 	\begin{figure}[ht]
 		\centering
@@ -75,9 +75,9 @@ Las facetas públicas son parte de la jerarquía de tipos, por lo que forman una
 
 Si la faceta pública coincide con la faceta privada, toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la lattice. Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna operación, se usa \texttt{Top}, por encontrarse en la parte superior de la lattice.
 
-En estricto rigor, los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo StringEq visto anteriormente se define como $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]$.
+En estricto rigor, los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo \texttt{StringEq} visto anteriormente se define como $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]$.
 
-Existen dos reglas principales para comprobar que un programa con facetas de desclasificación se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna un valor del tipo declarado como retorno para aquella operación en la faceta pública. Por ejemplo, si tenemos un valor con faceta pública $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<StringEq}]$, y llamamos al método $\mathtt{hash}$ sobre este valor, el tipo de retorno de esa llamada será $\mathtt{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
+Existen dos reglas principales para comprobar que un programa con facetas públicas se encuentra bien tipado. En primer lugar, la llamada a un método sobre un valor cuya faceta pública autoriza la operación, retorna un valor del tipo declarado como retorno para aquella operación en la faceta pública. Por ejemplo, si tenemos un valor con faceta pública $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<StringEq}]$, y llamamos al método $\mathtt{hash}$ sobre este valor, el tipo de retorno de esa llamada será $\mathtt{String<StringEq}$. A esta regla se le llama \texttt{TmD}.
 
 La segunda regla expresa que la llamada a un método sobre un valor cuya faceta pública no autoriza la operación, retorna un valor con faceta pública \texttt{Top}. Esto ocurre, por ejemplo, si llamamos al método $\mathtt{hash}$ sobre un valor que declara la faceta pública $\mathtt{StringEq}$. A esta regla se le llama \texttt{TmH}.
 
@@ -144,7 +144,7 @@ Consideremos el siguiente ejemplo, en donde se modifica una expresión de retorn
 \end{lstlisting}
 \end{ej}
 
-Supongamos que \texttt{hash} retorna un \texttt{String}. Ahora se generan dos constraints sobre \texttt{password}, $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$ y $\{\alpha <: [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$. El tipo $\alpha$ se resuelve con la operación \texttt{meet} entre ambos tipos de objeto, cuyo resultado $\mathtt{StringHashEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}, \mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{Bool<Bool}]\}$ se muestra en la figura \ref{latticeInference}. El teorema \ref{teo1} muestra las reglas utilizadas para la aplicación de operaciones sobre la lattice.
+Supongamos que \texttt{hash} retorna un \texttt{String}. Ahora se generan dos constraints sobre \texttt{password}, $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$ y $\{\alpha <: [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<String}]\}$. El tipo $\alpha$ se resuelve con la operación \texttt{meet} entre ambos tipos de objeto, cuyo resultado $\mathtt{StringHashEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool},\ \mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<String}]$ se muestra en la figura \ref{latticeInference}. El teorema \ref{teo1} muestra las reglas utilizadas para la aplicación de operaciones sobre la lattice.
 
 \begin{teo} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una lattice de subtyping, se cumple lo siguiente: \\
   \begin{itemize}

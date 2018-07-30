@@ -133,7 +133,21 @@ A modo de ejemplo, se muestran las constraints generadas para el ejemplo \ref{ej
 
 Las constraints 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password} ($\alpha$). Las constraints 3 y 4 se generan por la relación entre el \texttt{pc} (\texttt{Bot}) y el retorno del método (\texttt{Bot}), y las constraint 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método.
 
-\clearpage % TODO
+Además de la generación de constraints, en este paso se realiza la verificación de well-formed en las expresiones que tienen facetas públicas declaradas. Esto se muestra en el algoritmo \ref{wellformed}, para un nodo determinado del AST.
+
+\begin{algorithm}\captionsetup{labelsep=newline}
+  \centering
+  \caption{Verificación de well-formed}
+  \label{wellformed}
+    \begin{algorithmic}[1]
+      \Function{isWellFormed}{\texttt{node}}
+          \If {$\mathtt{node.hasDeclaredPublicFacet()}$}
+            \State \Return \texttt{node.privateFacet.subtypeOf(node.publicFacet)}
+          \EndIf
+          \State \Return \texttt{true}
+      \EndFunction
+    \end{algorithmic}
+\end{algorithm}
 
 \section{Resolución de constraints de subtyping} \label{propuestaRes}
 
@@ -156,20 +170,22 @@ El primer paso en la resolución de constraints es la eliminación de constraint
     \end{algorithmic}
 \end{algorithm}
 
-Aplicando el algoritmo \ref{pseudosimplify}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo dos constraints.
+Aplicando el algoritmo \ref{pseudosimplify}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo tres constraints.
 
 \begin{enumerate}
   \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta\}}$
   \item $\mathtt{\{\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma\}}$
+  \item $\mathtt{\{\gamma <: Bot\}}$
 \end{enumerate}
 
-El siguiente paso es agrupar las constraints sobre la misma variable de tipo, usando las reglas del teorema \ref{teo1}. Aplicando el algoritmo \ref{pseudogroup}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo una constraint.
+El siguiente paso es agrupar las constraints sobre la misma variable de tipo, usando las reglas del teorema \ref{teo1}. Aplicando el algoritmo \ref{pseudogroup}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo dos constraints.
 
 \begin{ej}\ \\
   \normalfont
   \label{ej3-2}
   \begin{enumerate}
     \item $\mathtt{\{\alpha <: Meet(Obj(eq : [Bot] \rightarrow Bot),\ Obj(hash : [\ ] \rightarrow Bot))\}}$
+    \item $\mathtt{\{\gamma <: Bot\}}$
   \end{enumerate}
 \end{ej}
 
@@ -233,10 +249,11 @@ Cuando se tiene un tipo $\mathtt{Meet(\overline{\tau}})$ o $\mathtt{Join(\overli
     \end{algorithmic}
 \end{algorithm}
 
-Si aplicamos el algoritmo \ref{pseudoperations} al ejemplo \ref{ej3-2}, se materializa la operación de la constraint.
+Si aplicamos el algoritmo \ref{pseudoperations} al ejemplo \ref{ej3-2}, se materializa la operación de la constraint 1.
 
 \begin{enumerate}
   \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot, hash : [\ ] \rightarrow Bot)\}}$
+  \item $\mathtt{\{\gamma <: Bot\}}$
 \end{enumerate}
 
 \subsubsection{Verificación de constraints}
