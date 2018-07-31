@@ -1,9 +1,14 @@
 \begin{conclusion}
-	(Algo de conclusión)
-	\section*{Proyecciones y trabajo futuro}
-	\subsection*{Formalización de inferencia}
-	\subsection*{Extensión del subconjunto soportado}
-	\subsection*{Sugerencias de edición, navegación y completación de código}
+
+
+	\section*{Trabajo futuro}
+
+	\paragraph{Formalización de inferencia.}En este trabajo se implmentó un sistema de inferencia sin demostrar que la extensión necesaria al sistema de tipos de type-based declassification preserva las propiedades del trabajo original, como son \emph{type safety} y relaxed noninterference. En este sentido, es deseable la formalización de la inferencia de tipos de dos facetas, antes de realizar cualquier extensión a este trabajo, cuyo objetivo fue demostrar el uso práctico del enfoque propuesto por Cruz \textit{et al.}
+
+	\paragraph{Extensión al subconjunto soportado.}Este trabajo soporta un subconjunto pequeño del lenguaje Dart, lo que no permite probarlo en aplicaciones reales de mayor envergadura. Soportar características avanzadas del lenguaje, e implementar la herramienta en otros lenguajes de programación, permitiría apuntar a un posible lanzamiento oficial de la herramienta como análisis de control de flujo para aplicaciones en producción.
+
+	\paragraph{Características del plugin.}El plugin implementado en este trabajo solo muestra los resultados de la inferencia, pero no permite al programador tomar acciones automáticas al respecto. Por ejemplo, es posible asistir al usuario en la definición de una faceta pública que ha sido declarada, navegar al lugar donde se define una faceta pública al ubicarse en la faceta declarada, definir y declarar una faceta pública basándose en el resultado de la inferencia, entre otros. Estas mejoras permitirán facilitarle aún más el trabajo al programador, y mejorar su experiencia programando con facetas públicas.
+
 
 
 \end{conclusion}
