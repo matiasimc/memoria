@@ -54,7 +54,7 @@ En type-based declassification los tipos tienen dos facetas; la faceta privada, 
 \end{lstlisting}
 \end{ej}
 
-El cumplimiento de la relación de subtyping entre la faceta pública y la faceta privada es requisito para el análisis de type-based declassification. Los tipos que cumplan con esta relación se denominan \emph{well-formed}. Esto permite considerar a las facetas públicas dentro de una lattice de subtyping, como se ejemplifica en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
+El cumplimiento de la relación de subtyping entre la faceta privada y la faceta pública es requisito para el análisis de type-based declassification. Los tipos que cumplan con esta relación se denominan \emph{well-formed}. Esto permite considerar a las facetas públicas dentro de una lattice de subtyping, como se ejemplifica en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
 
 	\begin{figure}[ht]
 		\centering

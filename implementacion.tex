@@ -47,7 +47,7 @@ Antes de la generación de constraints sobre un archivo, se realiza una etapa de
 Durante el proceso de inferencia, se pueden generar varios tipos de errores, los cuales difieren en el mensaje que será desplegado en la interfaz de usuario, y el resaltado que aplicarán en la ubicación correspondiente del código fuente.
 
 \begin{itemize}
-  \item \texttt{FlowError:} Se genera por la presencia de una constraint con una relación de subtyping no válida, que no proviene de invocación a método. Es un error, por lo que aplica un resaltado de color rojo en la ubicación correspondiente.
+  \item \texttt{FlowError:} Se genera por la presencia de una constraint con una relación de subtyping no válida, que no proviene de invocación a método. Este error almacena el nodo del AST en el cual la constraint fue generada, para informar al usuario con mayor precisión la ubicación y la causa del fallo. Es un error, por lo que aplica un resaltado de color rojo en la ubicación correspondiente.
   \item \texttt{WellFormedTypeError:} Se genera por la detección de tipos que no son well-formed. Es un error, por lo que aplica un resaltado de color rojo en la ubicación correspondiente.
   \item \texttt{UndefinedFacetWarning:} Se genera por la declaración de una faceta pública que no ha sido definida. Es un warning, por lo que aplica un resaltado de color amarillo en la ubicación correspondiente.
   \item \texttt{UnableToResolveInfo:} Se genera por la incapacidad de inferir un tipo concreto para una variable de tipo. Es de caracter informativo, por lo que solo aplica un leve resaltado de sintaxis en el código, y muestra un mensaje cuando el cursor se posiciona sobre la ubicación correspondiente.
@@ -57,16 +57,26 @@ Durante el proceso de inferencia, se pueden generar varios tipos de errores, los
 \subsection{Fase de generación de constraints}
 Una vez que se procesan las facetas públicas, se procede a la generación de constraints. Esto se realiza implementando varios visitors mostrados en el diagrama de la figura \ref{uml}.
 
-La clase encargada de procesar un archivo es \texttt{CompilationUnitVisitor}, en donde se procesa cada clase declarada en el archivo. Mediante el visitor \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el visitor implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de constraints de la sección \ref{propuestaGen}.
+La clase encargada de procesar las clases declaradas en un archivo es \texttt{CompilationUnitVisitor}. Mediante el visitor \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el visitor implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de constraints de la sección \ref{propuestaGen}.
 
-La clase \texttt{Store} es la encargada de la generación de variables de tipo, y el almacenamiento en diccionarios del tipo de las expresiones. Cada visita a los nodos del AST puede agregar constraints al set de constraints, y agregar o actualizar elementos en el store. Ambos se muestran en el diagrama \ref{uml}.
+La clase \texttt{Store} es la encargada de la generación de variables de tipo, y el almacenamiento en diccionarios del tipo de las expresiones y elementos. Una expresión es un ente sintáctico representado por un nodo en el AST, mientras que un elemento es un ente semántico que fue declarado con un nombre en algún lugar del programa.
 
-En esta fase se pueden generar errores de tipo \texttt{WellFormedTypeError} y \texttt{UndefinedFacetWarning}, los cuales son recolectados mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante el plugin.
+Por ejemplo, el nodo \texttt{MethodInvocation} representa una expresión de invocación a método. Desde este nodo es posible obtener un \texttt{MethodElement}, que representa la declaración del método invocado.
+
+El diccionario que almacena el tipo de las expresiones es necesario para almacenar información que no es posible acceder desde nodos que la necesitan. Por ejemplo, en el nodo \texttt{ReturnStatement} se genera una constraint entre la expresión de retorno y el retorno del método. La expresión de retorno es un hijo del nodo \texttt{ReturnStatement}, por lo que debe ser visitado antes de generar la constraint, para que guarde el tipo de la expresión en el diccionario y pueda ser obtenido en el nodo padre.
+
+El diccionario que almacena el tipo de los elementos es necesario para la generación de constraints sobre identificadores. Por ejemplo, en una invocación a método sobre una variable, se debe obtener el tipo del \texttt{VariableElement} para generar la constraint de invocación a método. Además, al final del proceso de inferencia, los elementos incluidos en este diccionario deben ser marcados en el código fuente para informar el tipo inferido al programador.
+
+En la fase de generación de constraints se pueden generar errores de tipo \texttt{WellFormedTypeError} y \texttt{UndefinedFacetWarning}, los cuales son recolectados mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante el plugin.
 
 \subsection{Fase de resolución de constraints}
-En esta fase, la clase \texttt{ConstraintSolver}, que se muestra en el diagrama \ref{uml}, se encarga de convertir el set de constraints en un mapeo entre variables de tipos y tipos concretos, implementando las operaciones descritas en la sección \ref{propuestaRes}.
+En esta fase, la clase \texttt{ConstraintSolver} se encarga de convertir el set de constraints en un mapeo entre variables de tipos y tipos concretos, implementando las operaciones descritas en la sección \ref{propuestaRes}. Esta clase se muestra en el diagrama \ref{uml}.
 
-Los errores que son generados pueden ser de los tipos \texttt{SubtypingError}, \texttt{UnableToResolveInfo} y \texttt{InferredFacetInfo}, los cuales son recolectados mediante el mismo \texttt{ErrorCollector} de la fase de generación de constraints.
+En el algoritmo de unificación, se pueden generar errores del tipo \texttt{FlowError}, al momento de verificar las constraints.
+
+Al final del proceso de resolución, se extraen las facetas públicas desde el diccionario que almacena el tipo de los elementos, que serán informadas al programador mediante errores del tipo \texttt{InferredFacetInfo}. Si un elemento está asociado a una variable de tipo, se genera un error del tipo \texttt{UnableToResolveInfo}.
+
+Los errores generados en esta fase son recolectados mediante el mismo \texttt{ErrorCollector} de la fase de generación de constraints.
 
 \begin{figure}[ht]
   \centering
