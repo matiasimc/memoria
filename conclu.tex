@@ -1,5 +1,8 @@
 \begin{conclusion}
 
+	Type-based declassification muestra una conexión entre las relaciones de subtyping de un lenguaje orientado a objetos, y las relaciones de orden que conforman los tipos de seguridad, para proponer un sistema de tipos que cumple una versión relajada de noninterference. Con esta propuesta, Cruz \textit{et al.} abordan parcialmente el desafió de integrar los modelos de control de flujo de información con infraestructuras existentes. Este trabajo materializa aquella propuesta, con una implementación para un subconjunto del lenguaje Dart, en conjunto con un sistema de inferencia y un plugin para editores.
+
+	A pesar del foco de seguridad que tiene un trabajo de estas características, la formulación del problema de inferencia y el uso del plugin para integrar los resultados fueron concebidos teniendo al programador en mente, para facilitarle el trabajo y mejorar su experiencia programando, entre otros beneficios. Esta experiencia puede mejorar aún más, agregando nuevas características al plugin.
 
 	\section*{Trabajo futuro}
 
@@ -7,7 +10,7 @@
 
 	\paragraph{Extensión al subconjunto soportado.}Este trabajo soporta un subconjunto pequeño del lenguaje Dart, lo que no permite probarlo en aplicaciones reales de mayor envergadura. Soportar características avanzadas del lenguaje, e implementar la herramienta en otros lenguajes de programación, permitiría apuntar a un posible lanzamiento oficial de la herramienta como análisis de control de flujo para aplicaciones en producción.
 
-	\paragraph{Características del plugin.}El plugin implementado en este trabajo solo muestra los resultados de la inferencia, pero no permite al programador tomar acciones automáticas al respecto. Por ejemplo, es posible asistir al usuario en la definición de una faceta pública que ha sido declarada, navegar al lugar donde se define una faceta pública al ubicarse en la faceta declarada, definir y declarar una faceta pública basándose en el resultado de la inferencia, entre otros. Estas mejoras permitirán facilitarle aún más el trabajo al programador, y mejorar su experiencia programando con facetas públicas.
+	\paragraph{Características del plugin.}El plugin implementado en este trabajo solo muestra los resultados de la inferencia, pero no permite al programador tomar acciones automáticas al respecto. Por ejemplo, es posible asistir al usuario en la definición de una faceta pública que ha sido declarada, navegar al lugar donde se define una faceta pública al ubicarse en la faceta declarada, definir y declarar una faceta pública basándose en el resultado de la inferencia, entre otros.
 
 
 

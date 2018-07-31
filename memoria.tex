@@ -10,11 +10,11 @@
 \author{Matías Ignacio Meneses Cortés}
 \title{Type-Based Declassification en Dart: Implementación y Elaboración de Herramientas de Inferencia}
 \auspicio{}
-\date{Abril 2018}
+\date{Julio 2018}
 \guia{Éric Tanter}
 \carrera{Ingeniero Civil en Computación}
 \memoria{Memoria para optar al Título de \break  Ingeniero Civil en Computación}
-\comision{}
+\comision{Aidan Hogan, Nancy Hitschfeld Kahler}
 
 \usepackage{lipsum}
 \usepackage{tikz}
@@ -70,7 +70,15 @@
 \maketitle
 
 \begin{abstract}
-{\lipsum[1-1]}
+	La protección de la confidencialidad de la información manipulada por los programas computacionales es abordada a nivel del código fuente con distintas técnicas. Una de ellas es tipado de seguridad para el control de flujo, que controla el nivel de seguridad donde fluye la información agregando anotaciones a las variables tipadas.
+
+	La propiedad de seguridad fundamental de control de flujo es conocida como \emph{noninterference}, que establece que un observador público no puede obtener conocimiento desde datos confidenciales. A pesar de ser una propiedad muy atractiva, los sistemas reales la vulneran fácilmente, y necesitan mecanismos para desclasifcar selectivamente alguna información.
+
+	En esta dirección, Cruz \textit{et al.} proponen \emph{type-based declassification}, una forma de tipado de seguridad que utiliza las relaciones de subtyping del lenguaje para expresar las políticas de desclasificación de los datos que maneja el programa, en una forma simple y expresiva.
+
+	A pesar de que el fundamento teórico de type-based declassification está bien descrito, carece de una implementación que permita comprobar la utilidad práctica de la propuesta. En este trabajo, se implementa el análisis de type-based declassification para un subconjunto del lenguaje Dart.
+
+	Además, se implementó un sistema de inferencia de políticas de desclasificación y un plugin para ambientes de desarrollo, con el objetivo de facilitar el trabajo al programador y mejorar su experiencia.
 \end{abstract}
 
 \begin{dedicatoria} % opcional

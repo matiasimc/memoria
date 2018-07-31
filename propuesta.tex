@@ -51,7 +51,7 @@ En este caso, se debe reportar un error de flujo en el llamado a la función \te
 
 \section{Consideraciones de diseño}
 
-Se debe tomar una decisión acerca de las facetas públicas de los métodos que pertenecen al \textit{core} de un lenguaje de programación. Para ilustrar la necesidad de esta decisión, veamos el siguiente ejemplo:
+Se debe tomar una decisión acerca de las facetas públicas de los métodos que pertenecen al \emph{core} de un lenguaje de programación, ya que no pueden ser anotados. Para ilustrar la necesidad de discutir esta decisión, veamos el siguiente ejemplo:
 
 \begin{lstlisting}
   int<Bot getLength(String password) {
@@ -61,12 +61,12 @@ Se debe tomar una decisión acerca de las facetas públicas de los métodos que 
 
 Este método será aceptado o rechazado por las reglas del sistema de tipos, si la faceta pública de retorno del campo \texttt{length} es \texttt{Bot} o \texttt{Top} respectivamente.
 
-Si decidimos que la faceta pública de retorno para métodos del \texttt{core} del lenguaje es \texttt{Top}, entonces cualquier operación que realicemos sobre el valor de retorno, retornará \texttt{Top}, lo cual es poco útil. Por lo tanto la decisión por defecto es que la faceta pública de retorno para métodos del \textit{core} del lenguaje sea \texttt{Bot}.
+Si decidimos que la faceta pública de retorno para métodos del core del lenguaje es \texttt{Top}, entonces cualquier operación que realicemos sobre el valor de retorno, retornará \texttt{Top}, lo cual es poco útil. Por lo tanto la decisión por defecto es que la faceta pública de retorno para métodos del core del lenguaje sea \texttt{Bot}.
 
 Ahora, analicemos ambas posibilidades para la faceta pública por defecto de los parámetros:
 
 \begin{itemize}
-  \item \texttt{Top} $\rightarrow$ \texttt{Bot}: Supongamos que el \textit{core} del lenguaje posee un método \texttt{identity}, que dado un \texttt{x}, retorna \texttt{x}. Si tomamos esta decisión, entonces el método \texttt{identity} podrá ser usado como desclasificador universal, como por ejemplo \texttt{identity(password)}.
+  \item \texttt{Top} $\rightarrow$ \texttt{Bot}: Supongamos que el core del lenguaje posee un método \texttt{identity}, que dado un \texttt{x}, retorna \texttt{x}. Si tomamos esta decisión, entonces el método \texttt{identity} podrá ser usado como desclasificador universal, como por ejemplo \texttt{identity(password)}.
   \item \texttt{Bot} $\rightarrow$ \texttt{Bot}: Esta elección restringe las facetas públicas de los argumentos utilizados a \texttt{Bot}, lo cual también podría ser considerado poco útil. Sin embargo, al retornar un valor con faceta pública \texttt{Bot}, cualquier operación podrá ser utilizada sobre ese valor.
 \end{itemize}
 
