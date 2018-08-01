@@ -9,7 +9,7 @@ La implementación de este trabajo fue realizada en Dart, debido a que proporcio
 \subsection{Dart Analyzer}
 \emph{Dart Analyer} es una herramienta incluida en Dart, que permite realizar análisis estático de código Dart. Entre otros servicios, esta herramienta permite obtener el AST de un código Dart. Dicho AST contiene la información relevante del programa, incluyendo el resultado del análisis de tipos.
 
-Análisis personalizados de programas en Dart pueden ser realizados usando la información del AST. Para facilitar su integración, Dart Analyzer utiliza el patrón Visitor para incorporar un nuevo análisis sobre el AST.
+Análisis personalizados de programas en Dart pueden ser realizados usando la información del AST. Dart Analyzer utiliza el patrón Visitor para incorporar un nuevo análisis sobre el AST, y así facilitar su integración con otros análisis.
 
 \subsection{Analyzer Plugin}
 La herramienta \emph{Analyzer Plugin} sirve para integrar un análisis personalizado sobre el AST generado por Dart Analyzer, con los IDE que tengan soporte para servidores de análisis estático de Dart, como IntelliJ, Eclipse, Atom, entre otros.
