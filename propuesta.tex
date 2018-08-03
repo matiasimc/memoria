@@ -1,6 +1,6 @@
 \chapter{Propuesta}
 
-En este trabajo se propone realizar la implementación en Dart de un sistema de inferencia de facetas públicas, que incluya el análisis de \textit{Type-based declassification}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detalla el problema de inferencia a resolver y las estrategias utilizadas para resolverlo.
+En este trabajo se propone realizar la implementación de un sistema de inferencia de facetas públicas, que incluya el análisis de \textit{Type-based declassification}, mediante la realización de un plugin para entornos de desarrollo integrado (IDE). En este capítulo se detalla el problema de inferencia a resolver y las estrategias utilizadas para resolverlo.
 
 \section{Problema de inferencia}
 Para la formulación del problema, es posible asumir que la información de las facetas privadas de type-based declassification se encuentra a disposición, debido a que algunos lenguajes de programación poseen herramientas para obtener dicha información.
@@ -9,7 +9,7 @@ Para la formulación del problema, es posible asumir que la información de las 
   Dado un programa parcialmente tipado con facetas públicas, y completamente tipado con facetas privadas, encontrar la faceta pública de las expresiones no tipadas que más se ajuste al uso de las expresiones, tal que se cumplan las reglas del sistema de tipos de type-based declassification.
 \end{defn}
 
-A continuación, se muestran algunos ejemplos con casos que no fueron cubiertos en el capítulo 2, con el objetivo de ilustrar la solución esperada al problema de inferencia.
+A continuación, se muestran algunos ejemplos de código parcialmente anotado con facetas públicas, con el objetivo de ilustrar la solución esperada al problema de inferencia.
 
 \begin{ej} \ \\
   \label{ej-tmh}
@@ -21,10 +21,10 @@ A continuación, se muestran algunos ejemplos con casos que no fueron cubiertos 
 \end{lstlisting}
 \end{ej}
 
-
-En este ejemplo, se quiere inferir que el método \texttt{login} tiene a \texttt{Top} como faceta pública, debido a la aplicación de la regla \texttt{TmH} de type-based declassification.
+Recordemos que la regla \texttt{TmH} de type-based declassification indica que la invocación a un método no autorizado sobre el objetivo de la llamada, retorna \texttt{Top}. Esto es justamente lo que se quiere inferir para el tipo de retorno del método \texttt{login} en el ejemplo \ref{ej-tmh}.
 
 \begin{ej} \ \\
+  \label{ej-tmd}
   \normalfont
 \begin{lstlisting}
   bool login(String password, String guess) {
@@ -33,9 +33,10 @@ En este ejemplo, se quiere inferir que el método \texttt{login} tiene a \texttt
 \end{lstlisting}
 \end{ej}
 
-En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{password}. La faceta pública para \texttt{password} que resuelve el problema de inferencia contiene al método \texttt{hash}, al cual se le infiere una faceta pública de retorno que contiene al método \texttt{eq}. Si se declara una faceta pública de retorno para el método \texttt{eq}, entonces se infiere esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de type-based declassification.
+En el ejemplo \ref{ej-tmd} ocurrió un encadenamiento de invocaciones a métodos sobre \texttt{password}. La faceta pública que se quiere inferir para \texttt{password} contiene al método \texttt{hash}, al cual se le quiere inferir una faceta pública de retorno que contiene al método \texttt{eq}. Si se declara una faceta pública de retorno para el método \texttt{eq}, entonces se debe inferir esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de type-based declassification.
 
 \begin{ej} \ \\
+  \label{ej-error}
   \normalfont
 \begin{lstlisting}
   void check(String<Bot s);
@@ -47,17 +48,28 @@ En este caso ocurrió un encadenamiento de llamadas a métodos sobre \texttt{pas
 \end{lstlisting}
 \end{ej}
 
-En este caso, se debe reportar un error de flujo en el llamado a la función \texttt{check}, debido a que la faceta del argumento debe ser subtipo de la faceta del parámetro, esto es, \texttt{Top <: Bot} es una relación no válida.
+En el ejemplo \ref{ej-error}, se debe reportar un error de flujo en el llamado a la función \texttt{check}, debido a que la faceta del argumento debe ser subtipo de la faceta del parámetro, esto es, \texttt{Top <: Bot} es una relación no válida.
 
-\section{Consideraciones de diseño}
+\section{Decisiones de diseño}
+Para resolver el problema de inferencia, se decidió realizar la implementación de un algoritmo de inferencia basado en constraints de subtyping. Como el objetivo de este trabajo no es formalizar un sistema de inferencia para type-based declassification, se implementa un algoritmo heurístico reutilizando enfoques e ideas de trabajos con características similares, lo cual fue presentado en la sección \ref{inference}.
 
-Se debe tomar una decisión acerca de las facetas públicas de los métodos que pertenecen al \emph{core} de un lenguaje de programación, ya que no pueden ser anotados. Para ilustrar la necesidad de discutir esta decisión, veamos el siguiente ejemplo:
+El subconjunto del lenguaje orientado objetos a considerar tendrá clases, métodos, variables, asignaciones e instrucciones condicionales.
 
+Con respecto al control de flujo, como el subconjunto a considerar tendrá instrucciones condicionales, se deben detectar flujos implícitos para preservar relaxed noninterference, por lo que se utilizará el concepto de \texttt{pc} presentado en la sección \ref{controlflujo}.
+
+Debido a que la implementación se realizará en un lenguaje orientado a objetos de propósito general, se debe tomar una decisión acerca de las facetas públicas de los métodos que pertenecen al \emph{core} del lenguaje, ya que no pueden ser anotados. Para ilustrar la necesidad de discutir esta decisión, veamos el siguiente ejemplo:
+
+\begin{ej} \ \\
+  \label{ej-necesidad}
+  \normalfont
 \begin{lstlisting}
   int<Bot getLength(String password) {
     return password.length
   }
 \end{lstlisting}
+\end{ej}
+
+
 
 Este método será aceptado o rechazado por las reglas del sistema de tipos, si la faceta pública de retorno del campo \texttt{length} es \texttt{Bot} o \texttt{Top} respectivamente.
 
@@ -73,17 +85,28 @@ Ahora, analicemos ambas posibilidades para la faceta pública por defecto de los
 Haciendo un balance, se considera que la opción \texttt{Bot} $\rightarrow$ \texttt{Bot} tiene el mejor equilibrio entre utilidad y seguridad, por lo que es la opción por defecto considerada. Sin embargo, es deseable que la herramienta se pueda configurar para elegir otra alternativa.
 
 \section{Gramática de tipos}
-Como se vio en la sección \ref{inference}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis. Esto se hace definiendo la gramática de tipos que usará el sistema de inferencia:
+Por lo discutido en la sección \ref{inference}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis. Esto se hace definiendo la gramática de tipos que usará el sistema de inferencia:
 
   $\mathtt{\tau := \alpha\ |\ Obj(\overline{l: \tau})\ |\ [\overline{\tau}] \rightarrow \tau \ |\ Join(\overline{\tau})\ |\ Meet(\overline{\tau})\ |\ Bot\ |\ Top}$
 
-Donde $\alpha$ es cualquier variable de tipo, $\mathtt{Obj(\overline{l: \tau}})$ representa el tipo de un objeto y $\mathtt{l}$ es un nombre de método.
+Donde $\alpha$ es cualquier variable de tipo, $\mathtt{Obj(\overline{l: \tau}})$ representa el tipo de un objeto y $\mathtt{l}$ es un nombre de método. Notar que aquí se reutilizó la idea de los tipos \texttt{meet} y \texttt{join} que propuso Cardelli~\cite{cardelli}.
 
 \section{Generación de constraints de subtyping} \label{propuestaGen}
-Como se mencionó en la sección \ref{constraints}, el uso de constraints permite presentar un algoritmo de inferencia como una fase de generación de constraints, y una fase de resolución de constraints. En el algoritmo \ref{pseudogen} se muestra la generación de constraints para un nodo determinado del árbol de sintaxis abstracta (AST).
+Como se mencionó en la sección \ref{inference}, el uso de constraints permite presentar un algoritmo de inferencia como una fase de generación de constraints, y una fase de resolución de constraints.
 
-Es importante notar que la constraint generada por la invocación a un método almacena el tipo de la expresión, debido a la posible aplicación de la regla \texttt{TmH} del sistema de tipos de type-based declassification.
-\clearpage % TODO
+El algoritmo de generación de constraints se ejecuta en cada nodo del árbol de sintaxis abstracta (AST). A continuación se explicarán las reglas de generación de constraints, y luego se mostrará el algoritmo en pseudolenguaje.
+
+\paragraph{Invocación a método.}Cuando se procesa un nodo que representa una invocación a método, se genera una constraint entre el objetivo de la invocación, y un tipo de objeto que contiene al método invocado. Esta constraint almacena el tipo de expresión de la invocación, debido a la posible aplicación de la regla \texttt{TmH} de type-based declassification, lo cual se explica en la sección \ref{propuestaVer}. Además, por cada argumento de la invocación, se genera una constraint entre el argumento y el parámetro correspondiente de la declaración del método.
+
+\paragraph{Expresión de retorno.}Cuando se procesa un nodo que representa una expresión de retorno, se genera una constraint entre la expresión de retorno y el retorno declarado por el método. Además, se genera una constraint entre el \texttt{pc} y el retorno declarado del método, debido que la expresión de retorno puede ocurrir dentro del cuerpo de un condicional.
+
+\paragraph{Expresión de asignación.}Cuando se procesa un nodo que representa una expresión de asignación, se genera una constraint entre el lado derecho de la asignación y el lado izquierdo de la asignación. Además, se genera una constraint entre el \texttt{pc} y el lado izquierdo de la asignación, por el mismo motivo que en la expresión de retorno.
+
+\paragraph{Expresión condicional.}Cuando se procesa un nodo que representa una expresión condicional (como \texttt{if} y \texttt{while}), se cambia el \texttt{pc} por la faceta pública de la condición, debido a que será utilizado por el algoritmo en el cuerpo del condicional.
+
+El algoritmo \ref{pseudogen} muestra la generación de constraints para un nodo determinado del AST. Ejecutando la función del algoritmo \ref{pseudogen} en todos los nodos del AST y uniendo los resultados, se obtiene el set de constraints.
+\clearpage
+
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
   \caption{Generación de constraints}
@@ -114,12 +137,19 @@ Es importante notar que la constraint generada por la invocación a un método a
       \EndFunction
     \end{algorithmic}
 \end{algorithm}
-Ejecutando la función del algoritmo \ref{pseudogen} en todos los nodos del AST y uniendo los resultados, se obtiene el set de constraints.
+A modo de ejemplo, consideremos el siguiente código parcialmente anotado con facetas públicas, y las constraints que se generan
 
-A modo de ejemplo, se muestran las constraints generadas para el ejemplo \ref{ej2-5}.
+
 
 \begin{ej}\ \\
   \label{ej3-1}
+  \normalfont
+  \begin{lstlisting}
+  String<String login(String<String guess, String password) {
+    if (password.eq(guess)) return password.hash();
+    else return "Login failed.";
+  }
+  \end{lstlisting}
   \begin{enumerate}
     \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta\}}$
     \item $\mathtt{\{\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma\}}$
@@ -131,7 +161,7 @@ A modo de ejemplo, se muestran las constraints generadas para el ejemplo \ref{ej
 \end{ej}
 
 
-Las constraints 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password} ($\alpha$). Las constraints 3 y 4 se generan por la relación entre el \texttt{pc} (\texttt{Bot}) y el retorno del método (\texttt{Bot}), y las constraint 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método.
+Las constraints 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password}, que fue asignado con una variable de tipo $\alpha$. Las constraints 3 y 4 se generan por la relación entre el \texttt{pc} (\texttt{Bot}) y el retorno del método (\texttt{Bot}), y las constraint 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método.
 
 Además de la generación de constraints, en este paso se realiza la verificación de well-formed en las expresiones que tienen facetas públicas declaradas. Esto se muestra en el algoritmo \ref{wellformed}, para un nodo determinado del AST.
 
@@ -256,7 +286,7 @@ Si aplicamos el algoritmo \ref{pseudoperations} al ejemplo \ref{ej3-2}, se mater
   \item $\mathtt{\{\gamma <: Bot\}}$
 \end{enumerate}
 
-\subsubsection{Verificación de constraints}
+\subsubsection{Verificación de constraints} \label{propuestaVer}
 Cuando una constraint representa una relación no válida, existen dos casos posibles:
 
 \begin{enumerate}
@@ -380,6 +410,7 @@ Cuando se tiene una constraint que relaciona una variable de tipo con un tipo co
       \EndFunction
     \end{algorithmic}
 \end{algorithm}
+\clearpage
 La función de unificación retorna un mapeo entre cada variable de tipo y un tipo concreto. El caso de que queden variables de tipo sin resolver puede significar dos cosas:
 
 \begin{itemize}

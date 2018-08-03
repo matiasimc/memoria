@@ -34,7 +34,7 @@ Para declarar las facetas públicas, se usan las anotaciones de Dart. Por ejempl
  es una declaración de un método de Dart anotado con facetas públicas.
 
 La definición de las facetas públicas se hace mediante clases abstractas de Dart. Por ejemplo, la faceta \texttt{StringCompareTo} se define mediante la clase abstracta del mismo nombre:
-
+\vspace{0.8em}
 \begin{lstlisting}
   abstract class StringCompareTo {
     int compareTo(String other);
@@ -70,7 +70,7 @@ El diccionario que almacena el tipo de los elementos es necesario para la genera
 En la fase de generación de constraints se pueden generar errores de tipo \texttt{WellFormedTypeError} y \texttt{UndefinedFacetWarning}, los cuales son recolectados mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante el plugin.
 
 \subsection{Fase de resolución de constraints}
-En esta fase, la clase \texttt{ConstraintSolver} se encarga de convertir el set de constraints en un mapeo entre variables de tipos y tipos concretos, implementando las operaciones descritas en la sección \ref{propuestaRes}. Esta clase se muestra en el diagrama \ref{uml}.
+En esta fase, la clase \texttt{ConstraintSolver} se encarga de convertir el set de constraints en un mapeo entre variables de tipo y tipos concretos, implementando las operaciones descritas en la sección \ref{propuestaRes}. Esta clase se muestra en el diagrama \ref{uml}.
 
 En el algoritmo de unificación, se pueden generar errores del tipo \texttt{FlowError}, al momento de verificar las constraints.
 

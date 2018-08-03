@@ -1,24 +1,25 @@
 \chapter{Antecedentes}
-En este capítulo se presentan los antecedentes y conceptos teóricos necesarios para entender este trabajo.
-\section{Control de flujo de información}
+En este capítulo se presentan los antecedentes y conceptos teóricos necesarios para entender este trabajo, y se divide en dos secciones principales. La primera, presenta los conceptos de control de flujo de información, mientras que la segunda, presenta los conceptos de inferencia de tipos.
+\section{Control de flujo de información} \label{controlflujo}
 Los lenguajes con tipado de seguridad para el control del flujo de la información clasifican los valores de un programa con respecto a sus niveles de confidencialidad, expresado mediante una \emph{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo} de etiquetas de seguridad. Por ejemplo, con la lattice de dos niveles de seguridad \texttt{L} $\sqsubseteq$ \texttt{H} se puede distinguir entre valores públicos o de baja confidencialidad (\texttt{L}) y valores privados o de alta confidencialidad (\texttt{H}). Un sistema de tipos con control de flujo asegura de forma estática el cumplimiento de la propiedad \emph{noninterference}~\cite{noninterference}, esto es, que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}.
 
-En el siguiente ejemplo se muestra un código anotado con niveles de seguridad, en donde el parámetro \texttt{guess} y el retorno del método se declaran de baja confidencialidad, y el parámetro \texttt{password} se declara de alta confidencialidad. Además, se considera que los valores literales son de baja confidencialidad.
+En el siguiente ejemplo se muestra un código anotado con niveles de seguridad, en donde el parámetro \texttt{guess} y el retorno del método se declaran de baja confidencialidad, y el parámetro \texttt{password} se declara de alta confidencialidad.
 
 \begin{ej} \ \\
   \normalfont
   \label{ej2-1}
 \begin{lstlisting}
-  String@L login(String@L guess, String@H password) {
-    if (password == guess) return "Login successful";
-    else return "Login failed";
+  bool@L login(String@L guess, String@H password) {
+    return password == guess;
   }
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-1} ocurrió un \emph{flujo explícito}, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando las salidas del programa. Si en cambio el método \texttt{login} declara un retorno de tipo \texttt{String@H}, un observador público no podrá leer la salida del programa, por lo que no ocurre un flujo explícito.
+En el ejemplo \ref{ej2-1} ocurrió un \emph{flujo explícito}, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando las salidas del programa, lo que no ocurriría si \texttt{login} declara un retorno de tipo \texttt{bool@H}.
 
-En el siguiente ejemplo se introduce una variable global al ejemplo \ref{ej2-1} para almacenar el valor de retorno, y se cambia el tipo de retorno de la función por \texttt{void}.
+Un flujo explícito significa una infracción a noninterference. Para su detección, los lenguajes de seguridad poseen distintas reglas que relacionan los niveles de seguridad involucrados. En una instrucción de asignación \texttt{x = y}, se dice que el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad de \texttt{x}. En una instrucción de retorno \texttt{return y}, se dice que el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad declarado como retorno del método. En el ejemplo \ref{ej2-1}, el nivel de seguridad de la comparación es \texttt{H}, debido a la propagación del nivel de seguridad de \texttt{password} en la operación de comparación. Esto es mayor que el nivel de seguridad de retorno \texttt{L}.
+
+En el siguiente ejemplo se introduce una variable global al ejemplo \ref{ej2-1} para almacenar el valor de retorno, y se cambia el tipo de retorno de la función por \texttt{void}. Además, se considera que los valores literales son de baja confidencialidad.
 
 \begin{ej} \ \\
   \normalfont
@@ -32,15 +33,14 @@ En el siguiente ejemplo se introduce una variable global al ejemplo \ref{ej2-1} 
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-12} ocurrió un \emph{flujo implícito}, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando cambios en el bloque de memoria que almacena el valor de la variable \texttt{ret}.
+En el ejemplo \ref{ej2-12} ocurrió un \emph{flujo implícito}, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando cambios en el valor que contiene la variable \texttt{ret}, mediante el control de flujo del programa.
 
-La ocurrencia de flujos explícitos e implícitos significa una infracción a noninterference. En los ejemplos \ref{ej2-1} y \ref{ej2-12}, es posible detectar estos flujos considerando que las instrucciones de retorno y asignación de valores de baja confidencialidad, ocurren en un contexto de alta confidencialidad, determinado por la condición de la instrucción \texttt{if}. Para considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos, se utiliza el concepto de \textit{program counter} (\texttt{pc}) para seguridad~\cite{pc}. Así, en los ejemplos \ref{ej2-1} y \ref{ej2-12} las instrucciones de retorno y asignación son inválidas, debido a que retornan y asignan valores de baja confidencialidad cuando el \texttt{pc} tiene un valor de alta confidencialidad.
+Un flujo implícito también significa una infracción a noninterference. Es posible detectar un flujo implícito considerando que las instrucciones de retorno y asignación de valores de baja confidencialidad, ocurren en un contexto de alta confidencialidad, determinado por la condición de la instrucción \texttt{if}. Para considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos, se utiliza el concepto de \textit{program counter} (\texttt{pc}) para seguridad~\cite{pc}. Así, en el ejemplo \ref{ej2-12} las instrucciones de asignación son inválidas, debido a que asignan valores de baja confidencialidad cuando el \texttt{pc} tiene un valor de alta confidencialidad.
 
 A pesar de que noninterference es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que impide que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, queremos que el programa de \texttt{login} sea aceptado a pesar de infringir noninterference, pues de otra forma no tendríamos cómo realizar la autenticación.
 
-Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos de \emph{desclasificación} que disminuyen el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, que desclasifica un valor de alta confidencialidad retornando un valor de baja confidencialidad. En el siguiente ejemplo, se utiliza para desclasificar el resultado de la operación de comparación.
+Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos de \emph{desclasificación} que disminuyen el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, que desclasifica un valor de alta confidencialidad retornando un valor de baja confidencialidad. En el ejemplo \ref{ej2-2}, se utiliza para desclasificar el resultado de la operación de comparación.
 \clearpage
-
 \begin{ej} \ \\
   \normalfont
   \label{ej2-2}
@@ -57,7 +57,7 @@ A pesar de que este programa no cumple con noninterference, no representa una am
 
 Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \emph{type-based declassification} como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
 
-En type-based declassification los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$\footnote{La notación $t_1\rightarrow t_2$ corresponde al tipo de una función con parámetro de tipo $t_1$ y retorno de tipo $t_2$} autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas $\mathtt{String}<\mathtt{StringEq}$ para controlar la operación de desclasificación de la igualdad sobre \texttt{password}, lo que se muestra en el ejemplo \ref{ej2-3}
+En type-based declassification los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$\footnote{La notación $t_1\rightarrow t_2$ corresponde al tipo de una función con parámetro de tipo $t_1$ y retorno de tipo $t_2$} autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas \texttt{String<StringEq} para controlar la operación de desclasificación de la igualdad sobre \texttt{password}, lo que se muestra en el ejemplo \ref{ej2-3}
 \begin{ej} \ \\
   \normalfont
   \label{ej2-3}
@@ -73,7 +73,7 @@ En type-based declassification los tipos tienen dos facetas; la faceta privada, 
 En type-based declassification, se cumple que la faceta privada es subtipo de la faceta pública. En el ejemplo \ref{ej2-3}, \texttt{String} es subtipo de \texttt{StringEq}, relación que se escribe como \texttt{String <: StringEq}. Los tipos que cumplen con esta relación se denominan \emph{well-formed}.
 
 Al igual que en tipado de seguridad de dos o más niveles, las facetas de type-based declassification forman una lattice con relaciones de subtyping, lo que se ejemplifica en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
-
+\clearpage
 	\begin{figure}[ht]
 		\centering
 		\begin{tikzpicture}[node distance=2.3cm]
@@ -108,9 +108,9 @@ Existen dos reglas principales para comprobar que un programa con tipos de dos f
 \end{ej}
 
 En el ejemplo \ref{ej2-6}, el valor de retorno de la invocación al método \texttt{hash} sobre el parámetro \texttt{password}, tiene faceta pública \texttt{StringEq}, debido a que fue declarado de esta forma en la faceta pública \texttt{StringHashEq}. A esta regla se le llama \texttt{TmD}.
-\clearpage
-Ahora consideremos el siguiente ejemplo, en donde se cambia la faceta pública del parámetro \texttt{password} del ejemplo \ref{ej2-6} por \texttt{StringEq}.
 
+Ahora consideremos el siguiente ejemplo, en donde se cambia la faceta pública del parámetro \texttt{password} del ejemplo \ref{ej2-6} por \texttt{StringEq}.
+\clearpage
 \begin{ej} \ \\
   \normalfont
   \label{ej2-7}
@@ -126,71 +126,124 @@ En el ejemplo \ref{ej2-7} se realiza una invocación al método \texttt{hash} so
 La propiedad de seguridad que se demuestra para el sistema de tipos de type-based declassification es una forma de noninterference con políticas de desclasificación, denominada \emph{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
 \section{Inferencia de tipos} \label{inference}
-La inferencia de tipos es el proceso de determinar los tipos de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores.
+En la sección anterior se revisaron los conceptos relacionados a control de flujo de información, que sirven para comprender el trabajo de type-based declassification. En esta sección se revisan los conceptos relacionados a inferencia de tipos, necesarios para comprender la propuesta de esta memoria.
 
-Consideremos el siguiente ejemplo, donde se quita la anotación de la faceta pública del parámetro \texttt{password} del ejemplo \ref{ej2-3}:
+La inferencia de tipos es el proceso de determinar el tipo de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores, y mantener los beneficios de un lenguaje estáticamente tipado.
 
-\begin{ej} \ \\
+Para ilustrar los conceptos importantes de inferencia, consideremos un lenguaje sencillo con funciones y operaciones aritméticas sobre enteros, cuya sintaxis se muestra en el siguiente ejemplo.
+\vspace{0.8em}
+\begin{ej}
   \normalfont
   \label{ej2-8}
 \begin{lstlisting}
-  String<String login(String<String guess, String password) {
-  	if (password.eq(guess)) return "Login successful";
-  	else return "Login failed";
-  }
+  let g = (x) => x + 5;
 \end{lstlisting}
 \end{ej}
 
-El sistema de tipos podría \emph{inferir} que la faceta pública ausente contiene \emph{al menos} el método \texttt{eq}. En efecto, \texttt{Bot} también es una faceta pública válida para \texttt{password}, pero no es la faceta pública que más se ajusta al uso del parámetro.
+En el ejemplo \ref{ej2-8}, \texttt{g} es una función que dado un \texttt{x}, retorna la suma entre \texttt{x} y \texttt{5}. Los lenguajes con inferencia de tipos pueden deducir el tipo de \texttt{g}, que en este caso es $\mathtt{int \rightarrow int}$.
 
-Para razonar acerca de la faceta pública del parámetro \texttt{password}, el sistema de tipos le asigna una \emph{variable de tipo} $\alpha$.
+Para razonar sobre tipos desconocidos, los sistemas de inferencia asignan \emph{variables de tipo} a cada expresión con tipo desconocido, y \emph{tipos concretos} a cada expresión con tipo conocido.
 
-\subsection{Constraints} \label{constraints}
-Cuando un sistema de tipos aplica una determinada regla para tipar una expresión, puede imponer condiciones que los tipos deben cumplir para que la expresión esté bien tipada. En el ejemplo \ref{ej2-4}, se puede decir que \texttt{password} tiene una faceta pública $\mathtt{\alpha}$ si y solo si $\mathtt{\alpha}$ posee el método \texttt{eq}.
+\begin{center}
+  \ttfamily
+  \begin{tabular}{l c}
+    Expresión & Tipo \\
+    \hline
+    (x) =>\ x + 5 & X \\
+    x & Y \\
+    x + 5 & Z \\
+    + & $\mathtt{int \rightarrow int}$ \\
+    x & W \\
+    5 & int \\
+  \end{tabular}
+\end{center}
 
-Para razonar acerca de estas condiciones, el sistema de tipos las representa mediante \emph{constraints}, que expresan una relación entre dos tipos. En el ejemplo \ref{ej2-4}, la condición sobre la faceta pública de \texttt{password} puede ser representada mediante la constraint de subtyping $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$.
 
-El uso de constraints permite la presentación de un algoritmo de inferencia de forma modular, como un generador de constraints y un solucionador de constraints. El \emph{set de constraints} generado se asemeja a un sistema de ecuaciones que siempre tendrá solución dependiendo de las características del lenguaje de programación. Por ejemplo, System F~\cite{WELLS1999111} es un lenguaje con inferencia de tipos completa no decidible.
+Cuando se procesan las expresiones del programa y se asignan los tipos, se generan condiciones que los tipos deben cumplir para que cada expresión esté bien tipada. Estas condiciones se denominan \emph{constraints}, y en este caso expresan una relación de igualdad entre dos tipos.
 
-\subsection{Unificación}
-La unificación es el proceso de encontrar una solución a las variables de tipo del set de constraints. Si las constraints son de igualdad, la unificación realiza substituciones sucesivas hasta resolver cada uno de los tipos. En cambio, si las constraints son de subtyping, se pueden realizar las operaciones \texttt{meet} (el ínfimo entre dos elementos, $a \wedge b$) y \texttt{join} (el supremo entre dos elementos, $a \vee b$) sobre la lattice que conforma la jerarquía de tipos, cuando sea pertinente.
+El uso de constraints permite presentar un algoritmo de inferencia de forma modular, como una fase de generación de constraints, y una fase de resolución de constraints.
+
+Las siguientes observaciones permiten derivar el \emph{set de constraints} del programa.
+
+\begin{enumerate}
+  \item Tenemos una función anónima \texttt{(x) =>\ x + 5} que debe tener tipo $\mathtt{Y \rightarrow Z}$, donde \texttt{Y} es el tipo del parámetro y \texttt{Z} es el tipo del cuerpo.
+  \item Tenemos una aplicación de la función suma, por lo que se generan condiciones sobre los argumentos. En este caso, \texttt{W = int}.
+  \item El parámetro de la función anónima se utiliza como argumento de la suma, por lo que se genera la constraint \texttt{W = Y}.
+  \item Como la suma tiene tipo $\mathtt{int \rightarrow int}$, la aplicación \texttt{x + 5} tiene tipo \texttt{int}. Luego se genera la constraint \texttt{Z = int}.
+\end{enumerate}
+
+Sintetizando, el set de constraints generado es el siguiente:
+
+\begin{enumerate}
+  \item $\mathtt{X = Y \rightarrow Z}$
+  \item \texttt{W = int}
+  \item \texttt{W = Y}
+  \item \texttt{Z = int}
+\end{enumerate}
+
+Una vez que se genera el set de constraints sobre el programa, se procede a encontrar una solución para las variables de tipo del set de constraints. Cuando las constraints son de igualdad, se utiliza el algoritmo de unificación de Damas-Milner~\cite{damasmilner}. Este algoritmo genera un mapeo entre variables de tipo y tipos concretos, mediante substituciones. La solución esperada del ejemplo \ref{ej2-8} es:
+
+\begin{center}
+  \ttfamily
+  \begin{tabular}{c c}
+    Variable de tipo & Tipo concreto \\
+    \hline
+    X & $\mathtt{int \rightarrow int}$  \\
+    Y & int \\
+    Z & int \\
+    W & int \\
+  \end{tabular}
+\end{center}
+\clearpage
+Desafortunadamente, el algoritmo de unificación de Damas-Milner no funciona cuando las constraints son de subtyping. Consideremos una extensión del lenguaje anterior,   en donde se introducen los tipos \texttt{num} y \texttt{float}, donde se cumple \texttt{float <: num} y \texttt{int <: num}. En el ejemplo \ref{ej2-9} se muestran dos instrucciones de asignación.
+\vspace{0.8em}
+\begin{ej}
+  \normalfont
+  \label{ej2-9}
+\begin{lstlisting}
+  let f = 4;
+                (...)
+                f = 1.5;
+\end{lstlisting}
+\end{ej}
+
+Las constraints que se generan para las asignaciones a la variable f son:
+
+\begin{enumerate}
+  \item \texttt{int <: X}
+  \item \texttt{float <: X}
+\end{enumerate}
+
+Para resolver relaciones de este tipo, Cardelli~\cite{cardelli} considera la relación de orden parcial entre los tipos, inducida por la relación de subtyping, que se muestra en la figura \ref{subt1}.
 
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}[node distance=2.3cm]
-    \node(Top) 												{\texttt{Top}};
-    \node(StringEq)		[below right of=Top]			{\texttt{StringEq}};
-    \node(StringHash)					[below left of=Top] 			{\texttt{StringHash}};
-    \node(StringHashEq) [below left of=StringEq] {\texttt{StringHashEq}};
-    \node(String) [below of=StringHashEq] {\texttt{String}};
-    \draw(Top)      -- (StringEq);
-    \draw(Top)      -- (StringHash);
-    \draw(StringEq)      -- (StringHashEq);
-    \draw(StringHash)      -- (StringHashEq);
-    \draw(StringHashEq) -- (String);
+    \node(num) 												{\texttt{num}};
+    \node(int)		[below right of=num]			{\texttt{int}};
+    \node(float)					[below left of=num] 			{\texttt{float}};
+    \draw (num)      -- (int);
+    \draw (num)      -- (float);
   \end{tikzpicture}
-  \caption{Operación \texttt{meet} entre \texttt{StringEq} y \texttt{StringHash}}
-  \label{latticeInference}
+  \caption{Orden parcial entre los tipos}
+  \label{subt1}
 \end{figure}
 
-Consideremos el siguiente ejemplo, en donde se modifica una expresión de retorno del ejemplo \ref{ej2-4} con otro uso del parámetro \texttt{password}.
+Luego, introduce los tipos \texttt{meet} y \texttt{join}, que corresponden a la máxima cota inferior (ínfimo) y a la mínima cota superior (súpremo) entre dos tipos, respectivamente. Pese a que Cardelli no considera una inferencia basada en constraints, se puede aplicar este enfoque para la resolución de constraints de subtyping. En efecto, Pottier~\cite{pottier:inria-00073205} y Sekiguchi~\cite{sekiguchi} presentan sistemas de inferencia basados en constraints, con tipos equivalentes a los \texttt{meet} y \texttt{join} de Cardelli.
 
-\begin{ej} \ \\
-  \normalfont
-  \label{ej2-9}
-\begin{lstlisting}
-  String<String login(String<String guess, String password) {
-  	if (password.eq(guess)) return password.hash();
-  	else return "Login failed";
-  }
-\end{lstlisting}
-\end{ej}
+Las operaciones \texttt{meet} y \texttt{join} tienen solución si todo par de tipos en el orden parcial tiene un único supremo e ínfimo, lo que se define como lattice. En la figura \ref{subt1}, se debe agregar el tipo \texttt{Bot} para que el orden parcial sea una lattice.
 
-Supongamos que \texttt{hash} retorna un \texttt{String}. Ahora se generan dos constraints sobre \texttt{password}, $\{\alpha <: [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]\}$ y $\{\alpha <: [\mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<String}]\}$. El tipo $\alpha$ se resuelve con la operación \texttt{meet} entre ambos tipos de objeto, cuyo resultado $\mathtt{StringHashEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool},\ \mathtt{hash} : \mathtt{Unit<Unit} \rightarrow \mathtt{String<String}]$ se muestra en la figura \ref{latticeInference}. El teorema \ref{teo1} muestra las reglas utilizadas para la aplicación de operaciones sobre la lattice.
+Las reglas para la aplicación de estas operaciones sobre una lattice se muestran en el teorema \ref{teo1}.
 
 \begin{teo} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una lattice de subtyping, se cumple lo siguiente: \\
   \begin{itemize}
-    \item \texttt{x <: y}, \texttt{x <: z} $\implies$ \texttt{x <: y }$\wedge$\texttt{ z}
-    \item \texttt{y <: x}, \texttt{z <: x} $\implies$ \texttt{y }$\vee$\texttt{ z <: x}
+    \item \texttt{x <: y}, \texttt{x <: z} $\implies$ \texttt{x <: meet(y, z)}
+    \item \texttt{y <: x}, \texttt{z <: x} $\implies$ \texttt{join(y, z) <: x}
   \end{itemize}
 \end{teo}
+
+Volviendo al ejemplo \ref{ej2-9}, las constraints generadas se resuelven con la operación \texttt{join} entre \texttt{int} y \texttt{float} debido a la aplicación del teorema \ref{teo1}, lo que da como resultado \texttt{num}.
+
+% Teniendo en cuenta que los distintos sistemas de inferencia propuestos a lo largo del tiempo comparten características, Odersky \textit{et al.}~\cite{odersky} propusieron el framework \texttt{HM(X)}, que entrega un algoritmo de inferencia genérico para un sistema de tipos basado en constraints que cumpla ciertas condiciones.
+
+% Utilizando el framework \texttt{HM(X)}, Pottier y Simonet~\cite{Pottier} presentaron un análisis de control de flujo con inferencia de tipos de seguridad, que hereda todas las buenas propiedades de \texttt{HM(X)}.
