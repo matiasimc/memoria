@@ -98,7 +98,7 @@ El algoritmo de generación de constraints se ejecuta en cada nodo del árbol de
 
 \paragraph{Invocación a método.}Cuando se procesa un nodo que representa una invocación a método, se genera una constraint entre el objetivo de la invocación, y un tipo de objeto que contiene al método invocado. Esta constraint almacena el tipo de expresión de la invocación, debido a la posible aplicación de la regla \texttt{TmH} de type-based declassification, lo cual se explica en la sección \ref{propuestaVer}. Además, por cada argumento de la invocación, se genera una constraint entre el argumento y el parámetro correspondiente de la declaración del método.
 
-\paragraph{Expresión de retorno.}Cuando se procesa un nodo que representa una expresión de retorno, se genera una constraint entre la expresión de retorno y el retorno declarado por el método. Además, se genera una constraint entre el \texttt{pc} y el retorno declarado del método, debido que la expresión de retorno puede ocurrir dentro del cuerpo de un condicional.
+\paragraph{Expresión de retorno.}Cuando se procesa un nodo que representa una expresión de retorno, se genera una constraint entre la expresión de retorno y el retorno declarado por el método. Además, se genera una constraint entre el \texttt{pc} y el retorno declarado del método, debido a que la expresión de retorno puede ocurrir dentro del cuerpo de un condicional.
 
 \paragraph{Expresión de asignación.}Cuando se procesa un nodo que representa una expresión de asignación, se genera una constraint entre el lado derecho de la asignación y el lado izquierdo de la asignación. Además, se genera una constraint entre el \texttt{pc} y el lado izquierdo de la asignación, por el mismo motivo que en la expresión de retorno.
 
