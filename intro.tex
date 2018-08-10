@@ -2,32 +2,36 @@
 
 	La protección de la confidencialidad de la información manipulada por los programas computacionales es un problema cuya relevancia se ha incrementado en el último tiempo, a pesar de tener varias décadas de investigación. Por ejemplo, una aplicación web (o móvil) que como parte de su funcionamiento debe interactuar con servicios de terceros y por tanto debe proteger que su información sensible no se escape durante la ejecución de la aplicación a canales públicos.
 
-	Muchas de las técnicas de seguridad convencionales como \textit{control de acceso} tienen deficiencias para proteger la confidencialidad de un programa, por ejemplo no restringen la propagación de información~\cite{myers-phd}.
+	Los sistemas computacionales seguros aplican múltiples técnicas de protección de confidencialidad de la información, las cuales pueden ser específicas a un nivel de comunicación de un programa. Por ejemplo, a nivel de red se utilizan protocolos de encriptación para cifrar mensajes confidenciales, y a nivel del sistema operativo el núcleo restringe el acceso a información manipulada por procesos independientes.
 
-	Formas más expresivas y efectivas de proteger la confidencialidad se basan en un análisis estático sobre el código del programa, y se categorizan dentro de \textit{language-based security}. Una de las técnicas más efectivas se denomina \textit{tipado de seguridad} en un \textit{lenguaje de seguridad}, donde los tipos son anotados con niveles de seguridad para clasificar la información manipulada por el programa.
+	Existe un conjunto de técnicas de seguridad a nivel del código del programa, con el nombre de seguridad basada en el lenguaje (\emph{language-based security}). Una de estas técnicas es control de acceso~\cite{controlacceso}, que permite o deniega el acceso a recursos e información entre los distintos módulos de un programa. Estas técnicas pueden ser estáticas (análisis sintáctico) o dinámicas (análisis en tiempo de ejecución).
 
-	Los lenguajes de seguridad formalizan la protección de confidencialidad mediante una propiedad de no-interferencia~\cite{noninterference}, la cual puede ser muy restrictiva para aplicaciones reales y prácticas. Es por ello que los lenguajes de seguridad ofrecen mecanismos para desclasificar la información, y a su vez asegurar el cumplimiento de alguna propiedad de seguridad.
+	Una técnica de seguridad basada en el lenguaje se denomina tipado de seguridad, que consiste en clasificar la información manipulada por el programa agregando niveles de seguridad a los identificadores mediante anotaciones en el código fuente, lo que permite realizar un análisis estático o dinámico del flujo de la información. En este trabajo, nos centramos en el análisis estático del control de flujo de la información.
 
-	Uno de los mayores desafíos de los lenguajes de seguridad es ofrecer mecanismos de desclasificación utilizando técnicas más expresivas, y de esta forma facilitar el trabajo del programador. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \emph{type-based declassification}, una variación de tipado de seguridad que utiliza el sistema de tipos del lenguaje para controlar la desclasificación de la información.
+	Los lenguajes con tipado de seguridad formalizan la protección de confidencialidad mediante una propiedad de no-interferencia (\emph{noninterference})~\cite{noninterference}, la cual puede ser muy restrictiva para aplicaciones reales y prácticas. Es por ello que los lenguajes con tipado de seguridad ofrecen mecanismos para desclasificar la información confidencial, y a su vez asegurar el cumplimiento de alguna propiedad de seguridad~\cite{sabelfeldSands:JCS09}.
 
-	El fundamento teórico de type-based declassification está bien descrito, pero carece de una implementación que permita comprobar la utilidad práctica de la propuesta. Además, se considera poco viable la implementación en su estado actual, ya que el programador tendría que agregar muchas anotaciones innecesarias al código para poder efectuar el análisis de control de flujo.
+	Uno de los mayores desafíos de los lenguajes con tipado de seguridad es ofrecer mecanismos de desclasificación utilizando técnicas más expresivas, y de esta forma facilitar el trabajo del programador. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron la desclasificación basada en tipos (\emph{type-based declassification}), una variante de tipado de seguridad que utiliza el sistema de tipos del lenguaje para controlar la desclasificación de la información.
 
-	Un problema similar es el que resuelven los lenguajes de programación utilizando mecanismos de inferencia de tipos, con el fin de facilitar el trabajo al programador. En esta dirección, se han propuesto mecanismos de inferencia para tipos de seguridad~\cite{Pottier}, lo que motiva una proposición similar para type-based declassification.
+	El fundamento teórico de la desclasificación basada en tipos está bien descrito, pero carece de una implementación que permita comprobar la utilidad práctica de la propuesta. Además, se considera poco viable la implementación en su estado actual, ya que el programador tendría que agregar muchas anotaciones innecesarias al código para poder efectuar el análisis de control de flujo.
 
-	Dart es un lenguaje de programación multipropósito que ofrece herramientas para realizar análisis personalizado sobre el árbol sintáctico de un código fuente Dart. Estas herramientas pueden ser integradas a los entornos de desarrollo integrado (IDE) mediante plugins, lo que permite al usuario analizar sus programas de forma interactiva.
+	Un problema similar es el que resuelven los lenguajes de programación utilizando inferencia de tipos, que consiste en asignar un tipo adecuado a las expresiones sin una anotación de tipo, con el fin de facilitar el trabajo al programador y mantener los beneficios de un lenguaje estáticamente tipado. En esta dirección, se han propuesto mecanismos de inferencia para tipos de seguridad~\cite{Pottier}, lo que motiva una proposición similar para la desclasificación basada en tipos.
+
+	Dart es un lenguaje de programación de propósito general, orientado a objetos y de código abierto desarrollado por Google. Es usado para construir aplicaciones web, móviles y dispositivos IoT (Internet of Things).
+
+	Dart ofrece herramientas para realizar análisis personalizado sobre el árbol sintáctico de un código fuente Dart. Estas herramientas pueden ser integradas a los ambientes de desarrollo (IDE) mediante extensiones, lo que permite al usuario analizar sus programas de forma interactiva.
 
 	\section{Objetivos}
-	El objetivo de la memoria es realizar la implementación de un sistema de inferencia para type-based declassification. Dentro de los objetivos específicos del trabajo, podemos encontrar:
+	El objetivo de la memoria es realizar la implementación de un sistema de inferencia para la desclasificación basada en tipos. Dentro de los objetivos específicos del trabajo, podemos encontrar:
 
 	\begin{itemize}
-	\item \textbf{Inferencia y verificación estática de type-based declassification}. Se entiende coma la implementación de un sistema de inferencia de facetas de desclasificación para type-based declassification, en el lenguaje de programación Dart. Dentro de la inferencia se incluye la verificación de las reglas del sistema de tipos de type-based declassification.
+	\item \textbf{Inferencia y verificación estática de la desclasificación basada en tipos}. Se entiende coma la implementación de un sistema de inferencia de facetas de desclasificación para la desclasificación basada en tipos, en el lenguaje de programación Dart.
 
-	\item \textbf{Plugin para editores}. Mostrar al programador el resultado de la inferencia, por medio de un plugin para los IDE que soporten servidores de análisis estático de Dart, ofreciéndole acciones al respecto.
+	\item \textbf{Extensión para ambientes de desarrollo}. Mostrar al programador el resultado de la inferencia, por medio de una extensión para los ambientes de desarrollo que soporten servidores de análisis estático de Dart, ofreciéndole acciones al respecto.
 
 	\end{itemize}
 
 	\section{Organización del documento}
 
-	Los antecedentes teóricos necesarios para entender este trabajo se abordan en el capítulo 2. mientras que la propuesta de solución es desarrollada en el capítulo 3. Los detalles de diseño de implementación de la propuesta son revisados en el capítulo 4, y la validación del trabajo es discutida en el capitulo 5. En el último capítulo se presentan las conclusiones y el trabajo futuro.
+	Los antecedentes teóricos necesarios para entender este trabajo se abordan en el capítulo 2, mientras que la propuesta de solución es desarrollada en el capítulo 3. Los detalles de diseño de implementación de la propuesta son revisados en el capítulo 4, y la validación del trabajo es discutida en el capitulo 5. En el último capítulo se presentan las conclusiones y el trabajo futuro.
 
 \end{intro}

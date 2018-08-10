@@ -1,7 +1,8 @@
 \chapter{Antecedentes}
 En este capítulo se presentan los antecedentes y conceptos teóricos necesarios para entender este trabajo, y se divide en dos secciones principales. La primera, presenta los conceptos de control de flujo de información, mientras que la segunda, presenta los conceptos de inferencia de tipos.
+
 \section{Control de flujo de información} \label{controlflujo}
-Los lenguajes con tipado de seguridad para el control del flujo de la información clasifican los valores de un programa con respecto a sus niveles de confidencialidad, expresado mediante una \emph{lattice}\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo} de etiquetas de seguridad. Por ejemplo, con la lattice de dos niveles de seguridad \texttt{L} $\sqsubseteq$ \texttt{H} se puede distinguir entre valores públicos o de baja confidencialidad (\texttt{L}) y valores privados o de alta confidencialidad (\texttt{H}). Un sistema de tipos con control de flujo asegura de forma estática el cumplimiento de la propiedad \emph{noninterference}~\cite{noninterference}, esto es, que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}.
+Los lenguajes con tipado de seguridad para el control del flujo de la información clasifican los valores de un programa con respecto a sus niveles de confidencialidad, expresado mediante un retículo\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo} (\emph{lattice}) de etiquetas de seguridad. Por ejemplo, con el retículo de dos niveles de seguridad \texttt{L} $\sqsubseteq$ \texttt{H} se puede distinguir entre valores públicos o de baja confidencialidad (\texttt{L}) y valores privados o de alta confidencialidad (\texttt{H}). Un sistema de tipos con control de flujo asegura de forma estática el cumplimiento de la propiedad de no-interferencia~\cite{noninterference}, esto es, que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}.
 
 En el siguiente ejemplo se muestra un código anotado con niveles de seguridad, en donde el parámetro \texttt{guess} y el retorno del método se declaran de baja confidencialidad, y el parámetro \texttt{password} se declara de alta confidencialidad.
 
@@ -15,9 +16,9 @@ En el siguiente ejemplo se muestra un código anotado con niveles de seguridad, 
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-1} ocurrió un \emph{flujo explícito}, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando las salidas del programa, lo que no ocurriría si \texttt{login} declara un retorno de tipo \texttt{bool@H}.
+En el ejemplo \ref{ej2-1} ocurrió un flujo explícito, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando las salidas del programa, lo que no ocurriría si \texttt{login} declara un retorno de tipo \texttt{bool@H}.
 
-Un flujo explícito significa una infracción a noninterference. Para su detección, los lenguajes de seguridad poseen distintas reglas que relacionan los niveles de seguridad involucrados. En una instrucción de asignación \texttt{x = y}, se dice que el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad de \texttt{x}. En una instrucción de retorno \texttt{return y}, se dice que el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad declarado como retorno del método. En el ejemplo \ref{ej2-1}, el nivel de seguridad de la comparación es \texttt{H}, debido a la propagación del nivel de seguridad de \texttt{password} en la operación de comparación. Esto es mayor que el nivel de seguridad de retorno \texttt{L}.
+Un flujo explícito significa una infracción a no-interferencia. Para su detección, los lenguajes de seguridad poseen distintas reglas que relacionan los niveles de seguridad involucrados. En una instrucción de asignación \texttt{x = y}, se dice que el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad de \texttt{x}. En una instrucción de retorno \texttt{return y}, se dice que el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad declarado como retorno del método. En el ejemplo \ref{ej2-1}, el nivel de seguridad de la comparación es \texttt{H}, debido a la propagación del nivel de seguridad de \texttt{password} en la operación de comparación. Esto es mayor que el nivel de seguridad de retorno \texttt{L}.
 
 En el siguiente ejemplo se introduce una variable global al ejemplo \ref{ej2-1} para almacenar el valor de retorno, y se cambia el tipo de retorno de la función por \texttt{void}. Además, se considera que los valores literales son de baja confidencialidad.
 
@@ -33,13 +34,13 @@ En el siguiente ejemplo se introduce una variable global al ejemplo \ref{ej2-1} 
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-12} ocurrió un \emph{flujo implícito}, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando cambios en el valor que contiene la variable \texttt{ret}, mediante el control de flujo del programa.
+En el ejemplo \ref{ej2-12} ocurrió un flujo implícito, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando cambios en el valor que contiene la variable \texttt{ret}, mediante el control de flujo del programa.
 
-Un flujo implícito también significa una infracción a noninterference. Es posible detectar un flujo implícito considerando que las instrucciones de retorno y asignación de valores de baja confidencialidad, ocurren en un contexto de alta confidencialidad, determinado por la condición de la instrucción \texttt{if}. Para considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos, se utiliza el concepto de \textit{program counter} (\texttt{pc}) para seguridad~\cite{pc}. Así, en el ejemplo \ref{ej2-12} las instrucciones de asignación son inválidas, debido a que asignan valores de baja confidencialidad cuando el \texttt{pc} tiene un valor de alta confidencialidad.
+Un flujo implícito también significa una infracción a no-interferencia. Es posible detectar un flujo implícito considerando que las instrucciones de retorno y asignación de valores de baja confidencialidad, ocurren en un contexto de alta confidencialidad, determinado por la condición de la instrucción \texttt{if}. Para considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos, se utiliza el concepto de \emph{program counter} (\texttt{pc}) para seguridad~\cite{pc}. Así, en el ejemplo \ref{ej2-12} las instrucciones de asignación son inválidas, debido a que asignan valores de baja confidencialidad cuando el \texttt{pc} tiene un valor de alta confidencialidad.
 
-A pesar de que noninterference es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que impide que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, queremos que el programa de \texttt{login} sea aceptado a pesar de infringir noninterference, pues de otra forma no tendríamos cómo realizar la autenticación.
+A pesar de que no-interferencia es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que impide que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, queremos que el programa de \texttt{login} sea aceptado a pesar de no cumplir con la propiedad, pues de otra forma no tendríamos cómo realizar la autenticación.
 
-Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos de \emph{desclasificación} que disminuyen el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, que desclasifica un valor de alta confidencialidad retornando un valor de baja confidencialidad. En el ejemplo \ref{ej2-2}, se utiliza para desclasificar el resultado de la operación de comparación.
+Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos de desclasificación que disminuyen el nivel de seguridad de un valor confidencial, implementados de diferentes formas~\cite{sabelfeldSands:JCS09}. Una de ellas, por ejemplo en Jif~\cite{jif} es usar un operador \texttt{declassify}, que desclasifica un valor de alta confidencialidad retornando un valor de baja confidencialidad. En el ejemplo \ref{ej2-2}, se utiliza para desclasificar el resultado de la operación de comparación.
 \clearpage
 \begin{ej} \ \\
   \normalfont
@@ -53,11 +54,11 @@ Para solucionar este problema, los lenguajes de seguridad adicionan mecanismos d
 \end{ej}
 
 
-A pesar de que este programa no cumple con noninterference, no representa una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información. Por ejemplo, \texttt{declassify(password)} puede dar conocimiento absoluto sobre el valor de la variable a un observador público.
+A pesar de que este programa no cumple con no-interferencia, no representa una amenaza de seguridad, debido a que el resultado de la operación de comparación es negligible con respecto al parámetro privado \texttt{password}. Sin embargo, usos arbitrarios del operador \texttt{declassify} pueden resultar en serias fugas de información. Por ejemplo, \texttt{declassify(password)} puede dar conocimiento absoluto sobre el valor de la variable a un observador público.
 
-Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron \emph{type-based declassification} como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
+Varios mecanismos se han explorado para controlar el uso de desclasificación, y poder asegurar además una propiedad de seguridad para el programa~\cite{sabelfeldSands:JCS09}. En esta dirección, Cruz et al.~\cite{cruzAl:ecoop2017} recientemente propusieron la desclasificación basada en tipos como un mecanismo de desclasificación que conecta la abstracción de tipos con una forma controlada de desclasificación, en una manera intuitiva y expresiva, proveyendo garantías formales sobre la seguridad del programa.
 
-En type-based declassification los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$\footnote{La notación $t_1\rightarrow t_2$ corresponde al tipo de una función con parámetro de tipo $t_1$ y retorno de tipo $t_2$} autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas \texttt{String<StringEq} para controlar la operación de desclasificación de la igualdad sobre \texttt{password}, lo que se muestra en el ejemplo \ref{ej2-3}
+En la desclasificación basada en tipos, los tipos tienen dos facetas; la faceta privada, que refleja el tipo de implementación, y la faceta pública, que refleja las operaciones de desclasificación sobre los valores de dicho tipo. Por ejemplo, el tipo $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$\footnote{La notación $t_1\rightarrow t_2$ corresponde al tipo de una función con parámetro de tipo $t_1$ y retorno de tipo $t_2$} autoriza la operación \texttt{eq} sobre un \texttt{String}. Entonces se puede usar el tipo de dos facetas \texttt{String<StringEq} para controlar la operación de desclasificación de la igualdad sobre \texttt{password}, lo que se muestra en el ejemplo \ref{ej2-3}
 \begin{ej} \ \\
   \normalfont
   \label{ej2-3}
@@ -70,9 +71,9 @@ En type-based declassification los tipos tienen dos facetas; la faceta privada, 
 \end{ej}
 
 
-En type-based declassification, se cumple que la faceta privada es subtipo de la faceta pública. En el ejemplo \ref{ej2-3}, \texttt{String} es subtipo de \texttt{StringEq}, relación que se escribe como \texttt{String <: StringEq}. Los tipos que cumplen con esta relación se denominan \emph{well-formed}.
+En la desclasificación basada en tipos, se cumple que la faceta privada es subtipo de la faceta pública. En el ejemplo \ref{ej2-3}, \texttt{String} es subtipo de \texttt{StringEq}, relación que se escribe como \texttt{String <: StringEq}. Los tipos que cumplen con esta relación se denominan bien formados (\emph{well-formed}).
 
-Al igual que en tipado de seguridad de dos o más niveles, las facetas de type-based declassification forman una lattice con relaciones de subtyping, lo que se ejemplifica en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
+Al igual que en tipado de seguridad de dos o más niveles, las facetas de la desclasificación basada en tipos forman un retículo con relaciones de subtipos, lo que se ejemplifica en la figura \ref{l1}, donde \texttt{StringEq} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}]$ y \texttt{StringEqLength} $\triangleq [\mathtt{eq} : \mathtt{String} \rightarrow \mathtt{Bool}, \mathtt{length} : \mathtt{Unit} \rightarrow \mathtt{Int}]$.
 \clearpage
 	\begin{figure}[ht]
 		\centering
@@ -87,11 +88,11 @@ Al igual que en tipado de seguridad de dos o más niveles, las facetas de type-b
 			\draw(StringEq)      -- (StringEqLength);
 			\draw(StringEqLength)      -- (String);
 		\end{tikzpicture}
-		\caption{lattice de subtyping}
+		\caption{retículo de subtipos}
     \label{l1}
 	\end{figure}
 
-Si la faceta pública coincide con la faceta privada, toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior de la lattice. Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna operación, se usa \texttt{Top}, por encontrarse en la parte superior de la lattice.
+Si la faceta pública coincide con la faceta privada, toda operación sobre el valor estará autorizada. Cuando esto sucede, se refiere usualmente a la faceta pública con \texttt{Bot}, por encontrarse siempre en la parte inferior del retículo. Cuando se quiere referir a una faceta pública vacía o que no autoriza ninguna operación, se usa \texttt{Top}, por encontrarse en la parte superior del retículo.
 
 Los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo \texttt{StringEq} visto anteriormente se define como $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String<String} \rightarrow \mathtt{Bool<Bool}]$.
 
@@ -123,10 +124,10 @@ Ahora consideremos el siguiente ejemplo, en donde se cambia la faceta pública d
 
 En el ejemplo \ref{ej2-7} se realiza una invocación al método \texttt{hash} sobre el parámetro \texttt{password}, que declara una faceta pública que no autoriza la operación. Cuando esto sucede, la faceta pública de retorno de la invocación es \texttt{Top}. A esta regla se le llama \texttt{TmH}.
 
-La propiedad de seguridad que se demuestra para el sistema de tipos de type-based declassification es una forma de noninterference con políticas de desclasificación, denominada \emph{Relaxed noninterference}. Un lenguaje de seguridad que cumple esta propiedad, garantiza que la información confidencial sólo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
+La propiedad de seguridad que se demuestra para el sistema de tipos de la desclasificación basada en tipos es una forma de no-interferencia con políticas de desclasificación, denominada no-interferencia relajada (\emph{Relaxed noninterference}). Un lenguaje de seguridad que cumple con esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
 \section{Inferencia de tipos} \label{inference}
-En la sección anterior se revisaron los conceptos relacionados a control de flujo de información, que sirven para comprender el trabajo de type-based declassification. En esta sección se revisan los conceptos relacionados a inferencia de tipos, necesarios para comprender la propuesta de esta memoria.
+En la sección anterior se revisaron los conceptos relacionados a control de flujo de información, que sirven para comprender el trabajo de la desclasificación basada en tipos. En esta sección se revisan los conceptos relacionados a inferencia de tipos, necesarios para comprender la propuesta de esta memoria.
 
 La inferencia de tipos es el proceso de determinar el tipo de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores, y mantener los beneficios de un lenguaje estáticamente tipado.
 
@@ -140,7 +141,7 @@ Para ilustrar los conceptos importantes de inferencia, consideremos un lenguaje 
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-8}, \texttt{g} es una función que dado un \texttt{x}, retorna la suma entre \texttt{x} y \texttt{5}. Los lenguajes con inferencia de tipos pueden deducir el tipo de \texttt{g}, que en este caso es $\mathtt{int \rightarrow int}$.
+En el ejemplo \ref{ej2-8}, se asigna a \texttt{g} una función que retorna la suma entre \texttt{x} y \texttt{5}. Los lenguajes con inferencia de tipos pueden deducir el tipo de \texttt{g}, que en este caso es $\mathtt{int \rightarrow int}$.
 
 Para razonar sobre tipos desconocidos, los sistemas de inferencia asignan \emph{variables de tipo} a cada expresión con tipo desconocido, y \emph{tipos concretos} a cada expresión con tipo conocido.
 

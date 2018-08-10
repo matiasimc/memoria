@@ -72,13 +72,13 @@
 \begin{abstract}
 	La protección de la confidencialidad de la información manipulada por los programas computacionales es abordada a nivel del código fuente con distintas técnicas. Una de ellas es tipado de seguridad para el control de flujo, que controla el nivel de seguridad donde fluye la información agregando anotaciones a las variables tipadas.
 
-	La propiedad de seguridad fundamental de control de flujo es conocida como \emph{noninterference}, que establece que un observador público no puede obtener conocimiento desde datos confidenciales. A pesar de ser una propiedad muy atractiva, los sistemas reales la vulneran fácilmente, y necesitan mecanismos para desclasifcar selectivamente alguna información.
+	La propiedad de seguridad fundamental de control de flujo es conocida como no-interferencia (\emph{noninterference}), que establece que un observador público no puede obtener conocimiento desde datos confidenciales. A pesar de ser una propiedad muy atractiva, los sistemas reales la vulneran fácilmente, y necesitan mecanismos para desclasificar selectivamente alguna información.
 
-	En esta dirección, Cruz \textit{et al.} proponen \emph{type-based declassification}, una forma de tipado de seguridad que utiliza las relaciones de subtyping del lenguaje para expresar las políticas de desclasificación de los datos que maneja el programa, en una forma simple y expresiva.
+	En esta dirección, Cruz \textit{et al.} proponen una forma de desclasificación basada en tipos (\emph{type-based declassification}), en donde se utilizan las relaciones de subtipos del lenguaje para expresar las políticas de desclasificación de los datos que maneja el programa, en una forma simple y expresiva.
 
-	A pesar de que el fundamento teórico de type-based declassification está bien descrito, carece de una implementación que permita comprobar la utilidad práctica de la propuesta. En este trabajo, se implementa el análisis de type-based declassification para un subconjunto del lenguaje Dart.
+	A pesar de que el fundamento teórico de la desclasificación basada en tipos está bien descrito, carece de una implementación que permita comprobar la utilidad práctica de la propuesta. En este trabajo, se implementa el análisis de la desclasificación basada en tipos para un subconjunto del lenguaje Dart, un lenguaje de programación de propósito general orientado a objetos desarrollado por Google.
 
-	Además, se implementó un sistema de inferencia de políticas de desclasificación y un plugin para ambientes de desarrollo, con el objetivo de facilitar el trabajo al programador y mejorar su experiencia.
+	Además, se implementó un sistema de inferencia de políticas de desclasificación y una extensión para ambientes de desarrollo, con el objetivo de facilitar el trabajo al programador y mejorar su experiencia.
 \end{abstract}
 
 \begin{dedicatoria} % opcional
