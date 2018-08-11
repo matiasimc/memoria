@@ -141,50 +141,52 @@ Para ilustrar los conceptos importantes de inferencia, consideremos un lenguaje 
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-8}, se asigna a \texttt{g} una función que retorna la suma entre \texttt{x} y \texttt{5}. Los lenguajes con inferencia de tipos pueden deducir el tipo de \texttt{g}, que en este caso es $\mathtt{int \rightarrow int}$.
+En el ejemplo \ref{ej2-8}, se asigna a \texttt{g} una función que retorna la suma entre \texttt{x} y \texttt{5}. Notar que no se anotó el tipo de los identificadores \texttt{g} y \texttt{x}.
 
-Para razonar sobre tipos desconocidos, los sistemas de inferencia asignan \emph{variables de tipo} a cada expresión con tipo desconocido, y \emph{tipos concretos} a cada expresión con tipo conocido.
+En la etapa de tipar un programa (\emph{type checking}), los sistemas de inferencia asignan una variable de tipo a cada expresión sin un tipo conocido, y un tipo concreto\footnote{Un tipo concreto no tiene variables de tipo} (por ejemplo, \texttt{int}) a cada expresión con tipo conocido. Además, generan un conjunto de restricciones que se deben cumplir para que cada expresión esté bien tipada.
+\clearpage
 
-\begin{center}
+Una restricción representa una relación entre dos tipos. Esta relación puede ser de igualdad o de subtipos. El uso de restricciones permite presentar un algoritmo de inferencia de forma modular, como una fase de generación de restricciones, y una fase de resolución de restricciones.
+
+La figura \ref{tabla1} muestra la asignación de tipos a cada una de las expresiones del ejemplo \ref{ej2-8}, y las restricciones que se generan.
+
+
+\begin{figure}[ht]
+  \centering
   \ttfamily
-  \begin{tabular}{l c}
-    Expresión & Tipo \\
+  \begin{tabular}{c c c}
+    Expresión & Tipo & Restricciones\\
     \hline
-    (x) =>\ x + 5 & X \\
-    x & Y \\
-    x + 5 & Z \\
-    + & $\mathtt{int \rightarrow int}$ \\
-    x & W \\
-    5 & int \\
+    (x) =>\ x + 5 & X & $\mathtt{X = Y \rightarrow Z}$\\
+    x & Y & -\\
+    x + 5 & Z & Y = int, Z = int\\
+    + & $\mathtt{(int,int) \rightarrow int}$ & -\\
+    x & Y & -\\
+    5 & int & -\\
   \end{tabular}
-\end{center}
+  \caption{Etapa de \emph{type checking}}
+  \label{tabla1}
+\end{figure}
 
-
-Cuando se procesan las expresiones del programa y se asignan los tipos, se generan condiciones que los tipos deben cumplir para que cada expresión esté bien tipada. Estas condiciones se denominan \emph{constraints}, y en este caso expresan una relación de igualdad entre dos tipos.
-
-El uso de constraints permite presentar un algoritmo de inferencia de forma modular, como una fase de generación de constraints, y una fase de resolución de constraints.
-
-Las siguientes observaciones permiten derivar el \emph{set de constraints} del programa.
+En el ejemplo \ref{ej2-8}, las restricciones generadas representan igualdad entre dos tipos. Las siguientes observaciones permiten derivar conjunto de restricciones del programa.
 
 \begin{enumerate}
-  \item Tenemos una función anónima \texttt{(x) =>\ x + 5} que debe tener tipo $\mathtt{Y \rightarrow Z}$, donde \texttt{Y} es el tipo del parámetro y \texttt{Z} es el tipo del cuerpo.
-  \item Tenemos una aplicación de la función suma, por lo que se generan condiciones sobre los argumentos. En este caso, \texttt{W = int}.
-  \item El parámetro de la función anónima se utiliza como argumento de la suma, por lo que se genera la constraint \texttt{W = Y}.
-  \item Como la suma tiene tipo $\mathtt{int \rightarrow int}$, la aplicación \texttt{x + 5} tiene tipo \texttt{int}. Luego se genera la constraint \texttt{Z = int}.
+  \item \texttt{(x) =>\ x + 5} es una función anónima que debe tener tipo $\mathtt{Y \rightarrow Z}$, donde \texttt{Y} es el tipo del parámetro y \texttt{Z} es el tipo del cuerpo.
+  \item \texttt{x + 5} es una aplicación de la función suma, por lo que su tipo debe coincidir con el tipo de retorno de la función. Además, el tipo de los argumentos debe coincidir con el tipo de los parámetros de la función.
 \end{enumerate}
 
-Sintetizando, el set de constraints generado es el siguiente:
+Sintetizando, el conjunto de restricciones generado es el siguiente:
 
-\begin{enumerate}
+\begin{itemize}
   \item $\mathtt{X = Y \rightarrow Z}$
-  \item \texttt{W = int}
-  \item \texttt{W = Y}
+  \item \texttt{Y = int}
   \item \texttt{Z = int}
-\end{enumerate}
+\end{itemize}
 
-Una vez que se genera el set de constraints sobre el programa, se procede a encontrar una solución para las variables de tipo del set de constraints. Cuando las constraints son de igualdad, se utiliza el algoritmo de unificación de Damas-Milner~\cite{damasmilner}. Este algoritmo genera un mapeo entre variables de tipo y tipos concretos, mediante substituciones. La solución esperada del ejemplo \ref{ej2-8} es:
+Una vez que se genera el conjunto de restricciones sobre el programa, se procede a encontrar una solución para las variables de tipo del conjunto. Cuando las restricciones representan relaciones de igualdad, se utiliza el algoritmo de unificación de Damas-Milner~\cite{damasmilner}. Este algoritmo genera un diccionario de variables de tipo a tipos concretos, mediante substituciones. La figura \ref{tabla2} muestra la solución esperada del ejemplo \ref{ej2-8}.
 
-\begin{center}
+\begin{figure}[ht]
+  \centering
   \ttfamily
   \begin{tabular}{c c}
     Variable de tipo & Tipo concreto \\
@@ -192,30 +194,34 @@ Una vez que se genera el set de constraints sobre el programa, se procede a enco
     X & $\mathtt{int \rightarrow int}$  \\
     Y & int \\
     Z & int \\
-    W & int \\
   \end{tabular}
-\end{center}
+  \caption{Solución del conjunto de restricciones}
+  \label{tabla2}
+\end{figure}
+
 \clearpage
-Desafortunadamente, el algoritmo de unificación de Damas-Milner no funciona cuando las constraints son de subtyping. Consideremos una extensión del lenguaje anterior,   en donde se introducen los tipos \texttt{num} y \texttt{float}, donde se cumple \texttt{float <: num} y \texttt{int <: num}. En el ejemplo \ref{ej2-9} se muestran dos instrucciones de asignación.
+Desafortunadamente, el algoritmo de unificación de Damas-Milner no funciona cuando las restricciones representan una relación de subtipos. Consideremos una extensión del lenguaje anterior,  en donde se introducen los tipos \texttt{num} y \texttt{float}, donde se cumple \texttt{float <: num} y \texttt{int <: num}. En el ejemplo \ref{ej2-9} se muestran dos instrucciones de asignación.
 \vspace{0.8em}
 \begin{ej}
   \normalfont
   \label{ej2-9}
 \begin{lstlisting}
   let f = 4;
-                (...)
+                ...
                 f = 1.5;
 \end{lstlisting}
 \end{ej}
 
-Las constraints que se generan para las asignaciones a la variable f son:
+En el ejemplo \ref{ej2-9}, se asigna la variable de tipo \texttt{X} al identificador \texttt{f}. Las restricciones que se generan para las instrucciones de asignación son:
 
-\begin{enumerate}
+\begin{itemize}
   \item \texttt{int <: X}
   \item \texttt{float <: X}
-\end{enumerate}
+\end{itemize}
 
-Para resolver relaciones de este tipo, Cardelli~\cite{cardelli} considera la relación de orden parcial entre los tipos, inducida por la relación de subtyping, que se muestra en la figura \ref{subt1}.
+%Cardelli~\cite{cardelli}
+
+Para resolver este tipo de relaciones, se considera la relación de orden parcial entre los tipos, inducida por la relación de subtipos, que se muestra en la figura \ref{subt1}.
 
 \begin{figure}[ht]
   \centering
@@ -230,20 +236,71 @@ Para resolver relaciones de este tipo, Cardelli~\cite{cardelli} considera la rel
   \label{subt1}
 \end{figure}
 
-Luego, introduce los tipos \texttt{meet} y \texttt{join}, que corresponden a la máxima cota inferior (ínfimo) y a la mínima cota superior (súpremo) entre dos tipos, respectivamente. Pese a que Cardelli no considera una inferencia basada en constraints, se puede aplicar este enfoque para la resolución de constraints de subtyping. En efecto, Pottier~\cite{pottier:inria-00073205} y Sekiguchi~\cite{sekiguchi} presentan sistemas de inferencia basados en constraints, con tipos equivalentes a los \texttt{meet} y \texttt{join} de Cardelli.
+Un orden parcial admite las operaciones \texttt{meet} y \texttt{join}, que corresponden a la máxima cota inferior (ínfimo) y a la mínima cota superior (supremo) entre dos tipos, respectivamente. Estas operaciones tienen solución si todo par de tipos en el orden parcial tiene un único supremo e ínfimo, lo que se define como retículo. En la figura \ref{subt1}, se debe agregar el tipo \texttt{Bot} para que el orden parcial sea un retículo.
 
-Las operaciones \texttt{meet} y \texttt{join} tienen solución si todo par de tipos en el orden parcial tiene un único supremo e ínfimo, lo que se define como lattice. En la figura \ref{subt1}, se debe agregar el tipo \texttt{Bot} para que el orden parcial sea una lattice.
+Luego, se introducen los tipos $\mathtt{t_1 \sqcap t_2}$ y $\mathtt{t_1 \sqcup t_2}$, que representan a las operaciones \texttt{meet} y \texttt{join} entre dos tipos, respectivamente.
 
-Las reglas para la aplicación de estas operaciones sobre una lattice se muestran en el teorema \ref{teo1}.
+En la fase de resolución de restricciones, se aplican las reglas de la proposición \ref{teo1} para generar los tipos correspondientes. Luego, cuando los tipos $\sqcap$ y $\sqcup$ relacionan tipos concretos, se puede materializar la operación sobre el retículo.
 
-\begin{teo} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una lattice de subtyping, se cumple lo siguiente: \\
+%Pese a que Cardelli no considera una inferencia basada en constraints, se puede aplicar este enfoque para la resolución de constraints de subtyping. En efecto, Pottier~\cite{pottier:inria-00073205} y Sekiguchi~\cite{sekiguchi} presentan sistemas de inferencia basados en constraints, con tipos equivalentes a los \texttt{meet} y \texttt{join} de Cardelli.
+
+\begin{prop} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una retículo de subtipos, se cumple lo siguiente: \\
   \begin{itemize}
-    \item \texttt{x <: y}, \texttt{x <: z} $\implies$ \texttt{x <: meet(y, z)}
-    \item \texttt{y <: x}, \texttt{z <: x} $\implies$ \texttt{join(y, z) <: x}
+    \item \texttt{x <: y}, \texttt{x <: z} $\implies$ $\mathtt{x <: y \sqcap z}$
+    \item \texttt{y <: x}, \texttt{z <: x} $\implies$ $\mathtt{y \sqcup z <: x}$
   \end{itemize}
-\end{teo}
+\end{prop}
 
-Volviendo al ejemplo \ref{ej2-9}, las constraints generadas se resuelven con la operación \texttt{join} entre \texttt{int} y \texttt{float} debido a la aplicación del teorema \ref{teo1}, lo que da como resultado \texttt{num}.
+En el ejemplo \ref{ej2-9}, las restricciones generadas se reducen con la aplicación de la proposición \ref{teo1}, lo que da como resultado la restricción $\mathtt{int\sqcup float <: X}$. Como \texttt{int} y \texttt{float} son tipos concretos, se puede materializar la operación \texttt{join}, lo que da como resultado \texttt{num}.
+
+Finalmente, como la restricción \texttt{num <: X} solo admite una solución para \texttt{X}, se resuelve que \texttt{X} tiene tipo \texttt{num}.
+
+\subsection*{Notas}
+
+En el ejemplo \ref{ej2-9}, la relación de subtipos es nominal. En una relación de subtipos nominal, el retículo de subtipos se define por la jerarquía que conforman los tipos, la cual fue definida explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ej2-10} muestra una declaración explícita de la jerarquía de los tipos del ejemplo \ref{ej2-9}.
+
+\begin{ej} \ \\
+  \normalfont
+  \label{ej2-10}
+\begin{lstlisting}
+  class Num {
+    Num +(Num n2);
+    Num *(Num n2);
+  }
+
+  class Int extends Num { }
+
+  class Float extends Num {
+    Int ceil();
+  }
+\end{lstlisting}
+\end{ej}
+
+Cuando una relación de subtipos es estructural, el retículo de subtipos se define por la forma que tienen los tipos. El ejemplo \ref{ej2-11} muestra la declaración de las clases que definen a los tipos del ejemplo \ref{ej2-9}. En este caso, \texttt{Int} y \texttt{Float} son subtipos de \texttt{Num} porque tienen al menos los mismos métodos que tiene \texttt{Num}.
+
+\begin{ej} \ \\
+  \normalfont
+  \label{ej2-11}
+\begin{lstlisting}
+  class Num {
+    Num +(Num n2);
+    Num *(Num n2);
+  }
+
+  class Int {
+    Int +(Num n2);
+    Int *(Num n2);
+  }
+
+  class Float {
+    Float +(Num n2);
+    Float *(Num n2);
+    Int ceil();
+  }
+\end{lstlisting}
+\end{ej}
+
+%Los tipos $\sqcap$ y $\sqcup$ fueron utilizados por vez primera en un algoritmo de inferencia por Cardelli~\cite{cardelli}.
 
 % Teniendo en cuenta que los distintos sistemas de inferencia propuestos a lo largo del tiempo comparten características, Odersky \textit{et al.}~\cite{odersky} propusieron el framework \texttt{HM(X)}, que entrega un algoritmo de inferencia genérico para un sistema de tipos basado en constraints que cumpla ciertas condiciones.
 
