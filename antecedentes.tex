@@ -186,7 +186,7 @@ La figura \ref{tabla1} muestra la asignación de tipos a cada una de las expresi
   \label{tabla1}
 \end{figure}
 
-En el ejemplo \ref{ej2-8}, las restricciones generadas representan igualdad entre dos tipos. Las siguientes observaciones permiten derivar conjunto de restricciones del programa.
+En el ejemplo \ref{ej2-8}, las restricciones generadas representan igualdad entre dos tipos. Las siguientes observaciones permiten derivar el conjunto de restricciones del programa.
 
 \begin{enumerate}
   \item \texttt{(x) =>\ x + 5} es una función anónima que debe tener tipo $\mathtt{Y \rightarrow Z}$, donde \texttt{Y} es el tipo del parámetro y \texttt{Z} es el tipo del cuerpo.
@@ -273,50 +273,49 @@ En el ejemplo \ref{ej2-9}, las restricciones generadas se reducen con la aplicac
 
 Finalmente, como la restricción \texttt{num <: X} solo admite una solución para \texttt{X}, se resuelve que \texttt{X} tiene tipo \texttt{num}.
 
-\subsection*{Notas}
+\subsection*{Antecedentes adicionales}
 
-En el ejemplo \ref{ej2-9}, la relación de subtipos es nominal. En una relación de subtipos nominal, el retículo de subtipos se define por la jerarquía que conforman los tipos, la cual fue definida explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ej2-10} muestra una declaración explícita de la jerarquía de los tipos del ejemplo \ref{ej2-9}.
+\subsubsection*{Relación de subtipos}
+
+En el ejemplo \ref{ej2-9}, la relación de subtipos es nominal. En una relación de subtipos nominal, el retículo de subtipos es definido explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ej2-10} muestra una declaración explícita de un retículo de subtipos, mediante el uso del \emph{keyword} \texttt{extends}.
 
 \begin{ej} \ \\
   \normalfont
   \label{ej2-10}
 \begin{lstlisting}
-  class Num {
-    Num +(Num n2);
-    Num *(Num n2);
+  class Animal {
+    String getName();
   }
-
-  class Int extends Num { }
-
-  class Float extends Num {
-    Int ceil();
+  class Duck extends Animal {
+    void cuack();
+  }
+  class Cat extends Animal {
+    void miau();
   }
 \end{lstlisting}
 \end{ej}
 
-Cuando una relación de subtipos es estructural, el retículo de subtipos se define por la forma que tienen los tipos. El ejemplo \ref{ej2-11} muestra la declaración de las clases que definen a los tipos del ejemplo \ref{ej2-9}. En este caso, \texttt{Int} y \texttt{Float} son subtipos de \texttt{Num} porque tienen al menos los mismos métodos que tiene \texttt{Num}.
+Cuando una relación de subtipos es estructural, el retículo de subtipos se define por la forma que tienen los tipos. El ejemplo \ref{ej2-11} muestra la declaración de las clases que definen una relación de subtipos estructural.
 
 \begin{ej} \ \\
   \normalfont
   \label{ej2-11}
 \begin{lstlisting}
-  class Num {
-    Num +(Num n2);
-    Num *(Num n2);
+  class Animal {
+    String getName();
   }
-
-  class Int {
-    Int +(Num n2);
-    Int *(Num n2);
+  class Duck {
+    String getName();
+    void cuack();
   }
-
-  class Float {
-    Float +(Num n2);
-    Float *(Num n2);
-    Int ceil();
+  class Cat {
+    String getName();
+    void miau();
   }
 \end{lstlisting}
 \end{ej}
+
+\subsubsection*{Inferencia de tipos}
 
 %Los tipos $\sqcap$ y $\sqcup$ fueron utilizados por vez primera en un algoritmo de inferencia por Cardelli~\cite{cardelli}.
 
