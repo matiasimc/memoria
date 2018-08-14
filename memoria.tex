@@ -21,9 +21,15 @@
 \usetikzlibrary{positioning}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{color}
+\usepackage{xcolor}
+\newcommand{\highlight}[1]{\colorbox{gray!30}{$\displaystyle #1$}}
 \usepackage{proof}
 \usepackage{caption}
+\usepackage[subdued,defaultmathsizes]{mathastext}
+\MTnonlettersobeymathxx     % math alphabets will act on (, ), [, ], etc...
+\MTexplicitbracesobeymathxx % math alphabets will act on \{ and \}
+\MTfamily {\ttdefault}      % we will declare a math version using tt font
+\Mathastext [typewriter]    % the math version is called typewriter
 
 \usepackage{algorithm, algpseudocode}
 \makeatletter

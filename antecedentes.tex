@@ -34,7 +34,7 @@ La función \texttt{book} del ejemplo \ref{ej2-1} no contiene fugas de informaci
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-2} el sistema de tipos reporta un error en el llamado a la función \texttt{sendToGoogleMaps}, debido a que se disminuye el nivel de seguridad de \texttt{cardNumber}, desde \texttt{H} a \texttt{L}, lo cual es una infracción a la propiedad de no-interferencia.
+El programa del ejemplo \ref{ej2-2} es rechazado por el sistema de tipos, debido a un error causado por el llamado a la función \texttt{sendToGoogleMaps}, donde se disminuye el nivel de seguridad de \texttt{cardNumber} desde \texttt{H} a \texttt{L}, lo cual es una infracción a la propiedad de no-interferencia.
 
 Los flujos de información que ocurren en la asignación directa de valores se denominan \emph{flujos explícitos}. Para la detección de flujos explícitos que violan la propiedad de no-interferencia, los lenguajes con tipado de seguridad poseen distintas reglas que relacionan los niveles de seguridad involucrados. En una instrucción de asignación \texttt{x = y}, el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad de \texttt{x}. En una instrucción de retorno \texttt{return y}, el nivel de seguridad de \texttt{y} debe ser igual o menor que el nivel de seguridad declarado como retorno de la función. En un llamado a una función, como ocurre en el ejemplo \ref{ej2-2}, el nivel de seguridad de cada argumento debe ser menor o igual que el nivel de seguridad del correspondiente parámetro.
 
@@ -108,7 +108,7 @@ Al igual que en tipado de seguridad de dos o más niveles, las facetas de la des
 			\draw(StringEq)      -- (StringEqLength);
 			\draw(StringEqLength)      -- (String);
 		\end{tikzpicture}
-		\caption{retículo de subtipos}
+		\caption{Retículo de subtipos}
     \label{l1}
 	\end{figure}
 
@@ -126,7 +126,7 @@ Existen dos reglas principales para comprobar que un programa con tipos de dos f
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-6}, el valor de retorno de la invocación al método \texttt{hash} sobre el parámetro \texttt{password}, tiene faceta pública \texttt{StringEq}, debido a que fue declarado de esta forma en la faceta pública \texttt{StringHashEq}. A esta regla se le llama \texttt{TmD}.
+En el ejemplo \ref{ej2-6}, el valor de retorno de la invocación al método \texttt{hash} sobre el parámetro \texttt{password}, tiene faceta pública \texttt{StringEq}, debido a que fue declarado de esta forma en la faceta pública \texttt{StringHashEq}. A esta regla se le llama $\text{TmD}$ y se muestra en la figura \ref{reglas}.
 
 Ahora consideremos el siguiente ejemplo, en donde se cambia la faceta pública del parámetro \texttt{password} del ejemplo \ref{ej2-6} por \texttt{StringEq}.
 
@@ -140,7 +140,34 @@ Ahora consideremos el siguiente ejemplo, en donde se cambia la faceta pública d
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-7} se realiza una invocación al método \texttt{hash} sobre el parámetro \texttt{password}, que declara una faceta pública que no autoriza la operación. Cuando esto sucede, la faceta pública de retorno de la invocación es \texttt{Top}. A esta regla se le llama \texttt{TmH}.
+\clearpage
+En el ejemplo \ref{ej2-7} se realiza una invocación al método \texttt{hash} sobre el parámetro \texttt{password}, que declara una faceta pública que no autoriza la operación. Cuando esto sucede, la faceta pública de retorno de la invocación es \texttt{Top}. A esta regla se le llama $\text{TmH}$ y se muestra en la figura \ref{reglas}.
+
+\begin{figure}[ht]
+  \centering
+  \[
+    \infer[(\text{TmD})]
+    {\Gamma \vdash e_1.m(e_2) : S_2}
+    {
+    \Gamma \vdash e_1 : T\text{\texttt{<}}U&
+    \highlight{m\in U}&
+    \mathtt{methsig}(U,m) = S_1 \rightarrow S_2&
+    \Gamma \vdash e_2 : S_1
+    }
+  \]
+  \[
+    \infer[(\text{TmH})]
+    {\Gamma \vdash e_1.m(e_2) : T_2\text{\texttt{<}}\highlight{\top}}
+    {
+    \Gamma \vdash e_1 : T\text{\texttt{<}}U&
+    \highlight{m\notin U}&
+    \mathtt{methsig}(T,m) = S_1 \rightarrow T_2\text{\texttt{<}}U_2&
+    \Gamma \vdash e_2 : S_1
+    }
+  \]
+  \caption{Reglas principales del sistema de tipos de la desclasificación basada en tipos. Cada regla se compone de una serie de premisas en la parte superior, y una conclusión en la parte inferior. El juicio de la forma $\Gamma \vdash e : T$ indica que en el contexto $\Gamma$ la expresión $e$ tiene tipo $T$. El procedimiento auxiliar \texttt{methsig}$(O,m)$ entrega la firma del método $m$ en el tipo de objeto $O$.}
+  \label{reglas}
+\end{figure}
 
 La propiedad de seguridad que se demuestra para el sistema de tipos de la desclasificación basada en tipos es una forma de no-interferencia con políticas de desclasificación, denominada no-interferencia relajada (\emph{Relaxed noninterference}). Un lenguaje de seguridad que cumple con esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
