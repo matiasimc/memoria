@@ -165,18 +165,67 @@ En el ejemplo \ref{ej2-7} se realiza una invocación al método \texttt{hash} so
     \Gamma \vdash e_2 : S_1
     }
   \]
-  \caption{Reglas principales del sistema de tipos de la desclasificación basada en tipos. Cada regla se compone de una serie de premisas en la parte superior, y una conclusión en la parte inferior. El juicio de la forma $\Gamma \vdash e : T$ indica que en el contexto $\Gamma$ la expresión $e$ tiene tipo $T$. El procedimiento auxiliar \texttt{methsig}$(O,m)$ entrega la firma del método $m$ en el tipo de objeto $O$.}
+  \caption{Reglas principales del sistema de tipos de la desclasificación basada en tipos. Cada regla se compone de una serie de premisas en la parte superior, y una conclusión en la parte inferior. El juicio de la forma $\Gamma \vdash e : T$ indica que en el contexto $\Gamma$ la expresión $e$ tiene tipo $T$. El procedimiento auxiliar \texttt{methsig}$(O,m)$ entrega la firma del método $m$ en el tipo de objeto $O$. Un tipo $S$ es un tipo de dos facetas $T\text{\texttt{<}}U$.}
   \label{reglas}
 \end{figure}
 
-La propiedad de seguridad que se demuestra para el sistema de tipos de la desclasificación basada en tipos es una forma de no-interferencia con políticas de desclasificación, denominada no-interferencia relajada (\emph{Relaxed noninterference}). Un lenguaje de seguridad que cumple con esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
+La propiedad de seguridad que se demuestra para el sistema de tipos de la desclasificación basada en tipos es una forma de no-interferencia con políticas de desclasificación, denominada no-interferencia relajada (\emph{relaxed noninterference}). Un lenguaje de seguridad que cumple con esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
-\section{Inferencia de tipos} \label{inference}
-En la sección anterior se revisaron los conceptos relacionados a control de flujo de información, que sirven para comprender el trabajo de la desclasificación basada en tipos. En esta sección se revisan los conceptos relacionados a inferencia de tipos, necesarios para comprender la propuesta de esta memoria.
+En este capítulo se revisaron los conceptos de control de flujo de información y tipado de seguridad, incluyendo la desclasificación basada en tipos. Es importante considerar que la implementación de un lenguaje de programación con el sistema de tipos de la desclasificación basada en tipos, requiere la anotación de los identificadores con facetas públicas y privadas, lo cual es poco práctico. Por este motivo es deseable contar con un sistema de inferencia de tipos para la desclasificación basada en tipos. En el siguiente capítulo se revisan los conceptos importantes de inferencia de tipos.
 
-La inferencia de tipos es el proceso de determinar el tipo de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores, y mantener los beneficios de un lenguaje estáticamente tipado.
+\chapter{Inferencia de tipos} \label{inference}
+La inferencia de tipos es el proceso de determinar el tipo de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores, y mantener los beneficios de un lenguaje estáticamente tipado. Además, aumenta la escalabilidad de los sistemas, ya que el costo de refactorizar código anotado es mayor al costo de refactorizar código no anotado.
 
-Para ilustrar los conceptos importantes de inferencia, consideremos un lenguaje sencillo con funciones y operaciones aritméticas sobre enteros, cuya sintaxis se muestra en el siguiente ejemplo.
+\section{Inferencia en lenguajes conocidos}
+Las características de los sistemas de inferencia varían dependiendo de las características de los lenguajes de programación. A continuación se describe la inferencia de tipos en lenguajes conocidos.
+
+\paragraph{Scala.} Scala es un lenguaje de programación estáticamente\footnote{Un lenguaje estáticamente tipado es aquel que comprueba en tiempo de compilación la correctitud de los tipos del programa} tipado que combina los paradigmas de la programación orientada a objetos y la programación funcional. Scala posee una inferencia de tipos local~\cite{pierce}, que permite omitir las anotaciones de tipos en la declaración de variables locales, en el uso de clases y métodos polimórficos, y en el tipo de retorno de métodos no recursivos. Esto se muestra en el ejemplo \ref{ejscala}, donde se infiere el tipo de los identificadores \texttt{p} y \texttt{q}.
+\clearpage
+\begin{ej} \ \\
+  \normalfont
+  \label{ejscala}
+\begin{lstlisting}[language=Scala]
+  case class MyPair[A, B](x: A, y: B);
+  object InferenceTest {
+    def id[T](x: T) = x
+    val p = MyPair(1, "scala")   // type: MyPair[Int, String]
+    val q = id(1)                 // type: Int
+  }
+\end{lstlisting}
+\end{ej}
+
+\paragraph{Haskell.} Haskell es un lenguaje de programación funcional estáticamente tipado, cuyo sistema de tipos se basa en el sistema de tipos Hindley-Milner (HM)~\cite{damasmilner}. Este sistema de tipos tiene inferencia global, es decir, es capaz de inferir los tipos principales\footnote{Un tipo principal es el tipo más general que puede ser inferido para una expresión, en el sentido de que cualquier otro tipo posible es una especialización del tipo principal} en un programa sin ninguna anotación de tipo. Haskell es capaz de inferir tipos con polimorfismo paramétrico, lo que significa que se pueden declarar funciones polimórficas como en Java y Scala sin necesidad de indicar un tipo genérico. En el ejemplo \ref{haskellpoly} se muestra la definición de la función \texttt{map} en Haskell, y el tipo inferido en la última línea. Este tipo corresponde al tipo de una función, que dado una función de tipo $\mathtt{a \rightarrow b}$ y una lista de tipo \texttt{a}, retorna una lista de tipo \texttt{b}.
+
+\begin{ej} \ \\
+  \normalfont
+  \label{haskellpoly}
+\begin{lstlisting}[language=Haskell]
+  map f [] = []
+  map f (first:rest) = f first : map f rest
+
+  >:t map
+  map :: (a -> b) -> [a] -> [b]
+\end{lstlisting}
+\end{ej}
+
+\paragraph{C++.} C++ es un lenguaje de programación orientado a objetos estáticamente tipado que posee herramientas para realizar programación de bajo nivel. C++ ofrece la posibilidad de omitir el tipo en la declaración de variables mediante los keywords \texttt{auto} y \texttt{decltype}, lo que se muestra en el ejemplo \ref{ejc}.
+
+\begin{ej} \ \\
+  \normalfont
+  \label{ejc}
+\begin{lstlisting}[language=C,morekeywords={decltype,string}]
+  auto n = 1;      // type: int
+  string s = "abc";
+  decltype(s) k;  // type: string
+\end{lstlisting}
+\end{ej}
+
+\section{Inferencia en sistemas Hindley-Milner}
+
+Un sistema de tipos de Hindley-Milner (HM)~\cite{damasmilner} es un sistema de tipos clásico del cálculo lambda con polimorfismo paramétrico. El algoritmo de inferencia del sistema de tipos HM, denominado algoritmo W, siempre calcula el tipo principal de las expresiones. En esta sección se explica el proceso de inferencia de tipos para un lenguaje sencillo de tipo HM, con el fin de ilustrar los conceptos importantes de inferencia de tipos.
+
+El lenguaje a considerar posee operaciones aritméticas entre enteros y funciones. La sintaxis se muestra en el ejemplo \ref{ej2-8}.
+
 \vspace{0.8em}
 \begin{ej}
   \normalfont
@@ -189,7 +238,6 @@ Para ilustrar los conceptos importantes de inferencia, consideremos un lenguaje 
 En el ejemplo \ref{ej2-8}, se asigna a \texttt{g} una función que retorna la suma entre \texttt{x} y \texttt{5}. Notar que no se anotó el tipo de los identificadores \texttt{g} y \texttt{x}.
 
 En la etapa de tipar un programa (\emph{type checking}), los sistemas de inferencia asignan una variable de tipo a cada expresión sin un tipo conocido, y un tipo concreto\footnote{Un tipo concreto no tiene variables de tipo} (por ejemplo, \texttt{int}) a cada expresión con tipo conocido. Además, generan un conjunto de restricciones que se deben cumplir para que cada expresión esté bien tipada.
-\clearpage
 
 Una restricción representa una relación entre dos tipos. Esta relación puede ser de igualdad o de subtipos. El uso de restricciones permite presentar un algoritmo de inferencia de forma modular, como una fase de generación de restricciones, y una fase de resolución de restricciones.
 
@@ -213,7 +261,7 @@ La figura \ref{tabla1} muestra la asignación de tipos a cada una de las expresi
   \label{tabla1}
 \end{figure}
 
-En el ejemplo \ref{ej2-8}, las restricciones generadas representan igualdad entre dos tipos. Las siguientes observaciones permiten derivar el conjunto de restricciones del programa.
+Las restricciones generadas para el ejemplo \ref{ej2-8} representan la igualdad entre dos tipos. Las siguientes observaciones permiten derivar el conjunto de restricciones del programa.
 
 \begin{enumerate}
   \item \texttt{(x) =>\ x + 5} es una función anónima que debe tener tipo $\mathtt{Y \rightarrow Z}$, donde \texttt{Y} es el tipo del parámetro y \texttt{Z} es el tipo del cuerpo.
@@ -228,7 +276,7 @@ Sintetizando, el conjunto de restricciones generado es el siguiente:
   \item \texttt{Z = int}
 \end{itemize}
 
-Una vez que se genera el conjunto de restricciones sobre el programa, se procede a encontrar una solución para las variables de tipo del conjunto. Cuando las restricciones representan relaciones de igualdad, se utiliza el algoritmo de unificación de Damas-Milner~\cite{damasmilner}. Este algoritmo genera un diccionario de variables de tipo a tipos concretos, mediante substituciones. La figura \ref{tabla2} muestra la solución esperada del ejemplo \ref{ej2-8}.
+Una vez que se genera el conjunto de restricciones sobre el programa, se procede a encontrar una solución para las variables de tipo del conjunto. Cuando las restricciones representan relaciones de igualdad, se utiliza el algoritmo de unificación de Hindley-Milner~\cite{damasmilner}. Este algoritmo genera un diccionario de variables de tipo a tipos concretos, mediante substituciones. La figura \ref{tabla2} muestra la solución esperada del ejemplo \ref{ej2-8}.
 
 \begin{figure}[ht]
   \centering
@@ -244,8 +292,7 @@ Una vez que se genera el conjunto de restricciones sobre el programa, se procede
   \label{tabla2}
 \end{figure}
 
-\clearpage
-Desafortunadamente, el algoritmo de unificación de Damas-Milner no funciona cuando las restricciones representan una relación de subtipos. Consideremos una extensión del lenguaje anterior,  en donde se introducen los tipos \texttt{num} y \texttt{float}, donde se cumple \texttt{float <: num} y \texttt{int <: num}. En el ejemplo \ref{ej2-9} se muestran dos instrucciones de asignación.
+Desafortunadamente, el algoritmo de unificación de Hindley-Milner no funciona cuando las restricciones representan una relación de subtipos. Consideremos una extensión del lenguaje anterior,  en donde se introducen los tipos \texttt{num} y \texttt{float}, donde se cumple \texttt{float <: num} y \texttt{int <: num}. En el ejemplo \ref{ej2-9} se muestran dos instrucciones de asignación.
 \vspace{0.8em}
 \begin{ej}
   \normalfont
@@ -266,7 +313,7 @@ En el ejemplo \ref{ej2-9}, se asigna la variable de tipo \texttt{X} al identific
 
 %Cardelli~\cite{cardelli}
 
-Para resolver este tipo de relaciones, se considera la relación de orden parcial entre los tipos, inducida por la relación de subtipos, que se muestra en la figura \ref{subt1}.
+Para resolver este tipo de restricciones, se considera la relación de orden parcial entre los tipos, inducida por la relación de subtipos, que se muestra en la figura \ref{subt1}.
 
 \begin{figure}[ht]
   \centering
@@ -283,13 +330,13 @@ Para resolver este tipo de relaciones, se considera la relación de orden parcia
 
 Un orden parcial admite las operaciones \texttt{meet} y \texttt{join}, que corresponden a la máxima cota inferior (ínfimo) y a la mínima cota superior (supremo) entre dos tipos, respectivamente. Estas operaciones tienen solución si todo par de tipos en el orden parcial tiene un único supremo e ínfimo, lo que se define como retículo. En la figura \ref{subt1}, se debe agregar el tipo \texttt{Bot} para que el orden parcial sea un retículo.
 
-Luego, se introducen los tipos $\mathtt{t_1 \sqcap t_2}$ y $\mathtt{t_1 \sqcup t_2}$, que representan a las operaciones \texttt{meet} y \texttt{join} entre dos tipos, respectivamente.
+Luego, mediante los tipos $\mathtt{t_1 \sqcap t_2}$ y $\mathtt{t_1 \sqcup t_2}$ introducidos por Cardelli~\cite{cardelli}, se representan las operaciones \texttt{meet} y \texttt{join} entre dos tipos, respectivamente.
 
 En la fase de resolución de restricciones, se aplican las reglas de la proposición \ref{teo1} para generar los tipos correspondientes. Luego, cuando los tipos $\sqcap$ y $\sqcup$ relacionan tipos concretos, se puede materializar la operación sobre el retículo.
 
 %Pese a que Cardelli no considera una inferencia basada en constraints, se puede aplicar este enfoque para la resolución de constraints de subtyping. En efecto, Pottier~\cite{pottier:inria-00073205} y Sekiguchi~\cite{sekiguchi} presentan sistemas de inferencia basados en constraints, con tipos equivalentes a los \texttt{meet} y \texttt{join} de Cardelli.
 
-\begin{prop} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una retículo de subtipos, se cumple lo siguiente: \\
+\begin{prop} \label{teo1} \normalfont Si \texttt{x}, \texttt{y} y \texttt{z} pertenecen a una retículo de subtipos, se cumple lo siguiente:
   \begin{itemize}
     \item \texttt{x <: y}, \texttt{x <: z} $\implies$ $\mathtt{x <: y \sqcap z}$
     \item \texttt{y <: x}, \texttt{z <: x} $\implies$ $\mathtt{y \sqcup z <: x}$
@@ -300,49 +347,52 @@ En el ejemplo \ref{ej2-9}, las restricciones generadas se reducen con la aplicac
 
 Finalmente, como la restricción \texttt{num <: X} solo admite una solución para \texttt{X}, se resuelve que \texttt{X} tiene tipo \texttt{num}.
 
-\subsection*{Antecedentes adicionales}
+A lo largo del tiempo se han desarrollado diversas extensiones al sistema de tipos HM, para brindar características avanzadas manteniendo la completitud del algoritmo W. Odersky et al.~\cite{odersky} desarrollaron el framework HM(X), que entrega un algoritmo de inferencia genérico para cualquier sistema de tipos basado en restricciones, que cumpla con ciertas propiedades. Utilizando el framework HM(X), Pottier y Simonet~\cite{Pottier} presentaron un análisis de control de flujo con inferencia de tipos de seguridad.
 
-\subsubsection*{Relación de subtipos}
+En este capítulo se presentó la inferencia de tipos, se mostraron algunos ejemplos de lenguajes conocidos que utilizan alguna forma de inferencia, y se explicaron los conceptos básicos de inferencia utilizando un sistema Hindley-Milner. En el siguiente capítulo se propone un algoritmo de inferencia para la desclasificación basada en tipos.
 
-En el ejemplo \ref{ej2-9}, la relación de subtipos es nominal. En una relación de subtipos nominal, el retículo de subtipos es definido explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ej2-10} muestra una declaración explícita de un retículo de subtipos, mediante el uso del \emph{keyword} \texttt{extends}.
+% \subsection*{Antecedentes adicionales}
+%
+% \subsubsection*{Relación de subtipos}
+%
+% En el ejemplo \ref{ej2-9}, la relación de subtipos es nominal. En una relación de subtipos nominal, el retículo de subtipos es definido explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ej2-10} muestra una declaración explícita de un retículo de subtipos, mediante el uso del \emph{keyword} \texttt{extends}.
+%
+% \begin{ej} \ \\
+%   \normalfont
+%   \label{ej2-10}
+% \begin{lstlisting}
+%   class Animal {
+%     String getName();
+%   }
+%   class Duck extends Animal {
+%     void cuack();
+%   }
+%   class Cat extends Animal {
+%     void miau();
+%   }
+% \end{lstlisting}
+% \end{ej}
+%
+% Cuando una relación de subtipos es estructural, el retículo de subtipos se define por la forma que tienen los tipos. El ejemplo \ref{ej2-11} muestra la declaración de las clases que definen una relación de subtipos estructural.
+%
+% \begin{ej} \ \\
+%   \normalfont
+%   \label{ej2-11}
+% \begin{lstlisting}
+%   class Animal {
+%     String getName();
+%   }
+%   class Duck {
+%     String getName();
+%     void cuack();
+%   }
+%   class Cat {
+%     String getName();
+%     void miau();
+%   }
+% \end{lstlisting}
+% \end{ej}
 
-\begin{ej} \ \\
-  \normalfont
-  \label{ej2-10}
-\begin{lstlisting}
-  class Animal {
-    String getName();
-  }
-  class Duck extends Animal {
-    void cuack();
-  }
-  class Cat extends Animal {
-    void miau();
-  }
-\end{lstlisting}
-\end{ej}
-
-Cuando una relación de subtipos es estructural, el retículo de subtipos se define por la forma que tienen los tipos. El ejemplo \ref{ej2-11} muestra la declaración de las clases que definen una relación de subtipos estructural.
-
-\begin{ej} \ \\
-  \normalfont
-  \label{ej2-11}
-\begin{lstlisting}
-  class Animal {
-    String getName();
-  }
-  class Duck {
-    String getName();
-    void cuack();
-  }
-  class Cat {
-    String getName();
-    void miau();
-  }
-\end{lstlisting}
-\end{ej}
-
-\subsubsection*{Inferencia de tipos}
 
 %Los tipos $\sqcap$ y $\sqcup$ fueron utilizados por vez primera en un algoritmo de inferencia por Cardelli~\cite{cardelli}.
 
