@@ -171,15 +171,19 @@ En el ejemplo \ref{ej2-7} se realiza una invocación al método \texttt{hash} so
 
 La propiedad de seguridad que se demuestra para el sistema de tipos de la desclasificación basada en tipos es una forma de no-interferencia con políticas de desclasificación, denominada no-interferencia relajada (\emph{relaxed noninterference}). Un lenguaje de seguridad que cumple con esta propiedad, garantiza que la información confidencial solo puede fluir hacia canales públicos de forma controlada, por medio de las políticas de desclasificación.
 
-En este capítulo se revisaron los conceptos de control de flujo de información y tipado de seguridad, incluyendo la desclasificación basada en tipos. Es importante considerar que la implementación de un lenguaje de programación con el sistema de tipos de la desclasificación basada en tipos, requiere la anotación de los identificadores con facetas públicas y privadas, lo cual es poco práctico. Por este motivo es deseable contar con un sistema de inferencia de tipos para la desclasificación basada en tipos. En el siguiente capítulo se revisan los conceptos importantes de inferencia de tipos.
+\section*{Resumen}
+En este capítulo se revisaron los conceptos de tipado de seguridad para el control de flujo de información, y las distintas reglas que permiten detectar la ocurrencia de infracciones a la propiedad de no-interferencia. Luego, se mostró la necesidad de contar con mecanismos de desclasificación, para finalizar explicando la desclasificación basada en tipos.
+
+Es importante considerar que la implementación de un lenguaje de programación con el sistema de tipos de la desclasificación basada en tipos, requiere la anotación de los identificadores con facetas públicas y privadas, lo cual es poco práctico. Por este motivo es deseable contar con un sistema de inferencia de tipos para la desclasificación basada en tipos. En el siguiente capítulo se revisan los conceptos importantes de inferencia de tipos.
 
 \chapter{Inferencia de tipos} \label{inference}
 La inferencia de tipos es el proceso de determinar el tipo de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores, y mantener los beneficios de un lenguaje estáticamente tipado. Además, aumenta la escalabilidad de los sistemas, ya que el costo de refactorizar código anotado es mayor al costo de refactorizar código no anotado.
 
 \section{Inferencia en lenguajes conocidos}
-Las características de los sistemas de inferencia varían dependiendo de las características de los lenguajes de programación. A continuación se describe la inferencia de tipos en lenguajes conocidos.
+Las características de los algoritmos de inferencia varían dependiendo de las características de los lenguajes de programación. A continuación se describe la inferencia de tipos en lenguajes conocidos.
 
-\paragraph{Scala.} Scala es un lenguaje de programación estáticamente\footnote{Un lenguaje estáticamente tipado es aquel que comprueba en tiempo de compilación la correctitud de los tipos del programa} tipado que combina los paradigmas de la programación orientada a objetos y la programación funcional. Scala posee una inferencia de tipos local~\cite{pierce}, que permite omitir las anotaciones de tipos en la declaración de variables locales, en el uso de clases y métodos polimórficos, y en el tipo de retorno de métodos no recursivos. Esto se muestra en el ejemplo \ref{ejscala}, donde se infiere el tipo de los identificadores \texttt{p} y \texttt{q}.
+\subsection{Scala}
+Scala es un lenguaje de programación estáticamente\footnote{Un lenguaje estáticamente tipado es aquel que comprueba en tiempo de compilación la correctitud de los tipos del programa} tipado que combina los paradigmas de la programación orientada a objetos y la programación funcional. Scala posee una inferencia de tipos local~\cite{pierce}, que permite omitir las anotaciones de tipos en la declaración de variables locales, en el uso de clases y métodos polimórficos, y en el tipo de retorno de métodos no recursivos. Esto se muestra en el ejemplo \ref{ejscala}, donde se infiere el tipo de los identificadores \texttt{p} y \texttt{q}. \texttt{MyPair} es una clase polimórfica especial que define un constructor con dos parámetros. \texttt{id} define la función identidad polimórfica.
 \clearpage
 \begin{ej} \ \\
   \normalfont
@@ -194,7 +198,8 @@ Las características de los sistemas de inferencia varían dependiendo de las ca
 \end{lstlisting}
 \end{ej}
 
-\paragraph{Haskell.} Haskell es un lenguaje de programación funcional estáticamente tipado, cuyo sistema de tipos se basa en el sistema de tipos Hindley-Milner (HM)~\cite{damasmilner}. Este sistema de tipos tiene inferencia global, es decir, es capaz de inferir los tipos principales\footnote{Un tipo principal es el tipo más general que puede ser inferido para una expresión, en el sentido de que cualquier otro tipo posible es una especialización del tipo principal} en un programa sin ninguna anotación de tipo. Haskell es capaz de inferir tipos con polimorfismo paramétrico, lo que significa que se pueden declarar funciones polimórficas como en Java y Scala sin necesidad de indicar un tipo genérico. En el ejemplo \ref{haskellpoly} se muestra la definición de la función \texttt{map} en Haskell, y el tipo inferido en la última línea. Este tipo corresponde al tipo de una función, que dado una función de tipo $\mathtt{a \rightarrow b}$ y una lista de tipo \texttt{a}, retorna una lista de tipo \texttt{b}.
+\subsection{Haskell}
+Haskell es un lenguaje de programación funcional estáticamente tipado, cuyo sistema de tipos se basa en el sistema de tipos Hindley-Milner (HM)~\cite{damasmilner}. Este sistema de tipos tiene inferencia global, es decir, es capaz de inferir los tipos principales\footnote{Un tipo principal es el tipo más general que puede ser inferido para una expresión, en el sentido de que cualquier otro tipo posible es una especialización del tipo principal} en un programa sin anotaciones de tipo. Haskell es capaz de inferir tipos con polimorfismo paramétrico, lo que significa que se pueden declarar funciones polimórficas como en Java y Scala sin necesidad de indicar un tipo genérico. En la parte superior del ejemplo \ref{haskellpoly} se muestra la definición de la función \texttt{map} en Haskell, y en la parte inferior el tipo inferido. Este tipo corresponde al tipo de una función, que dado una función de tipo $\mathtt{a \rightarrow b}$ y una lista de tipo \texttt{a}, retorna una lista de tipo \texttt{b}.
 
 \begin{ej} \ \\
   \normalfont
@@ -202,13 +207,15 @@ Las características de los sistemas de inferencia varían dependiendo de las ca
 \begin{lstlisting}[language=Haskell]
   map f [] = []
   map f (first:rest) = f first : map f rest
-
-  >:t map
+  __________________________________________
   map :: (a -> b) -> [a] -> [b]
 \end{lstlisting}
 \end{ej}
 
-\paragraph{C++.} C++ es un lenguaje de programación orientado a objetos estáticamente tipado que posee herramientas para realizar programación de bajo nivel. C++ ofrece la posibilidad de omitir el tipo en la declaración de variables mediante los keywords \texttt{auto} y \texttt{decltype}, lo que se muestra en el ejemplo \ref{ejc}.
+%El sistema de inferencia implementado en la versión más reciente del compilador de Haskell se denomina OutsideIn(X)~\cite{outsideinx}.
+
+\subsection{C++}
+C++ es un lenguaje de programación orientado a objetos estáticamente tipado que posee herramientas para realizar programación de bajo nivel. C++ ofrece la posibilidad de omitir el tipo en la declaración de variables mediante los keywords \texttt{auto} y \texttt{decltype}, lo que se muestra en el ejemplo \ref{ejc}.
 
 \begin{ej} \ \\
   \normalfont
@@ -224,18 +231,18 @@ Las características de los sistemas de inferencia varían dependiendo de las ca
 
 Un sistema de tipos de Hindley-Milner (HM)~\cite{damasmilner} es un sistema de tipos clásico del cálculo lambda con polimorfismo paramétrico. El algoritmo de inferencia del sistema de tipos HM, denominado algoritmo W, siempre calcula el tipo principal de las expresiones. En esta sección se explica el proceso de inferencia de tipos para un lenguaje sencillo de tipo HM, con el fin de ilustrar los conceptos importantes de inferencia de tipos.
 
-El lenguaje a considerar posee operaciones aritméticas entre enteros y funciones. La sintaxis se muestra en el ejemplo \ref{ej2-8}.
+El lenguaje a considerar posee operaciones aritméticas entre enteros, funciones y expresiones condicionales. La sintaxis se muestra en el ejemplo \ref{ej2-8}.
 
 \vspace{0.8em}
 \begin{ej}
   \normalfont
   \label{ej2-8}
-\begin{lstlisting}
-  let g = (x) => x + 5;
+\begin{lstlisting}[morekeywords={then}]
+  let g = (x,c) => if (c) then x + 5 else x;
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-8}, se asigna a \texttt{g} una función que retorna la suma entre \texttt{x} y \texttt{5}. Notar que no se anotó el tipo de los identificadores \texttt{g} y \texttt{x}.
+En el ejemplo \ref{ej2-8}, se asigna a \texttt{g} una función que retorna la suma entre \texttt{x} y \texttt{5} si \texttt{c} es \texttt{true}, o \texttt{x} en caso contrario. Notar que no se anotó el tipo de los identificadores \texttt{g}, \texttt{x} y \texttt{c}.
 
 En la etapa de tipar un programa (\emph{type checking}), los sistemas de inferencia asignan una variable de tipo a cada expresión sin un tipo conocido, y un tipo concreto\footnote{Un tipo concreto no tiene variables de tipo} (por ejemplo, \texttt{int}) a cada expresión con tipo conocido. Además, generan un conjunto de restricciones que se deben cumplir para que cada expresión esté bien tipada.
 
@@ -250,12 +257,16 @@ La figura \ref{tabla1} muestra la asignación de tipos a cada una de las expresi
   \begin{tabular}{c c c}
     Expresión & Tipo & Restricciones\\
     \hline
-    (x) =>\ x + 5 & X & $\mathtt{X = Y \rightarrow Z}$\\
+    (x,c) =>\ if (c) then x + 5 else x & X & $\mathtt{X = (Y,Z) \rightarrow W}$\\
     x & Y & -\\
-    x + 5 & Z & Y = int, Z = int\\
+    c & Z & -\\
+    if (c) then x + 5 else x & W & W = V, W = Y\\
+    c & Z & Z = bool\\
+    x + 5 & V & Y = int, V = int\\
     + & $\mathtt{(int,int) \rightarrow int}$ & -\\
     x & Y & -\\
     5 & int & -\\
+    x & Y & -\\
   \end{tabular}
   \caption{Etapa de \emph{type checking}}
   \label{tabla1}
@@ -264,19 +275,19 @@ La figura \ref{tabla1} muestra la asignación de tipos a cada una de las expresi
 Las restricciones generadas para el ejemplo \ref{ej2-8} representan la igualdad entre dos tipos. Las siguientes observaciones permiten derivar el conjunto de restricciones del programa.
 
 \begin{enumerate}
-  \item \texttt{(x) =>\ x + 5} es una función anónima que debe tener tipo $\mathtt{Y \rightarrow Z}$, donde \texttt{Y} es el tipo del parámetro y \texttt{Z} es el tipo del cuerpo.
+  \item \texttt{(x,c) =>\ if (c) then x + 5 else x} es una función anónima que debe tener tipo $\mathtt{(Y,Z) \rightarrow W}$, donde \texttt{Y} y \texttt{Z} son los tipos de los parámetros y \texttt{W} es el tipo del cuerpo.
+  \item \texttt{if (c) then x + 5 else x} es una expresión condicional, cuyo tipo \texttt{W} es igual al tipo de ambas ramas de la condición.
+  \item La condición \texttt{c} de la expresión condicional debe tener tipo \texttt{bool}.
   \item \texttt{x + 5} es una aplicación de la función suma, por lo que su tipo debe coincidir con el tipo de retorno de la función. Además, el tipo de los argumentos debe coincidir con el tipo de los parámetros de la función.
 \end{enumerate}
 
 Sintetizando, el conjunto de restricciones generado es el siguiente:
 
-\begin{itemize}
-  \item $\mathtt{X = Y \rightarrow Z}$
-  \item \texttt{Y = int}
-  \item \texttt{Z = int}
-\end{itemize}
+\[
+R_1: \{ \mathtt{X = (Y,Z) \rightarrow W,\ W = V, W = Y,\ Z = bool,\ Y = int,\ V = int} \}
+\]
 
-Una vez que se genera el conjunto de restricciones sobre el programa, se procede a encontrar una solución para las variables de tipo del conjunto. Cuando las restricciones representan relaciones de igualdad, se utiliza el algoritmo de unificación de Hindley-Milner~\cite{damasmilner}. Este algoritmo genera un diccionario de variables de tipo a tipos concretos, mediante substituciones. La figura \ref{tabla2} muestra la solución esperada del ejemplo \ref{ej2-8}.
+Una vez que se genera el conjunto de restricciones sobre el programa, se procede a encontrar una solución para las variables de tipo del conjunto. Cuando las restricciones representan relaciones de igualdad, se utiliza el algoritmo de unificación de Hindley-Milner~\cite{damasmilner}. Este algoritmo genera un diccionario de variables de tipo a tipos concretos, mediante substituciones desde la última restricción generada a la primera restricción generada (\emph{bottom-up}). La figura \ref{tabla2} muestra la solución esperada del ejemplo \ref{ej2-8}.
 
 \begin{figure}[ht]
   \centering
@@ -284,32 +295,31 @@ Una vez que se genera el conjunto de restricciones sobre el programa, se procede
   \begin{tabular}{c c}
     Variable de tipo & Tipo concreto \\
     \hline
-    X & $\mathtt{int \rightarrow int}$  \\
+    X & $\mathtt{(int, bool) \rightarrow int}$  \\
     Y & int \\
-    Z & int \\
+    Z & bool \\
+    W & int \\
+    V & int \\
   \end{tabular}
   \caption{Solución del conjunto de restricciones}
   \label{tabla2}
 \end{figure}
 
-Desafortunadamente, el algoritmo de unificación de Hindley-Milner no funciona cuando las restricciones representan una relación de subtipos. Consideremos una extensión del lenguaje anterior,  en donde se introducen los tipos \texttt{num} y \texttt{float}, donde se cumple \texttt{float <: num} y \texttt{int <: num}. En el ejemplo \ref{ej2-9} se muestran dos instrucciones de asignación.
+Desafortunadamente, el algoritmo de unificación de Hindley-Milner no funciona cuando las restricciones representan una relación de subtipos. Consideremos una extensión del lenguaje anterior,  en donde se introducen los tipos \texttt{Top}, \texttt{num} y \texttt{float}, donde se cumple \texttt{num <: Top}, \texttt{bool <: Top}, \texttt{int <: num} y \texttt{float <: num}. En el ejemplo \ref{ej2-9} se muestra una expresión condicional que retorna valores de distinto tipo en las ramas.
 \vspace{0.8em}
 \begin{ej}
   \normalfont
   \label{ej2-9}
-\begin{lstlisting}
-  let f = 4;
-                ...
-                f = 1.5;
+\begin{lstlisting}[morekeywords={then}]
+  let g = if (c) then 1 else 0.5;
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej2-9}, se asigna la variable de tipo \texttt{X} al identificador \texttt{f}. Las restricciones que se generan para las instrucciones de asignación son:
+Siguiendo la misma lógica anterior, se asigna un tipo \texttt{X} a la expresión condicional y un tipo \texttt{Y} a la condición, y se generan las siguientes restricciones de subtipos:
 
-\begin{itemize}
-  \item \texttt{int <: X}
-  \item \texttt{float <: X}
-\end{itemize}
+\[
+R_2: \{ \mathtt{X <: int,\ X <: float,\ Y <: bool} \}
+\]
 
 %Cardelli~\cite{cardelli}
 
@@ -317,10 +327,14 @@ Para resolver este tipo de restricciones, se considera la relación de orden par
 
 \begin{figure}[ht]
   \centering
-  \begin{tikzpicture}[node distance=2.3cm]
-    \node(num) 												{\texttt{num}};
+  \begin{tikzpicture}[node distance=2cm]
+    \node(Top) {\texttt{Top}};
+    \node(num) [below right of=Top]												{\texttt{num}};
     \node(int)		[below right of=num]			{\texttt{int}};
     \node(float)					[below left of=num] 			{\texttt{float}};
+    \node(bool) [below left of=Top] {\texttt{bool}};
+    \draw (Top) -- (num);
+    \draw (Top) -- (bool);
     \draw (num)      -- (int);
     \draw (num)      -- (float);
   \end{tikzpicture}
@@ -332,7 +346,7 @@ Un orden parcial admite las operaciones \texttt{meet} y \texttt{join}, que corre
 
 Luego, mediante los tipos $\mathtt{t_1 \sqcap t_2}$ y $\mathtt{t_1 \sqcup t_2}$ introducidos por Cardelli~\cite{cardelli}, se representan las operaciones \texttt{meet} y \texttt{join} entre dos tipos, respectivamente.
 
-En la fase de resolución de restricciones, se aplican las reglas de la proposición \ref{teo1} para generar los tipos correspondientes. Luego, cuando los tipos $\sqcap$ y $\sqcup$ relacionan tipos concretos, se puede materializar la operación sobre el retículo.
+En la fase de resolución de restricciones, se aplican las reglas de la proposición \ref{teo1} para generar los tipos correspondientes. Luego, si al final del algoritmo de inferencia los tipos $\sqcap$ y $\sqcup$ relacionan tipos concretos, se puede materializar la operación sobre el retículo, es decir, encontrar el ínfimo o el supremo respectivamente.
 
 %Pese a que Cardelli no considera una inferencia basada en constraints, se puede aplicar este enfoque para la resolución de constraints de subtyping. En efecto, Pottier~\cite{pottier:inria-00073205} y Sekiguchi~\cite{sekiguchi} presentan sistemas de inferencia basados en constraints, con tipos equivalentes a los \texttt{meet} y \texttt{join} de Cardelli.
 
@@ -343,13 +357,13 @@ En la fase de resolución de restricciones, se aplican las reglas de la proposic
   \end{itemize}
 \end{prop}
 
-En el ejemplo \ref{ej2-9}, las restricciones generadas se reducen con la aplicación de la proposición \ref{teo1}, lo que da como resultado la restricción $\mathtt{int\sqcup float <: X}$. Como \texttt{int} y \texttt{float} son tipos concretos, se puede materializar la operación \texttt{join}, lo que da como resultado \texttt{num}.
+En el ejemplo \ref{ej2-9}, las restricciones generadas se reducen con la aplicación de la proposición \ref{teo1}, lo que da como resultado las restricciones $\mathtt{int\sqcup float <: X}$ y $\mathtt{Y <: bool}$. Como \texttt{int} y \texttt{float} son tipos concretos, se puede materializar la operación \texttt{join}, lo que da como resultado \texttt{num}, por lo que se resuelve que \texttt{X} tiene tipo \texttt{num} y que \texttt{Y} tiene tipo \texttt{bool}.
 
-Finalmente, como la restricción \texttt{num <: X} solo admite una solución para \texttt{X}, se resuelve que \texttt{X} tiene tipo \texttt{num}.
+A lo largo del tiempo se han desarrollado diversas extensiones al sistema de tipos HM, para brindar características avanzadas manteniendo la completitud del algoritmo W. Odersky et al.~\cite{odersky} desarrollaron el framework HM(X), que entrega un algoritmo de inferencia genérico que calcula los tipos principales para cualquier sistema de tipos basado en restricciones, que cumpla con ciertas propiedades. Utilizando el framework HM(X), Pottier y Simonet~\cite{Pottier} presentaron un análisis de control de flujo con inferencia de tipos de seguridad.
+\clearpage
+\section*{Resumen}
 
-A lo largo del tiempo se han desarrollado diversas extensiones al sistema de tipos HM, para brindar características avanzadas manteniendo la completitud del algoritmo W. Odersky et al.~\cite{odersky} desarrollaron el framework HM(X), que entrega un algoritmo de inferencia genérico para cualquier sistema de tipos basado en restricciones, que cumpla con ciertas propiedades. Utilizando el framework HM(X), Pottier y Simonet~\cite{Pottier} presentaron un análisis de control de flujo con inferencia de tipos de seguridad.
-
-En este capítulo se presentó la inferencia de tipos, se mostraron algunos ejemplos de lenguajes conocidos que utilizan alguna forma de inferencia, y se explicaron los conceptos básicos de inferencia utilizando un sistema Hindley-Milner. En el siguiente capítulo se propone un algoritmo de inferencia para la desclasificación basada en tipos.
+En este capítulo se mencionaron los usos y beneficios de la inferencia de tipos, se mostraron las características generales de los sistemas de inferencia en Scala, Haskell y C++, y se explicaron los conceptos básicos del proceso de inferencia utilizando un sistema Hindley-Milner. En el siguiente capítulo se propone un algoritmo de inferencia para la desclasificación basada en tipos.
 
 % \subsection*{Antecedentes adicionales}
 %
