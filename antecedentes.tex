@@ -305,6 +305,49 @@ Una vez que se genera el conjunto de restricciones sobre el programa, se procede
   \label{tabla2}
 \end{figure}
 
+\section{Inferencia con restricciones de subtipos}
+Los lenguajes de programación orientados a objetos como Java, Scala y OCaml permiten la definición de nuevos tipos mediante la creación de clases, los cuales se pueden encontrar en una relación de subtipos de forma explícita (nominal) o implícita (estructural).
+
+En una relación de subtipos nominal, el retículo de subtipos es definido explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ejnominal} muestra una declaración explícita de un retículo de subtipos, mediante el uso del \emph{keyword} \texttt{extends}.
+
+\begin{ej} \ \\
+  \normalfont
+  \label{ejnominal}
+\begin{lstlisting}
+  class Animal {
+    String getName();
+  }
+  class Duck extends Animal {
+    void cuack();
+  }
+  class Cat extends Animal {
+    void miau();
+  }
+\end{lstlisting}
+\end{ej}
+
+Cuando una relación de subtipos es estructural, el retículo de subtipos se define por la forma que tienen los tipos. El ejemplo \ref{ejestruct} muestra la declaración de las clases que definen una relación de subtipos estructural.
+
+\begin{ej} \ \\
+  \normalfont
+  \label{ejestruct}
+\begin{lstlisting}
+  class Animal {
+    String getName();
+  }
+  class Duck {
+    String getName();
+    void cuack();
+  }
+  class Cat {
+    String getName();
+    void miau();
+  }
+\end{lstlisting}
+\end{ej}
+
+Los ..
+
 Desafortunadamente, el algoritmo de unificación de Hindley-Milner no funciona cuando las restricciones representan una relación de subtipos. Consideremos una extensión del lenguaje anterior,  en donde se introducen los tipos \texttt{Top}, \texttt{num} y \texttt{float}, donde se cumple \texttt{num <: Top}, \texttt{bool <: Top}, \texttt{int <: num} y \texttt{float <: num}. En el ejemplo \ref{ej2-9} se muestra una expresión condicional que retorna valores de distinto tipo en las ramas.
 \vspace{0.8em}
 \begin{ej}
@@ -364,48 +407,6 @@ A lo largo del tiempo se han desarrollado diversas extensiones al sistema de tip
 \section*{Resumen}
 
 En este capítulo se mencionaron los usos y beneficios de la inferencia de tipos, se mostraron las características generales de los sistemas de inferencia en Scala, Haskell y C++, y se explicaron los conceptos básicos del proceso de inferencia utilizando un sistema Hindley-Milner. En el siguiente capítulo se presenta la propuesta de un sistema de inferencia para la desclasificación basada en tipos.
-
-% \subsection*{Antecedentes adicionales}
-%
-% \subsubsection*{Relación de subtipos}
-%
-% En el ejemplo \ref{ej2-9}, la relación de subtipos es nominal. En una relación de subtipos nominal, el retículo de subtipos es definido explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ej2-10} muestra una declaración explícita de un retículo de subtipos, mediante el uso del \emph{keyword} \texttt{extends}.
-%
-% \begin{ej} \ \\
-%   \normalfont
-%   \label{ej2-10}
-% \begin{lstlisting}
-%   class Animal {
-%     String getName();
-%   }
-%   class Duck extends Animal {
-%     void cuack();
-%   }
-%   class Cat extends Animal {
-%     void miau();
-%   }
-% \end{lstlisting}
-% \end{ej}
-%
-% Cuando una relación de subtipos es estructural, el retículo de subtipos se define por la forma que tienen los tipos. El ejemplo \ref{ej2-11} muestra la declaración de las clases que definen una relación de subtipos estructural.
-%
-% \begin{ej} \ \\
-%   \normalfont
-%   \label{ej2-11}
-% \begin{lstlisting}
-%   class Animal {
-%     String getName();
-%   }
-%   class Duck {
-%     String getName();
-%     void cuack();
-%   }
-%   class Cat {
-%     String getName();
-%     void miau();
-%   }
-% \end{lstlisting}
-% \end{ej}
 
 
 %Los tipos $\sqcap$ y $\sqcup$ fueron utilizados por vez primera en un algoritmo de inferencia por Cardelli~\cite{cardelli}.
