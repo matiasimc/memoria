@@ -174,7 +174,7 @@ La propiedad de seguridad que se demuestra para el sistema de tipos de la descla
 \section*{Resumen}
 En este capítulo se revisaron los conceptos de tipado de seguridad para el control de flujo de información, y las distintas reglas que permiten detectar la ocurrencia de infracciones a la propiedad de no-interferencia. Luego, se mostró la necesidad de contar con mecanismos de desclasificación, para finalizar explicando la desclasificación basada en tipos.
 
-Es importante considerar que la implementación de un lenguaje de programación con el sistema de tipos de la desclasificación basada en tipos, requiere la anotación de los identificadores con facetas públicas y privadas, lo cual es poco práctico. Por este motivo es deseable contar con un sistema de inferencia de tipos para la desclasificación basada en tipos. En el siguiente capítulo se revisan los conceptos importantes de inferencia de tipos.
+En la sección de introducción se mencionó que la implementación de la desclasificación basada en tipos no era suficiente sin un mecanismo de inferencia. En el siguiente capítulo se revisan los conceptos importantes de inferencia de tipos.
 
 \chapter{Inferencia de tipos} \label{inference}
 La inferencia de tipos es el proceso de determinar el tipo de las expresiones en un programa, basado en cómo son usadas. Tener un mecanismo de inferencia en un lenguaje de programación puede ser muy útil, debido a que da la posibilidad al programador de omitir las declaraciones de tipo para algunos identificadores, y mantener los beneficios de un lenguaje estáticamente tipado. Además, aumenta la escalabilidad de los sistemas, ya que el costo de refactorizar código anotado es mayor al costo de refactorizar código no anotado.

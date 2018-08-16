@@ -120,7 +120,7 @@ En el ejemplo \ref{ej3-1} se muestra un código parcialmente anotado con facetas
   \end{enumerate}
 \end{ej}
 
-La variable de tipo $\alpha$ corresponde al tipo del parámetro \texttt{password}. La variable de tipo $\beta$ corresponde al tipo de la condición en la expresión condicional. La variable de tipo $\gamma$ corresponde al tipo de la expresión de la invocación a método \texttt{password.hash()}.
+La variable de tipo $\alpha$ corresponde al tipo del parámetro \texttt{password}. La variable de tipo $\beta$ corresponde al tipo de la condición en la expresión condicional. La variable de tipo $\gamma$ corresponde al tipo de la expresión de invocación al método \texttt{password.hash()}.
 
 Las restricciones 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password}. Las restricciones 3 y 4 se generan por la relación entre el contexto de seguridad (\texttt{Bot}) y el retorno del método (\texttt{Bot}) en ambas ramas de la expresión condicional, y las restricciones 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método en ambas ramas de la expresión condicional.
 \clearpage
@@ -222,7 +222,7 @@ Aplicando el algoritmo \ref{pseudosimplify}, el conjunto de restricciones del ej
 \end{ej}
 
 
-El siguiente paso es agrupar las restricciones sobre la misma variable de tipo, usando las reglas del teorema \ref{teo1}. Aplicando el algoritmo \ref{pseudogroup}, el conjunto de restricciones del ejemplo \ref{ejsimplify} se reduce a solo dos restricciones, lo que se muestra en el ejemplo \ref{ej3-2}.
+El siguiente paso es agrupar las restricciones sobre la misma variable de tipo, usando las reglas de la proposición \ref{teo1}. Aplicando el algoritmo \ref{pseudogroup}, el conjunto de restricciones del ejemplo \ref{ejsimplify} se reduce a solo dos restricciones, lo que se muestra en el ejemplo \ref{ej3-2}.
 
 
 \begin{ej}\
@@ -273,7 +273,7 @@ En este paso, se construyen tipos utilizando las operaciones \texttt{meet} y \te
 \subsubsection{Meet y Join}
 Cuando se tiene un tipo $\mathtt{t_1 \sqcap t_2}$ o $\mathtt{t_1 \sqcup t_2}$, donde $\mathtt{t_1}$ y $\mathtt{t_2}$ no tienen variables de tipo, entonces se puede construir el tipo correspondiente. Este procedimiento se muestra en el algoritmo \ref{pseudoperations}. La operación \texttt{meet} consiste en la unión de los métodos en $\mathtt{t_1}$ y $\mathtt{t_2}$, y \texttt{join} consiste en la intersección de los métodos en $\mathtt{t_1}$ y $\mathtt{t_2}$.
 
-Si aplicamos el algoritmo \ref{pseudoperations} al conjunto de restricciones del ejemplo \ref{ej3-2}, se construye el tipo de la derecha en la restricción 1. Esto se muestra en el ejemplo \ref{ejmater}.
+Si aplicamos el algoritmo \ref{pseudoperations} al conjunto de restricciones del ejemplo \ref{ej3-2}, se construye el tipo del lado derecho de la restricción 1. Esto se muestra en el ejemplo \ref{ejmater}.
 \clearpage
 \begin{ej}\
   \normalfont
@@ -429,4 +429,4 @@ Cuando se tiene una restricción que relaciona una variable de tipo con un tipo 
 La función de unificación retorna un mapeo entre cada variable de tipo y un tipo concreto. El caso de que queden variables de tipo sin resolver significa que cualquier faceta pública sirve para validar la expresión según las reglas del sistema de tipos.
 
 \section*{Resumen}
-En este capítulo se describió la propuesta de un algoritmo de inferencia heurístico para la desclasificación basada en tipos. Este algoritmo se basa en la inferencia en sistemas Hindley-Milner, con variaciones en el paso de resolución de restricciones para tratar con restricciones sobre subtipos. En el próximo capítulo se describen detalles de la implementación en Dart.
+En este capítulo se describió la propuesta de un sistema de inferencia heurístico para la desclasificación basada en tipos. Este sistema se basa en la inferencia en sistemas Hindley-Milner, con variaciones en el paso de resolución de restricciones para tratar con restricciones sobre subtipos. En el próximo capítulo se describen detalles de la implementación en Dart.
