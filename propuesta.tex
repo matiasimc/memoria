@@ -1,12 +1,12 @@
-\chapter{Inferencia de facetas públicas}
+\chapter{Inferencia de facetas públicas en Dart}
 
-En este trabajo se propone realizar la implementación de un sistema de inferencia de facetas públicas, que incluya el análisis de la desclasificación basada en tipos, y luego la realización de una extensión para ambientes de desarrollo. En este capítulo se detalla el problema de inferencia a resolver y las estrategias utilizadas para resolverlo.
+En este trabajo se propone realizar la implementación de un sistema de inferencia de facetas públicas en el lenguaje Dart, que incluya el análisis de la desclasificación basada en tipos, y luego la realización de una extensión para ambientes de desarrollo. En este capítulo se detalla el problema de inferencia a resolver y las estrategias utilizadas para resolverlo.
 
-\section{Problema de inferencia}
-Para la formulación del problema, es posible asumir que la información de las facetas privadas de type-based declassification se encuentra a disposición, debido a que algunos lenguajes de programación poseen herramientas para obtener dicha información.
+\section{Problema de inferencia de facetas públicas}
+Para la formulación del problema, es posible asumir que la información de las facetas privadas de la desclasificación basada en tipos se encuentra a disposición, debido a que se pueden convertir los tipos estáticos comunes (como \texttt{String}) de Dart en facetas privadas. Los detalles de esta conversión se explican en la sección \ref{conv}.
 
 \begin{defn}[Problema de inferencia]
-  Dado un programa parcialmente tipado con facetas públicas, y completamente tipado con facetas privadas, encontrar la faceta pública de las expresiones no tipadas que más se ajuste al uso de las expresiones, tal que se cumplan las reglas del sistema de tipos de type-based declassification.
+  Dado un programa parcialmente tipado con facetas públicas, y completamente tipado con facetas privadas, encontrar la faceta pública de las expresiones no tipadas que más se ajuste al uso de las expresiones, tal que el programa sea bien tipado.
 \end{defn}
 
 A continuación, se muestran algunos ejemplos de código parcialmente anotado con facetas públicas, con el objetivo de ilustrar la solución esperada al problema de inferencia.
@@ -21,7 +21,7 @@ A continuación, se muestran algunos ejemplos de código parcialmente anotado co
 \end{lstlisting}
 \end{ej}
 
-Recordemos que la regla \texttt{TmH} de type-based declassification indica que la invocación a un método no autorizado sobre el objetivo de la llamada, retorna \texttt{Top}. Esto es justamente lo que se quiere inferir para el tipo de retorno del método \texttt{login} en el ejemplo \ref{ej-tmh}.
+Recordemos que la regla $\text{TmH}$ de la desclasificación basada en tipos indica que la invocación a un método no autorizado sobre el receptor de la llamada, retorna \texttt{Top}. Esto es lo que se quiere inferir para el tipo de retorno del método \texttt{login} en el ejemplo \ref{ej-tmh}.
 
 \begin{ej} \ \\
   \label{ej-tmd}
@@ -33,25 +33,39 @@ Recordemos que la regla \texttt{TmH} de type-based declassification indica que l
 \end{lstlisting}
 \end{ej}
 
-En el ejemplo \ref{ej-tmd} ocurrió un encadenamiento de invocaciones a métodos sobre \texttt{password}. La faceta pública que se quiere inferir para \texttt{password} contiene al método \texttt{hash}, al cual se le quiere inferir una faceta pública de retorno que contiene al método \texttt{eq}. Si se declara una faceta pública de retorno para el método \texttt{eq}, entonces se debe inferir esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla \texttt{TmD} de type-based declassification.
+En el ejemplo \ref{ej-tmd} ocurrió un encadenamiento de invocaciones a métodos sobre \texttt{password}. La faceta pública que se quiere inferir para \texttt{password} contiene al método \texttt{hash}, al cual se le quiere inferir una faceta pública de retorno que contiene al método \texttt{eq}. Si se declara una faceta pública de retorno para el método \texttt{eq}, entonces se debe inferir esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla $\text{TmD}$ de la desclasificación basada en tipos.
 
-\begin{ej} \ \\
-  \label{ej-error}
-  \normalfont
-\begin{lstlisting}
-  void check(String<Bot s);
+\section{Conversión a facetas privadas} \label{conv}
+Para que la implementación del sistema de tipos de la desclasificación basada en tipos se integre con Dart, se debe realizar una conversión de los tipos que son incluidos por defecto en todo programa de Dart (\emph{core} de Dart), como \texttt{String} y \texttt{List}, a facetas privadas de la desclasificación basada en tipos.
 
-  bool<Top login(String<Top password, String guess) {
-    check(password);
-    return password.eq(guess);
-  }
-\end{lstlisting}
-\end{ej}
+Sea $D = [m_i: \overline{A_i} \rightarrow B_i]$ un tipo de objeto con métodos $m_i$. La operación \texttt{convert} se define como sigue:
 
-En el ejemplo \ref{ej-error}, se debe reportar un error de flujo en el llamado a la función \texttt{check}, debido a que la faceta del argumento debe ser subtipo de la faceta del parámetro, esto es, \texttt{Top <: Bot} es una relación no válida.
+\[
+\mathtt{convert}(D) = [m_i: \overline{A_i\text{\texttt{<}}P_{Ai}} \rightarrow B_i\text{\texttt{<}}P_{Bi}]
+\]
 
-\section{Decisiones de diseño}
-Para resolver el problema de inferencia, se decidió realizar la implementación de un algoritmo de inferencia basado en constraints de subtyping. Como el objetivo de este trabajo no es formalizar un sistema de inferencia para type-based declassification, se implementa un algoritmo heurístico reutilizando enfoques e ideas de trabajos con características similares, lo cual fue presentado en la sección \ref{inference}.
+Lo que hace \texttt{convert} es reemplazar el tipo de dart $D$ por una faceta privada, donde los tipos de los parámetros y retorno de cada método se convirtieron a tipos de dos facetas, con faceta pública $P_{Ai}$ y $P_{Bi}$ respectivamente.
+
+Las facetas públicas $P_{Ai}$ y $P_{Bi}$ se pueden establecer según distintos criterios. En un sistema de tipos con polimorfismo, podemos considerarlas como variables de tipo cuantificadas, que pueden tomar distintos valores. Aquello está fuera del alcance de este trabajo, por lo que se debe tomar una decisión respecto al valor que tendrán las facetas públicas en la operación \texttt{convert}.
+
+Hay dos opciones para tipar las facetas públicas: \texttt{Top} y \texttt{Bot}, debido a que son las únicas facetas públicas que se conocen de antemano. Primero, veamos las opciones para la faceta pública de retorno $P_{Bi}$. Si decidimos que $P_{Bi}$ es igual a \texttt{Top}, entonces el sistema de inferencia terminará asignando \texttt{Top} a cada expresión que se asocie con un llamado a un método del \emph{core} de Dart, lo cual se propaga rápidamente. Esto es poco útil, debido a que el sistema de inferencia detectará flujos inválidos cuando en la práctica no hay una fuga de información. Por lo tanto, la decisión por defecto es que $P_{Bi}$ sea \texttt{Bot}.
+
+Ahora, analicemos ambas posibilidades para $P_{Ai}$:
+
+\begin{itemize}
+  \item \texttt{Top}: Supongamos que el core del lenguaje posee un método \texttt{identity}, que dado un \texttt{x}, retorna \texttt{x}. Si tomamos esta decisión, entonces el método \texttt{identity} podrá ser usado como desclasificador universal, como por ejemplo \texttt{identity(password)}.
+  \item \texttt{Bot}: Esta elección restringe las facetas públicas de los argumentos utilizados a \texttt{Bot}, lo cual también podría ser considerado poco útil. Sin embargo, al retornar un valor con faceta pública \texttt{Bot}, cualquier operación podrá ser utilizada sobre ese valor.
+\end{itemize}
+
+Haciendo un balance, se considera que la opción \texttt{Bot} tiene el mejor equilibrio entre utilidad y seguridad, por lo que es la opción por defecto considerada. Con esto, la versión utilizada de \texttt{convert} es:
+
+\[
+\mathtt{convert}([m_i: \overline{A_i} \rightarrow B_i]) = [m_i: \overline{A_i\text{\texttt{<}}\bot} \rightarrow B_i\text{\texttt{<}}\bot]
+\]
+
+
+\section{Decisiones de diseño} \label{diseno}
+Para resolver el problema de inferencia, se decidió realizar la implementación de un algoritmo de inferencia basado en restricciones sobre subtipos. Como el objetivo de este trabajo no es formalizar un sistema de inferencia para la desclasificación basada en tipos, se implementa un algoritmo heurístico reutilizando enfoques e ideas de trabajos con características similares, lo cual fue presentado en la sección \ref{inference}.
 
 El subconjunto del lenguaje orientado objetos a considerar tendrá clases, métodos, variables, asignaciones e instrucciones condicionales.
 

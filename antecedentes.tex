@@ -227,7 +227,7 @@ C++ es un lenguaje de programación orientado a objetos estáticamente tipado qu
 \end{lstlisting}
 \end{ej}
 
-\section{Inferencia en sistemas Hindley-Milner}
+\section{Inferencia en sistemas Hindley-Milner} \label{sechm}
 
 Un sistema de tipos de Hindley-Milner (HM)~\cite{damasmilner} es un sistema de tipos clásico del cálculo lambda con polimorfismo paramétrico. El algoritmo de inferencia del sistema de tipos HM, denominado algoritmo W, siempre calcula el tipo principal de las expresiones. En esta sección se explica el proceso de inferencia de tipos para un lenguaje sencillo de tipo HM, con el fin de ilustrar los conceptos importantes de inferencia de tipos.
 
@@ -276,7 +276,7 @@ Las restricciones generadas para el ejemplo \ref{ej2-8} representan la igualdad 
 
 \begin{enumerate}
   \item \texttt{(x,c) =>\ if (c) then x + 5 else x} es una función anónima que debe tener tipo $\mathtt{(Y,Z) \rightarrow W}$, donde \texttt{Y} y \texttt{Z} son los tipos de los parámetros y \texttt{W} es el tipo del cuerpo.
-  \item \texttt{if (c) then x + 5 else x} es una expresión condicional, cuyo tipo \texttt{W} es igual al tipo de ambas ramas de la condición.
+  \item \texttt{if (c) then x + 5 else x} es una expresión condicional, cuyo tipo \texttt{W} es igual al tipo de ambas ramas de la expresión.
   \item La condición \texttt{c} de la expresión condicional debe tener tipo \texttt{bool}.
   \item \texttt{x + 5} es una aplicación de la función suma, por lo que su tipo debe coincidir con el tipo de retorno de la función. Además, el tipo de los argumentos debe coincidir con el tipo de los parámetros de la función.
 \end{enumerate}
@@ -305,10 +305,12 @@ Una vez que se genera el conjunto de restricciones sobre el programa, se procede
   \label{tabla2}
 \end{figure}
 
-\section{Inferencia con restricciones de subtipos}
-Los lenguajes de programación orientados a objetos como Java, Scala y OCaml permiten la definición de nuevos tipos mediante la creación de clases, los cuales se pueden encontrar en una relación de subtipos de forma explícita (nominal) o implícita (estructural).
+A lo largo del tiempo se han desarrollado diversas extensiones al sistema de tipos HM, para brindar características avanzadas manteniendo la completitud del algoritmo W. Odersky et al.~\cite{odersky} desarrollaron el framework HM(X), que entrega un algoritmo de inferencia genérico que calcula los tipos principales para cualquier sistema de tipos basado en restricciones, que cumpla con ciertas propiedades. Utilizando el framework HM(X), Pottier y Simonet~\cite{Pottier} presentaron un análisis de control de flujo con inferencia de tipos de seguridad.
 
-En una relación de subtipos nominal, el retículo de subtipos es definido explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ejnominal} muestra una declaración explícita de un retículo de subtipos, mediante el uso del \emph{keyword} \texttt{extends}.
+\section{Inferencia en sistemas con subtipos}
+Los lenguajes de programación orientados a objetos como Java, Scala y OCaml permiten la definición de nuevos tipos mediante la creación de clases. Estos tipos se relacionan de forma explícita (nominal) o implícita (estructural), y se integran al retículo de subtipos definido previamente por el lenguaje de programación.
+
+En una relación de subtipos nominal, el retículo de subtipos es definido explícitamente por el programador o el lenguaje de programación. El ejemplo \ref{ejnominal} muestra una declaración explícita de una jerarquía de tipos, mediante el uso del \emph{keyword} \texttt{extends}.
 
 \begin{ej} \ \\
   \normalfont
@@ -346,9 +348,9 @@ Cuando una relación de subtipos es estructural, el retículo de subtipos se def
 \end{lstlisting}
 \end{ej}
 
-Los ..
+Para realizar inferencia en sistemas con subtipos, se utilizan restricciones sobre subtipos en lugar de restricciones sobre igualdad. Desafortunadamente, el algoritmo de unificación de Hindley-Milner no funciona cuando las restricciones representan una relación de subtipos.
 
-Desafortunadamente, el algoritmo de unificación de Hindley-Milner no funciona cuando las restricciones representan una relación de subtipos. Consideremos una extensión del lenguaje anterior,  en donde se introducen los tipos \texttt{Top}, \texttt{num} y \texttt{float}, donde se cumple \texttt{num <: Top}, \texttt{bool <: Top}, \texttt{int <: num} y \texttt{float <: num}. En el ejemplo \ref{ej2-9} se muestra una expresión condicional que retorna valores de distinto tipo en las ramas.
+Una forma de resolver restricciones sobre subtipos es utilizar operaciones sobre el retículo de subtipos. Consideremos una extensión del lenguaje de la sección \ref{sechm}, en donde se introducen los tipos \texttt{Top}, \texttt{num} y \texttt{float}, tal que \texttt{num <: Top}, \texttt{bool <: Top}, \texttt{int <: num} y \texttt{float <: num}. En el ejemplo \ref{ej2-9} se muestra una expresión condicional que retorna valores de distinto tipo en las ramas.
 \vspace{0.8em}
 \begin{ej}
   \normalfont
@@ -358,7 +360,7 @@ Desafortunadamente, el algoritmo de unificación de Hindley-Milner no funciona c
 \end{lstlisting}
 \end{ej}
 
-Siguiendo la misma lógica anterior, se asigna un tipo \texttt{X} a la expresión condicional y un tipo \texttt{Y} a la condición, y se generan las siguientes restricciones de subtipos:
+Siguiendo la misma lógica de la inferencia en sistemas HM, se asigna una variable de tipo \texttt{X} a la expresión condicional y una variable de tipo \texttt{Y} a la condición, y se generan las siguientes restricciones sobre subtipos:
 
 \[
 R_2: \{ \mathtt{X <: int,\ X <: float,\ Y <: bool} \}
@@ -402,11 +404,10 @@ En la fase de resolución de restricciones, se aplican las reglas de la proposic
 
 En el ejemplo \ref{ej2-9}, las restricciones generadas se reducen con la aplicación de la proposición \ref{teo1}, lo que da como resultado las restricciones $\mathtt{int\sqcup float <: X}$ y $\mathtt{Y <: bool}$. Como \texttt{int} y \texttt{float} son tipos concretos, se puede materializar la operación \texttt{join}, lo que da como resultado \texttt{num}, por lo que se resuelve que \texttt{X} tiene tipo \texttt{num} y que \texttt{Y} tiene tipo \texttt{bool}.
 
-A lo largo del tiempo se han desarrollado diversas extensiones al sistema de tipos HM, para brindar características avanzadas manteniendo la completitud del algoritmo W. Odersky et al.~\cite{odersky} desarrollaron el framework HM(X), que entrega un algoritmo de inferencia genérico que calcula los tipos principales para cualquier sistema de tipos basado en restricciones, que cumpla con ciertas propiedades. Utilizando el framework HM(X), Pottier y Simonet~\cite{Pottier} presentaron un análisis de control de flujo con inferencia de tipos de seguridad.
-\clearpage
-\section*{Resumen}
+La inferencia global al estilo HM en sistemas con subtipos ha sido estudiada por distintos autores~\cite{odersky2}. Sin embargo, se reconoce que esta combinación no funciona bien en la práctica, debido a que el tamaño del conjunto de restricciones crece de forma exponencial, lo cual dificulta la identificación y despliegue de errores de tipo~\cite{odersky2}.
 
-En este capítulo se mencionaron los usos y beneficios de la inferencia de tipos, se mostraron las características generales de los sistemas de inferencia en Scala, Haskell y C++, y se explicaron los conceptos básicos del proceso de inferencia utilizando un sistema Hindley-Milner. En el siguiente capítulo se presenta la propuesta de un sistema de inferencia para la desclasificación basada en tipos.
+\section*{Resumen}
+En este capítulo se mencionaron los usos y beneficios de la inferencia de tipos, se mostraron las características generales de los sistemas de inferencia en Scala, Haskell y C++, se explicaron los conceptos básicos del proceso de inferencia utilizando un sistema Hindley-Milner, y se mostró una forma de resolver restricciones sobre subtipos. En el siguiente capítulo se presenta la propuesta de un sistema de inferencia para la desclasificación basada en tipos.
 
 
 %Los tipos $\sqcap$ y $\sqcup$ fueron utilizados por vez primera en un algoritmo de inferencia por Cardelli~\cite{cardelli}.
