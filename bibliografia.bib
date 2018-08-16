@@ -212,20 +212,6 @@ isbn="978-3-540-33355-5"
   howpublished = {\url{https://github.com/matiasimc/secure-login-test}},
 }
 
-@techreport{pottier:inria-00073205,
-  TITLE = {{Type Inference in the Presence of Subtyping: from Theory to Practice}},
-  AUTHOR = {Pottier, Fran{\c c}ois},
-  URL = {https://hal.inria.fr/inria-00073205},
-  TYPE = {Research Report},
-  NUMBER = {RR-3483},
-  INSTITUTION = {{INRIA}},
-  YEAR = {1998},
-  KEYWORDS = {READABILITY ; CONSTRAINTS ; EFFICIENCY ; PROGRAM ANALYSIS ; SIMPLIFICATION ; INFERENCE ; ML ; TYPING ; SUBTYPING ; POLYMORPHISM},
-  PDF = {https://hal.inria.fr/inria-00073205/file/RR-3483.pdf},
-  HAL_ID = {inria-00073205},
-  HAL_VERSION = {v1},
-}
-
 @inproceedings{damasmilner,
  author = {Damas, Luis and Milner, Robin},
  title = {Principal Type-schemes for Functional Programs},
@@ -252,20 +238,6 @@ isbn="978-3-540-33355-5"
     publisher = {Springer-Verlag}
 }
 
-@InProceedings{sekiguchi,
-author="Sekiguchi, Tatsurou
-and Yonezawa, Akinori",
-editor="Hagiya, Masami
-and Mitchell, John C.",
-title="A complete type inference system for subtyped recursive types",
-booktitle="Theoretical Aspects of Computer Software",
-year="1994",
-publisher="Springer Berlin Heidelberg",
-address="Berlin, Heidelberg",
-pages="667--686",
-abstract="Since record polymorphism is one of essential factors for object-oriented languages, various approaches to incorporate record polymorphism into type systems have been proposed to lay the foundation for object-oriented languages. Recursive types, which are essentially types of lists or trees, are major programming tools. In object-oriented languages, a pseudo variable ``self'' has a recursive type, which requires that type systems be able to treat recursive types. The purpose of this paper is to provide a type system and its type inference algorithm which can handle subtyping, recursive types and parametric polymorphism without any kind of type declaration or unnatural restrictions. We prove soundness and completeness of the type inference algorithm. Our system integrates subtyping and recursive types into Damas and Milner's type system and preserves important properties such as existence of principal typing. The basic idea is that we consider a type as a regular tree.",
-isbn="978-3-540-48383-0"
-}
 
 @article{odersky,
  author = {Odersky, Martin and Sulzmann, Martin and Wehr, Martin},
@@ -286,65 +258,6 @@ isbn="978-3-540-48383-0"
  address = {New York, NY, USA},
 }
 
-@inproceedings{Hicks,
- author = {Hicks, Boniface and King, Dave and McDaniel, Patrick and Hicks, Michael},
- title = {Trusted Declassification:: High-level Policy for a Security-typed Language},
- booktitle = {Proceedings of the 2006 Workshop on Programming Languages and Analysis for Security},
- series = {PLAS '06},
- year = {2006},
- isbn = {1-59593-374-3},
- location = {Ottawa, Ontario, Canada},
- pages = {65--74},
- numpages = {10},
- url = {http://doi.acm.org/10.1145/1134744.1134757},
- doi = {10.1145/1134744.1134757},
- acmid = {1134757},
- publisher = {ACM},
- address = {New York, NY, USA},
- keywords = {noninterference modolo trusted methods, FJifP, Jif, declassification, information-flow control, security policy, security-typed languages, trusted declassification},
-}
-
-@article{pierce,
- author = {Pierce, Benjamin C. and Turner, David N.},
- title = {Local Type Inference},
- journal = {ACM Trans. Program. Lang. Syst.},
- issue_date = {Jan. 2000},
- volume = {22},
- number = {1},
- month = jan,
- year = {2000},
- issn = {0164-0925},
- pages = {1--44},
- numpages = {44},
- url = {http://doi.acm.org/10.1145/345099.345100},
- doi = {10.1145/345099.345100},
- acmid = {345100},
- publisher = {ACM},
- address = {New York, NY, USA},
- keywords = {polymorphism, subtyping, type inference},
-}
-
-@article{outsideinx,
-author = {Vytiniotis, Dimitrios and Peyton Jones, Simon and Schrijvers, Tom and Sulzmann, Martin},
-title = {OutsideIn(X): Modular type inference with local assumptions},
-booktitle = {},
-year = {2011},
-month = {September},
-abstract = {
-
-Advanced type system features, such as GADTs, type classes and type families, have proven to be invaluable language extensions for ensuring data invariants and program correctness. Unfortunately, they pose a tough problem for type inference when they are used as local type assumptions. Local type assumptions often result in the lack of principal types and cast the generalisation of local let-bindings prohibitively difficult to implement and specify. User-declared axioms only make this situation worse. In this paper, we explain the problems and-perhaps controversially-argue for abandoning local let-binding generalisation. We give empirical results that local let generalisation is only sporadically used by Haskell programmers. Moving on, we present a novel constraint-based type inference approach for local type assumptions. Our system, called OutsideIn(X), is parameterised over the particular underlying constraint domain X, in the same way as HM(X). This stratification allows us to use a common metatheory and inference algorithm. OutsideIn(X) extends the constraints of X by introducing implication constraints on top. We describe the strategy for solving these implication constraints, which, in turn, relies on a constraint solver for X. We characterise the properties of the constraint solver for X so that the resulting algorithm only accepts programs with principal types, even when the type system specification accepts programs that do not enjoy principal types. Going beyond the general framework, we give a particular constraint solver for X = type classes + GADTs + type families, a non-trivial challenge in its own right. This constraint solver has been implemented and distributed as part of GHC 7.
-
-
-},
-publisher = {Cambridge University Press},
-url = {https://www.microsoft.com/en-us/research/publication/outsideinx-modular-type-inference-with-local-assumptions/},
-address = {},
-pages = {333–412},
-journal = {Journal of Functional Programming},
-volume = {21},
-chapter = {},
-isbn = {},
-}
 
 @article{odersky2,
  author = {Odersky, Martin and Zenger, Christoph and Zenger, Matthias},

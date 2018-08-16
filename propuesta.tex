@@ -35,16 +35,37 @@ Recordemos que la regla $\text{TmH}$ de la desclasificación basada en tipos ind
 
 En el ejemplo \ref{ej-tmd} ocurrió un encadenamiento de invocaciones a métodos sobre \texttt{password}. La faceta pública que se quiere inferir para \texttt{password} contiene al método \texttt{hash}, al cual se le quiere inferir una faceta pública de retorno que contiene al método \texttt{eq}. Si se declara una faceta pública de retorno para el método \texttt{eq}, entonces se debe inferir esa misma faceta para el retorno del método \texttt{login}, por la aplicación de la regla $\text{TmD}$ de la desclasificación basada en tipos.
 
+\section{Perspectiva general de la solución} \label{diseno}
+Para resolver el problema de inferencia, se decidió realizar la implementación de un algoritmo de inferencia global basado en restricciones sobre subtipos. Como el objetivo de este trabajo no es formalizar un sistema de inferencia para la desclasificación basada en tipos, se implementa un algoritmo heurístico reutilizando enfoques e ideas de trabajos con características similares, lo cual fue presentado en el capítulo \ref{inference}. La propuesta de solución se divide en los siguientes pasos:
+
+\begin{enumerate}
+  \item Definición de los tipos utilizados por el sistema de inferencia mediante la gramática de tipos.
+  \item Integración de los tipos estáticos comunes de Dart con las facetas de la desclasificación basada en tipos.
+  \item Descripción del paso de generación de restricciones para un programa de Dart.
+  \item Descripción del paso de resolución de restricciones.
+\end{enumerate}
+
+El subconjunto del lenguaje Dart a considerar en la implementación tendrá clases, métodos, variables, asignaciones e instrucciones condicionales.
+
+Con respecto al control de flujo de información, como el subconjunto del lenguaje a considerar tiene instrucciones condicionales, se deben detectar flujos implícitos para preservar la propiedad de no-interferencia relajada, por lo que se utiliza el concepto de contexto de seguridad presentado en el capítulo \ref{controlflujo}.
+\clearpage
+\section{Gramática de tipos}
+Por lo discutido en el capítulo \ref{inference}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en restricciones. Además, se incluyen los constructores $\sqcap$ y $\sqcup$ que representan las operaciones \texttt{meet} y \texttt{join} sobre un orden parcial, y se definen los otros tipos que serán utilizados en el análisis. Esto se hace definiendo la gramática de tipos que usará el sistema de inferencia:
+
+  \[\mathtt{\tau := \alpha\ |\ Obj(\overline{l: \tau})\ |\ \overline{\tau} \rightarrow \tau \ |\ \tau \sqcap \tau\ |\ \tau \sqcup \tau\ |\ Bot\ |\ Top}\]
+
+Donde $\alpha$ es cualquier variable de tipo. La barra superior indica una lista de elementos. Por ejemplo, $\mathtt{Obj(\overline{l: \tau}})$ representa el tipo de un objeto con una lista de métodos de nombre \texttt{l}.
+
 \section{Conversión a facetas privadas} \label{conv}
 Para que la implementación del sistema de tipos de la desclasificación basada en tipos se integre con Dart, se debe realizar una conversión de los tipos que son incluidos por defecto en todo programa de Dart (\emph{core} de Dart), como \texttt{String} y \texttt{List}, a facetas privadas de la desclasificación basada en tipos.
 
-Sea $D = [m_i: \overline{A_i} \rightarrow B_i]$ un tipo de objeto con métodos $m_i$. La operación \texttt{convert} se define como sigue:
+Sea $[m_i: \overline{A_i} \rightarrow B_i]$ un tipo de objeto con métodos $m_i$. La operación \texttt{convert} se define como sigue:
 
 \[
-\mathtt{convert}(D) = [m_i: \overline{A_i\text{\texttt{<}}P_{Ai}} \rightarrow B_i\text{\texttt{<}}P_{Bi}]
+\mathtt{convert}([m_i: \overline{A_i} \rightarrow B_i]) = [m_i: \overline{A_i\text{\texttt{<}}P_{Ai}} \rightarrow B_i\text{\texttt{<}}P_{Bi}]
 \]
 
-Lo que hace \texttt{convert} es reemplazar el tipo de dart $D$ por una faceta privada, donde los tipos de los parámetros y retorno de cada método se convirtieron a tipos de dos facetas, con faceta pública $P_{Ai}$ y $P_{Bi}$ respectivamente.
+Lo que hace \texttt{convert} es reemplazar el tipo de objeto de Dart por una faceta privada, donde los tipos de los parámetros y retorno de cada método se convirtieron a tipos de dos facetas, con faceta pública $P_{Ai}$ y $P_{Bi}$ respectivamente.
 
 Las facetas públicas $P_{Ai}$ y $P_{Bi}$ se pueden establecer según distintos criterios. En un sistema de tipos con polimorfismo, podemos considerarlas como variables de tipo cuantificadas, que pueden tomar distintos valores. Aquello está fuera del alcance de este trabajo, por lo que se debe tomar una decisión respecto al valor que tendrán las facetas públicas en la operación \texttt{convert}.
 
@@ -63,97 +84,22 @@ Haciendo un balance, se considera que la opción \texttt{Bot} tiene el mejor equ
 \mathtt{convert}([m_i: \overline{A_i} \rightarrow B_i]) = [m_i: \overline{A_i\text{\texttt{<}}\bot} \rightarrow B_i\text{\texttt{<}}\bot]
 \]
 
+\section{Generación de restricciones sobre subtipos} \label{propuestaGen}
+Como se mencionó en la sección \ref{sechm}, el uso de restricciones permite presentar un algoritmo de inferencia como una fase de generación de restricciones, y una fase de resolución de restricciones.
 
-\section{Decisiones de diseño} \label{diseno}
-Para resolver el problema de inferencia, se decidió realizar la implementación de un algoritmo de inferencia basado en restricciones sobre subtipos. Como el objetivo de este trabajo no es formalizar un sistema de inferencia para la desclasificación basada en tipos, se implementa un algoritmo heurístico reutilizando enfoques e ideas de trabajos con características similares, lo cual fue presentado en la sección \ref{inference}.
+El algoritmo de generación de restricciones es un algoritmo recursivo que se ejecuta sobre un nodo del árbol de sintaxis abstracta (AST) del programa y retorna un tipo y un conjunto de restricciones. A continuación se explican informalmente las reglas de generación de restricciones, y luego se muestra el algoritmo en pseudocódigo.
 
-El subconjunto del lenguaje orientado objetos a considerar tendrá clases, métodos, variables, asignaciones e instrucciones condicionales.
+\paragraph{Invocación a método.}Cuando se procesa un nodo que representa una invocación a método, se genera la restricción \texttt{(target <: Obj(name: signature), exp)}, donde \texttt{target} es el tipo del receptor de la invocación, \texttt{Obj(name: signature)} es un tipo de objeto que contiene al método invocado, y \texttt{exp} es el tipo de la expresión de invocación. El tipo de la expresión se almacena en la restricción debido a la posible aplicación de la regla $\text{TmH}$ de la desclasificación basada en tipos, lo cual se explica en la sección \ref{propuestaVer}. Además, por cada argumento de la invocación, se genera la restricción \texttt{(arg <: par)}, donde \texttt{arg} es el tipo del argumento y \texttt{par} es el tipo del correspondiente parámetro del método.
 
-Con respecto al control de flujo, como el subconjunto a considerar tendrá instrucciones condicionales, se deben detectar flujos implícitos para preservar relaxed noninterference, por lo que se utilizará el concepto de \texttt{pc} presentado en la sección \ref{controlflujo}.
+\paragraph{Expresión de retorno.}Cuando se procesa un nodo que representa una expresión de retorno, se genera la restricción \texttt{(exp <: ret)}, donde \texttt{exp} es el tipo de la expresión de retorno y \texttt{ret} es el tipo de retorno en la firma del método. Además, se genera la restricción \texttt{(pc <: ret)}, donde \texttt{pc} es el contexto de seguridad, debido a que la expresión de retorno puede ocurrir dentro del cuerpo de un condicional.
 
-Debido a que la implementación se realizará en un lenguaje orientado a objetos de propósito general, se debe tomar una decisión acerca de las facetas públicas de los métodos que pertenecen al \emph{core} del lenguaje, ya que no pueden ser anotados. Para ilustrar la necesidad de discutir esta decisión, veamos el siguiente ejemplo:
+\paragraph{Expresión de asignación.}Cuando se procesa un nodo que representa una expresión de asignación, se genera la restricción \texttt{(right <: left)}, donde \texttt{right} es el tipo del lado derecho de la asignación y \texttt{left} es el tipo del lado izquierdo de la asignación. Además, se genera la restricción \texttt{(pc <: left)}, por el mismo motivo que en la expresión de retorno.
 
-\begin{ej} \ \\
-  \label{ej-necesidad}
-  \normalfont
-\begin{lstlisting}
-  int<Bot getLength(String password) {
-    return password.length
-  }
-\end{lstlisting}
-\end{ej}
+\paragraph{Expresión condicional.}Cuando se procesa un nodo que representa una expresión condicional (como \texttt{if} y \texttt{while}), se cambia el contexto de seguridad por la faceta pública de la condición, debido a que será utilizado por el algoritmo en el cuerpo del condicional.
 
+El algoritmo \ref{pseudogen} muestra la generación de restricciones para un nodo determinado del AST. Se asume la existencia de un almacén (\emph{store}) que almacena los tipos de los identificadores. En la línea \ref{lineTVar} se asigna una variable de tipo a \texttt{type}. La asignación de la línea \ref{lineAss} asigna el tipo retornado por la función \texttt{Constraint\_Generation} a \texttt{targetType} y el conjunto de restricciones retornado por la misma función a \texttt{targetCS}.
 
-
-Este método será aceptado o rechazado por las reglas del sistema de tipos, si la faceta pública de retorno del campo \texttt{length} es \texttt{Bot} o \texttt{Top} respectivamente.
-
-Si decidimos que la faceta pública de retorno para métodos del core del lenguaje es \texttt{Top}, entonces cualquier operación que realicemos sobre el valor de retorno, retornará \texttt{Top}, lo cual es poco útil. Por lo tanto la decisión por defecto es que la faceta pública de retorno para métodos del core del lenguaje sea \texttt{Bot}.
-
-Ahora, analicemos ambas posibilidades para la faceta pública por defecto de los parámetros:
-
-\begin{itemize}
-  \item \texttt{Top} $\rightarrow$ \texttt{Bot}: Supongamos que el core del lenguaje posee un método \texttt{identity}, que dado un \texttt{x}, retorna \texttt{x}. Si tomamos esta decisión, entonces el método \texttt{identity} podrá ser usado como desclasificador universal, como por ejemplo \texttt{identity(password)}.
-  \item \texttt{Bot} $\rightarrow$ \texttt{Bot}: Esta elección restringe las facetas públicas de los argumentos utilizados a \texttt{Bot}, lo cual también podría ser considerado poco útil. Sin embargo, al retornar un valor con faceta pública \texttt{Bot}, cualquier operación podrá ser utilizada sobre ese valor.
-\end{itemize}
-
-Haciendo un balance, se considera que la opción \texttt{Bot} $\rightarrow$ \texttt{Bot} tiene el mejor equilibrio entre utilidad y seguridad, por lo que es la opción por defecto considerada. Sin embargo, es deseable que la herramienta se pueda configurar para elegir otra alternativa.
-
-\section{Gramática de tipos}
-Por lo discutido en la sección \ref{inference}, es necesario introducir variables de tipo para presentar un algoritmo de inferencia basado en constraints. Además, se deben definir los otros tipos que serán utilizados internamente en el análisis. Esto se hace definiendo la gramática de tipos que usará el sistema de inferencia:
-
-  $\mathtt{\tau := \alpha\ |\ Obj(\overline{l: \tau})\ |\ [\overline{\tau}] \rightarrow \tau \ |\ Join(\overline{\tau})\ |\ Meet(\overline{\tau})\ |\ Bot\ |\ Top}$
-
-Donde $\alpha$ es cualquier variable de tipo, $\mathtt{Obj(\overline{l: \tau}})$ representa el tipo de un objeto y $\mathtt{l}$ es un nombre de método. Notar que aquí se reutilizó la idea de los tipos \texttt{meet} y \texttt{join} que propuso Cardelli~\cite{cardelli}.
-
-\section{Generación de constraints de subtyping} \label{propuestaGen}
-Como se mencionó en la sección \ref{inference}, el uso de constraints permite presentar un algoritmo de inferencia como una fase de generación de constraints, y una fase de resolución de constraints.
-
-El algoritmo de generación de constraints se ejecuta en cada nodo del árbol de sintaxis abstracta (AST). A continuación se explicarán las reglas de generación de constraints, y luego se mostrará el algoritmo en pseudolenguaje.
-
-\paragraph{Invocación a método.}Cuando se procesa un nodo que representa una invocación a método, se genera una constraint entre el objetivo de la invocación, y un tipo de objeto que contiene al método invocado. Esta constraint almacena el tipo de expresión de la invocación, debido a la posible aplicación de la regla \texttt{TmH} de type-based declassification, lo cual se explica en la sección \ref{propuestaVer}. Además, por cada argumento de la invocación, se genera una constraint entre el argumento y el parámetro correspondiente de la declaración del método.
-
-\paragraph{Expresión de retorno.}Cuando se procesa un nodo que representa una expresión de retorno, se genera una constraint entre la expresión de retorno y el retorno declarado por el método. Además, se genera una constraint entre el \texttt{pc} y el retorno declarado del método, debido a que la expresión de retorno puede ocurrir dentro del cuerpo de un condicional.
-
-\paragraph{Expresión de asignación.}Cuando se procesa un nodo que representa una expresión de asignación, se genera una constraint entre el lado derecho de la asignación y el lado izquierdo de la asignación. Además, se genera una constraint entre el \texttt{pc} y el lado izquierdo de la asignación, por el mismo motivo que en la expresión de retorno.
-
-\paragraph{Expresión condicional.}Cuando se procesa un nodo que representa una expresión condicional (como \texttt{if} y \texttt{while}), se cambia el \texttt{pc} por la faceta pública de la condición, debido a que será utilizado por el algoritmo en el cuerpo del condicional.
-
-El algoritmo \ref{pseudogen} muestra la generación de constraints para un nodo determinado del AST. Ejecutando la función del algoritmo \ref{pseudogen} en todos los nodos del AST y uniendo los resultados, se obtiene el set de constraints.
-\clearpage
-
-\begin{algorithm}\captionsetup{labelsep=newline}
-  \centering
-  \caption{Generación de constraints}
-  \label{pseudogen}
-    \begin{algorithmic}[1]
-      \Function{Constraint\_Generation}{\texttt{node, pc}}
-          \State $\mathtt{cs\gets \{\}}$
-          \Switch{\texttt{node}}
-            \Case{\texttt{MethodInvocation(name, target, signature, expression, arguments)}}
-              \State \texttt{cs.insert(target <: Obj(name: signature), expression)}
-              \For {$\mathtt{argument,correspondingParameter\ \mathbf{in}\ arguments}$}
-                \State \texttt{cs.insert(argument <: correspondingParameter})
-              \EndFor
-            \EndCase
-            \Case{\texttt{ReturnStatement(expression, methodReturn)}}
-              \State \texttt{cs.insert(expression <: methodReturn)}
-              \State \texttt{cs.insert(pc <: methodReturn)}
-            \EndCase
-            \Case{\texttt{AssignmentExpression(leftHand, rightHand)}}
-              \State \texttt{cs.insert(rightHand <: LeftHand)}
-              \State \texttt{cs.insert(pc <: LeftHand)}
-            \EndCase
-            \Case{\texttt{IfExpression(conditionExpression)}}
-              \State $\mathtt{pc\gets conditionExpression}$
-            \EndCase
-          \EndSwitch
-          \State \Return \texttt{cs, pc}
-      \EndFunction
-    \end{algorithmic}
-\end{algorithm}
-A modo de ejemplo, consideremos el siguiente código parcialmente anotado con facetas públicas, y las constraints que se generan
-
-
+En el ejemplo \ref{ej3-1} se muestra un código parcialmente anotado con facetas públicas. En este ejemplo, se espera inferir una faceta pública para \texttt{password} que contenga a los métodos \texttt{eq} y \texttt{hash}. En esta sección se muestra el conjunto de restricciones generado para el ejemplo \ref{ej3-1}, mientras que en la sección \ref{propuestaRes} se muestra la resolución de este conjunto.
 
 \begin{ej}\ \\
   \label{ej3-1}
@@ -165,23 +111,72 @@ A modo de ejemplo, consideremos el siguiente código parcialmente anotado con fa
   }
   \end{lstlisting}
   \begin{enumerate}
-    \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta\}}$
-    \item $\mathtt{\{\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma\}}$
-    \item $\mathtt{\{Bot <: Bot\}}$
-    \item $\mathtt{\{Bot <: Bot\}}$
-    \item $\mathtt{\{\gamma <: Bot\}}$
-    \item $\mathtt{\{Bot <: Bot\}}$
+    \item $\mathtt{(\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta)}$
+    \item $\mathtt{(\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma)}$
+    \item $\mathtt{(Bot <: Bot)}$
+    \item $\mathtt{(Bot <: Bot)}$
+    \item $\mathtt{(\gamma <: Bot)}$
+    \item $\mathtt{(Bot <: Bot)}$
   \end{enumerate}
 \end{ej}
 
+La variable de tipo $\alpha$ corresponde al tipo del parámetro \texttt{password}. La variable de tipo $\beta$ corresponde al tipo de la condición en la expresión condicional. La variable de tipo $\gamma$ corresponde al tipo de la expresión de la invocación a método \texttt{password.hash()}.
 
-Las constraints 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password}, que fue asignado con una variable de tipo $\alpha$. Las constraints 3 y 4 se generan por la relación entre el \texttt{pc} (\texttt{Bot}) y el retorno del método (\texttt{Bot}), y las constraint 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método.
-
-Además de la generación de constraints, en este paso se realiza la verificación de well-formed en las expresiones que tienen facetas públicas declaradas. Esto se muestra en el algoritmo \ref{wellformed}, para un nodo determinado del AST.
-
+Las restricciones 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password}. Las restricciones 3 y 4 se generan por la relación entre el contexto de seguridad (\texttt{Bot}) y el retorno del método (\texttt{Bot}) en ambas ramas de la expresión condicional, y las restricciones 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método en ambas ramas de la expresión condicional.
+\clearpage
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
-  \caption{Verificación de well-formed}
+  \caption{Generación de restricciones}
+  \label{pseudogen}
+    \begin{algorithmic}[1]
+      \Function{Constraint\_Generation}{\texttt{node, pc}}
+          \State $\mathtt{cs\gets \{)}$
+          \State $\mathtt{type\gets Bot}$
+          \Switch{\texttt{node}}
+            \Case{\texttt{Identifier(name)}}
+              \State $\mathtt{type\gets Store.getType(name)}$
+            \EndCase
+            \Case{\texttt{MethodInvocation(name, target, signature, arguments)}}
+              \State $\mathtt{type\gets \alpha}$ \label{lineTVar}
+              \State $\mathtt{targetType, targetCS\gets Constraint\_Generation(target, pc)}$ \label{lineAss}
+              \State \texttt{cs.insert(targetType <: Obj(name: signature), type)}
+              \State \texttt{cs.addAll(targetCS)}
+              \For {$\mathtt{argument,parType\ \mathbf{in}\ arguments}$}
+                \State $\mathtt{argType, argCS\gets Constraint\_Generation(argument, pc)}$
+                \State \texttt{cs.insert(argType <: parType})
+                \State \texttt{cs.addAll(argCS)}
+              \EndFor
+            \EndCase
+            \Case{\texttt{ReturnStatement(expression, methodReturn)}}
+              \State $\mathtt{expType, expCS\gets Constraint\_Generation(expression, pc)}$
+              \State \texttt{cs.insert(expType <: methodReturn)}
+              \State \texttt{cs.insert(pc <: methodReturn)}
+              \State \texttt{cs.addAll(expCS)}
+            \EndCase
+            \Case{\texttt{AssignmentExpression(leftHand, rightHand)}}
+              \State $\mathtt{leftType, leftCS\gets Constraint\_Generation(leftHand, pc)}$
+              \State $\mathtt{rightType, rightCS\gets Constraint\_Generation(rightHand, pc)}$
+              \State \texttt{cs.insert(rightType <: leftType)}
+              \State \texttt{cs.insert(pc <: leftType)}
+              \State \texttt{cs.addAll(leftCS, rightCS)}
+            \EndCase
+            \Case{\texttt{IfExpression(conditionExpression, thenExpression, elseExpression)}}
+              \State $\mathtt{condType, condCS\gets Constraint\_Generation(conditionExpression, pc)}$
+              \State $\mathtt{thenType, thenCS\gets Constraint\_Generation(thenExpression, condType)}$
+              \State $\mathtt{elseType, elseCS\gets Constraint\_Generation(elseExpression, condType)}$
+              \State \texttt{cs.addAll(condCS, thenCS, elseCS)}
+            \EndCase
+          \EndSwitch
+          \State \Return \texttt{type, cs}
+      \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+Además de la generación de restricciones, en este paso se verifica que las expresiones que tienen facetas públicas declaradas cumplan con la restricción de tipos bien formados. Esto se muestra en el algoritmo \ref{wellformed}, para un nodo determinado del AST.
+\clearpage
+\begin{algorithm}\captionsetup{labelsep=newline}
+  \centering
+  \caption{Verificación de tipos bien formados}
   \label{wellformed}
     \begin{algorithmic}[1]
       \Function{isWellFormed}{\texttt{node}}
@@ -193,13 +188,13 @@ Además de la generación de constraints, en este paso se realiza la verificaci�
     \end{algorithmic}
 \end{algorithm}
 
-\section{Resolución de constraints de subtyping} \label{propuestaRes}
+\section{Resolución de restricciones sobre subtipos} \label{propuestaRes}
 
-El primer paso en la resolución de constraints es la eliminación de constraints \textit{obvias}. Esto es, la eliminación de las constraints \texttt{Bot <: X} y \texttt{X <: Top}, ya que no aportan información útil al algoritmo de inferencia.
+El primer paso en la resolución de restricciones es la eliminación de restricciones \textit{obvias}. Esto es, la eliminación de las restricciones \texttt{(Bot <: X)} y \texttt{(X <: Top)}, ya que no aportan información útil al algoritmo de inferencia.
 
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
-  \caption{Simplificación de constraints}
+  \caption{Simplificación de restricciones}
   \label{pseudosimplify}
     \begin{algorithmic}[1]
       \Function{Simplify}{\texttt{cs}}
@@ -214,33 +209,38 @@ El primer paso en la resolución de constraints es la eliminación de constraint
     \end{algorithmic}
 \end{algorithm}
 
-Aplicando el algoritmo \ref{pseudosimplify}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo tres constraints.
+Aplicando el algoritmo \ref{pseudosimplify}, el conjunto de restricciones del ejemplo \ref{ej3-1} se reduce a solo tres restricciones, lo que se muestra en el ejemplo \ref{ejsimplify}.
 
-\begin{enumerate}
-  \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta\}}$
-  \item $\mathtt{\{\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma\}}$
-  \item $\mathtt{\{\gamma <: Bot\}}$
-\end{enumerate}
-
-El siguiente paso es agrupar las constraints sobre la misma variable de tipo, usando las reglas del teorema \ref{teo1}. Aplicando el algoritmo \ref{pseudogroup}, el set de constraints del ejemplo \ref{ej3-1} se reduce a solo dos constraints.
-
-\begin{ej}\ \\
+\begin{ej}\
   \normalfont
-  \label{ej3-2}
+  \label{ejsimplify}
   \begin{enumerate}
-    \item $\mathtt{\{\alpha <: Meet(Obj(eq : [Bot] \rightarrow Bot),\ Obj(hash : [\ ] \rightarrow Bot))\}}$
-    \item $\mathtt{\{\gamma <: Bot\}}$
+    \item $\mathtt{(\alpha <: Obj(eq : [Bot] \rightarrow Bot),\ \beta)}$
+    \item $\mathtt{(\alpha <: Obj(hash : [\ ] \rightarrow Bot),\ \gamma)}$
+    \item $\mathtt{(\gamma <: Bot)}$
   \end{enumerate}
 \end{ej}
 
+
+El siguiente paso es agrupar las restricciones sobre la misma variable de tipo, usando las reglas del teorema \ref{teo1}. Aplicando el algoritmo \ref{pseudogroup}, el conjunto de restricciones del ejemplo \ref{ejsimplify} se reduce a solo dos restricciones, lo que se muestra en el ejemplo \ref{ej3-2}.
+
+
+\begin{ej}\
+  \normalfont
+  \label{ej3-2}
+  \begin{enumerate}
+    \item $\mathtt{(\alpha <: Meet(Obj(eq : [Bot] \rightarrow Bot),\ Obj(hash : [\ ] \rightarrow Bot)))}$
+    \item $\mathtt{(\gamma <: Bot)}$
+  \end{enumerate}
+\end{ej}
 \clearpage % TODO
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
-  \caption{Agrupación de constraints}
+  \caption{Agrupación de restricciones}
   \label{pseudogroup}
     \begin{algorithmic}[1]
       \Function{Group}{\texttt{cs, typeVariables}}
-          \State $\mathtt{toRemove\gets \{\}}$
+          \State $\mathtt{toRemove\gets \{)}$
           \For {\texttt{tvar \textbf{in} typeVariables}}
             \State $\mathtt{c_1\gets Constraint(tvar, Meet())}$
             \State $\mathtt{c_2\gets Constraint(Join(), tvar)}$
@@ -268,10 +268,22 @@ El siguiente paso es agrupar las constraints sobre la misma variable de tipo, us
 
 
 \subsection{Unificación}
-En este paso, se materializan las operaciones \texttt{meet} y \texttt{join}, se comprueba la validez de las constraints y se realizan substituciones de forma iterativa.
+En este paso, se materializan las operaciones \texttt{meet} y \texttt{join} sobre los tipos $\sqcap$ y $\sqcup$ que relacionan tipos concretos, lo que significa calcular el supremo y el ínfimo respectivamente entre los tipos relacionados. Además, se comprueba la validez de las restricciones y se realizan substituciones de forma iterativa.
 
 \subsubsection{Meet y Join}
-Cuando se tiene un tipo $\mathtt{Meet(\overline{\tau}})$ o $\mathtt{Join(\overline{\tau}})$, donde $\tau$ no tiene variables de tipo, entonces se puede materializar la operación sobre la lattice correspondiente. Este procedimiento se muestra en el algoritmo \ref{pseudoperations}. La operación \texttt{meet} consiste en la unión de los miembros de cada tipo de objeto en el tipo \texttt{Meet}, y \texttt{join} consiste en la intersección de los miembros de cada tipo de objeto en el tipo \texttt{Join}.
+Cuando se tiene un tipo $\mathtt{t_1 \sqcap t_2}$ o $\mathtt{t_1 \sqcup t_2}$, donde $\mathtt{t_1}$ y $\mathtt{t_2}$ no tienen variables de tipo, entonces se puede materializar la operación correspondiente sobre el retículo de subtipos. Este procedimiento se muestra en el algoritmo \ref{pseudoperations}. La operación \texttt{meet} consiste en la unión de los miembros de $\mathtt{t_1}$ y $\mathtt{t_2}$, y \texttt{join} consiste en la intersección de los miembros de $\mathtt{t_1}$ y $\mathtt{t_2}$.
+
+Si aplicamos el algoritmo \ref{pseudoperations} al conjunto de restricciones del ejemplo \ref{ej3-2}, se materializa la operación de la restricción 1. Esto se muestra en el ejemplo \ref{ejmater}.
+\clearpage
+\begin{ej}\
+  \normalfont
+  \label{ejmater}
+  \begin{enumerate}
+    \item $\mathtt{(\alpha <: Obj(eq : [Bot] \rightarrow Bot, hash : [\ ] \rightarrow Bot))}$
+    \item $\mathtt{(\gamma <: Bot)}$
+  \end{enumerate}
+\end{ej}
+
 
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
@@ -280,48 +292,41 @@ Cuando se tiene un tipo $\mathtt{Meet(\overline{\tau}})$ o $\mathtt{Join(\overli
     \begin{algorithmic}[1]
       \Function{performOperations}{\texttt{cs}}
           \For {\texttt{constraint \textbf{in} cs}}
-            \If {\texttt{constraint.right \textbf{is} Meet \textbf{and} constraint.right.isConcrete()}}
+            \If {\texttt{constraint.right \textbf{is} $\sqcap$ \textbf{and} constraint.right.isConcrete()}}
               \State $\mathtt{constraint.right\gets}$
-              \State \ \ \ \ \ \ \ \ \ $\mathtt{constraint.right.reduce((t1,t2) => Obj(t1.members \cup t2.members))}$
+              \State \ \ \ \ \ \ \ \ \ $\mathtt{constraint.right.t1 \cup constraint.right.t2}$
             \EndIf
             \If {\texttt{constraint.left \textbf{is} Join \textbf{and} constraint.left.isConcrete()}}
               \State $\mathtt{constraint.left\gets}$
-              \State \ \ \ \ \ \ \ \ \ $\mathtt{constraint.left.reduce((t1,t2) => Obj(t1.members \cap t2.members))}$
+              \State \ \ \ \ \ \ \ \ \ $\mathtt{constraint.left.t1 \cap constraint.left.t2}$
             \EndIf
           \EndFor
       \EndFunction
     \end{algorithmic}
 \end{algorithm}
 
-Si aplicamos el algoritmo \ref{pseudoperations} al ejemplo \ref{ej3-2}, se materializa la operación de la constraint 1.
+\subsubsection{Verificación de restricciones} \label{propuestaVer}
+Cuando una restricción representa una relación no válida, existen dos casos posibles, dependiendo del origen de la restricción:
 
 \begin{enumerate}
-  \item $\mathtt{\{\alpha <: Obj(eq : [Bot] \rightarrow Bot, hash : [\ ] \rightarrow Bot)\}}$
-  \item $\mathtt{\{\gamma <: Bot\}}$
+  \item Si la restricción no proviene de una invocación a método, se debe reportar un error.
+  \item En caso contrario, se debe reemplazar por \texttt{Top} toda aparición del tipo de expresión de la restricción, en el conjunto de restricciones, debido a la aplicación de la regla $\text{TmH}$ de la desclasificación basada en tipos. En este caso no se debe reportar error.
 \end{enumerate}
 
-\subsubsection{Verificación de constraints} \label{propuestaVer}
-Cuando una constraint representa una relación no válida, existen dos casos posibles:
+En el ejemplo \ref{ej-tmh}, las restricciones relevantes generadas son:
 
 \begin{enumerate}
-  \item Si la constraint no proviene de una invocación a método, se debe reportar un error.
-  \item En caso contrario, se debe reemplazar por \texttt{Top} toda aparición del tipo de expresión de la constraint, en el set de constraints. En este caso no se debe reportar error.
+  \item $(\mathtt{Top <: Obj(eq: Bot \rightarrow Bot),\ \alpha})$
+  \item $(\mathtt{\alpha <: \beta})$
 \end{enumerate}
 
-En el ejemplo \ref{ej-tmh}, las constraints relevantes generadas son:
+Donde $\beta$ es la faceta pública de retorno de \texttt{login}. Como la restricción 1 representa una relación no válida y proviene de invocación a método, el tipo de expresión $\alpha$ debe substituirse por \texttt{Top} en el conjunto de restricciones. Luego, la restricción 2 cambia a $(\mathtt{Top <: \beta})$.
 
-\begin{enumerate}
-  \item $\{\mathtt{Top <: Obj(eq: Bot \rightarrow Bot),\ \alpha}\}$
-  \item $\{\mathtt{\alpha <: \beta}\}$
-\end{enumerate}
-
-Donde $\beta$ es la faceta pública de retorno de \texttt{login}. Como la constraint 1 representa una relación no válida y proviene de invocación a método, el tipo de expresión $\alpha$ debe substituirse por \texttt{Top} en el set de constraint. Luego, la constraint 2 cambia a $\{\mathtt{Top <: \beta}\}$.
-
-El algoritmo \ref{pseudocheck} muestra la verificación de constraints. Este algoritmo usa la función \texttt{substitute}, que se muestra en el algoritmo \ref{pseudosubstitute}.
-
+El algoritmo \ref{pseudocheck} muestra la verificación de restricciones. Este algoritmo usa la función \texttt{substitute}, que se muestra en el algoritmo \ref{pseudosubstitute}.
+\clearpage
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
-  \caption{Verificación de constraints}
+  \caption{Verificación de restricciones}
   \label{pseudocheck}
     \begin{algorithmic}[1]
       \Function{checkConstraints}{\texttt{cs,errorCollector}}
@@ -355,36 +360,30 @@ El algoritmo \ref{pseudocheck} muestra la verificación de constraints. Este alg
             \Case{$\mathtt{x \rightarrow y}$}
               \State \Return $\mathtt{substitute(x,target,newType)\rightarrow substitute(y,target,newType)}$
             \EndCase
-            \Case{\texttt{Meet(types)}}
-              \State \Return \texttt{Meet(Meet.map((t) => substitute(t,target,newType))}
+            \Case{$\mathtt{x \sqcap y}$}
+              \State \Return $\mathtt{substitute(x,target,newType) \sqcap substitute(y,target,newType)}$
             \EndCase
-            \Case{\texttt{Join(types)}}
-              \State \Return \texttt{Join(Join.map((t) => substitute(t,target,newType)))}
-            \EndCase
-            \Case{\texttt{Bot}}
-              \State \Return \texttt{Bot}
-            \EndCase
-            \Case{\texttt{Top}}
-              \State \Return \texttt{Top}
+            \Case{$\mathtt{x \sqcup y}$}
+              \State \Return $\mathtt{substitute(x,target,newType) \sqcup substitute(y,target,newType)}$
             \EndCase
             \Case{$\alpha$}
               \State \Return $\alpha$
             \EndCase
           \EndSwitch
+      \State \Return \texttt{source}
       \EndFunction
     \end{algorithmic}
 \end{algorithm}
 
 \subsubsection{Substitución}
-Cuando se tiene una constraint que relaciona una variable de tipo con un tipo concreto\footnote{Un tipo concreto no tiene variables de tipo}, se debe substituir en el set de constraint toda aparición de la variable de tipo, por el tipo concreto. Como este proceso puede generar nuevas constraints que sean candidatas a materialización de operaciones, a verificación o a substitución, se debe iterar hasta que no queden constrainst candidatas. El algoritmo \ref{pseudosubst} muestra la substitución de constraints resueltas, mientras que el algoritmo \ref{pseudouni} muestra el procedimiento completo de unificación.
-
+Cuando se tiene una restricción que relaciona una variable de tipo con un tipo concreto, se debe substituir en el conjunto de restricciones toda aparición de la variable de tipo, por el tipo concreto. Como este proceso puede generar nuevas restricciones que sean candidatas a materialización de operaciones, a verificación o a substitución, se debe iterar hasta que no queden restricciones candidatas. El algoritmo \ref{pseudosubst} muestra la substitución de restricciones resueltas, mientras que el algoritmo \ref{pseudouni} muestra el procedimiento completo de unificación.
 \begin{algorithm}\captionsetup{labelsep=newline}
   \centering
-  \caption{Substitución de constraints}
+  \caption{Substitución de restricciones}
   \label{pseudosubst}
     \begin{algorithmic}[1]
       \Function{substituteResolved}{\texttt{cs}}
-          \State $\mathtt{m\gets \{\}}$
+          \State $\mathtt{m\gets \{)}$
           \For {\texttt{constraint \textbf{in} cs}}
             \If {\texttt{constraint.right.isConcrete() \textbf{and} constraint.left.isVariable()}}
               \For {\texttt{c \textbf{in} cs, c != constraint}}
@@ -414,7 +413,7 @@ Cuando se tiene una constraint que relaciona una variable de tipo con un tipo co
   \label{pseudouni}
     \begin{algorithmic}[1]
       \Function{Unify}{\texttt{cs,errorCollector}}
-          \State $\mathtt{m\gets \{\}}$
+          \State $\mathtt{m\gets \{)}$
           \While {\texttt{cs.hasOperationCandidates() \textbf{or} cs.hasSubstCandidates()}}
             \State \texttt{performOperations(cs)}
             \State \texttt{checkConstraints(cs, errorCollector)}
@@ -425,11 +424,7 @@ Cuando se tiene una constraint que relaciona una variable de tipo con un tipo co
     \end{algorithmic}
 \end{algorithm}
 \clearpage
-La función de unificación retorna un mapeo entre cada variable de tipo y un tipo concreto. El caso de que queden variables de tipo sin resolver puede significar dos cosas:
+La función de unificación retorna un mapeo entre cada variable de tipo y un tipo concreto. El caso de que queden variables de tipo sin resolver significa que cualquier faceta pública sirve para validar la expresión según las reglas del sistema de tipos.
 
-\begin{itemize}
-  \item Falta información para determinar el tipo concreto de una expresión, lo que no significa errores de tipos
-  \item Cualquier faceta sirve para validar la expresión según las reglas del sistema de tipos
-\end{itemize}
-
-Si se informa al usuario un error debido a la ocurrencia del primer caso, esto obliga la anotación de facetas que no son importantes, por lo que se considera al segundo caso una mejor opción.
+\section*{Resumen}
+Por escribir.

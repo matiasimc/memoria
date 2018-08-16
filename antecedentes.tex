@@ -183,7 +183,7 @@ La inferencia de tipos es el proceso de determinar el tipo de las expresiones en
 Las características de los algoritmos de inferencia varían dependiendo de las características de los lenguajes de programación. A continuación se describe la inferencia de tipos en lenguajes conocidos.
 
 \subsection{Scala}
-Scala es un lenguaje de programación estáticamente\footnote{Un lenguaje estáticamente tipado es aquel que comprueba en tiempo de compilación la correctitud de los tipos del programa} tipado que combina los paradigmas de la programación orientada a objetos y la programación funcional. Scala posee una inferencia de tipos local~\cite{pierce}, que permite omitir las anotaciones de tipos en la declaración de variables locales, en el uso de clases y métodos polimórficos, y en el tipo de retorno de métodos no recursivos. Esto se muestra en el ejemplo \ref{ejscala}, donde se infiere el tipo de los identificadores \texttt{p} y \texttt{q}. \texttt{MyPair} es una clase polimórfica especial que define un constructor con dos parámetros. \texttt{id} define la función identidad polimórfica.
+Scala es un lenguaje de programación estáticamente\footnote{Un lenguaje estáticamente tipado es aquel que comprueba en tiempo de compilación la correctitud de los tipos del programa} tipado que combina los paradigmas de la programación orientada a objetos y la programación funcional. Scala posee una inferencia de tipos local~\cite{odersky2}, que permite omitir las anotaciones de tipos en la declaración de variables locales, en el uso de clases y métodos polimórficos, y en el tipo de retorno de métodos no recursivos. Esto se muestra en el ejemplo \ref{ejscala}, donde se infiere el tipo de los identificadores \texttt{p} y \texttt{q}. \texttt{MyPair} es una clase polimórfica especial que define un constructor con dos parámetros. \texttt{id} define la función identidad polimórfica.
 \clearpage
 \begin{ej} \ \\
   \normalfont
@@ -356,7 +356,7 @@ Una forma de resolver restricciones sobre subtipos es utilizar operaciones sobre
   \normalfont
   \label{ej2-9}
 \begin{lstlisting}[morekeywords={then}]
-  let g = if (c) then 1 else 0.5;
+  let g = (c) => if (c) then 1 else 0.5;
 \end{lstlisting}
 \end{ej}
 
