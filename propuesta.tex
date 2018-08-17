@@ -65,7 +65,7 @@ Sea $[m_i: \overline{A_i} \rightarrow B_i]$ un tipo de objeto con métodos $m_i$
 \mathtt{convert}([m_i: \overline{A_i} \rightarrow B_i]) = [m_i: \overline{A_i\text{\texttt{<}}P_{Ai}} \rightarrow B_i\text{\texttt{<}}P_{Bi}]
 \]
 
-Lo que hace \texttt{convert} es reemplazar el tipo de objeto de Dart por una faceta privada, donde los tipos de los parámetros y retorno de cada método se convirtieron a tipos de dos facetas, con faceta pública $P_{Ai}$ y $P_{Bi}$ respectivamente.
+Lo que hace \texttt{convert} es reemplazar el tipo de objeto de Dart por una faceta privada, donde los tipos de los parámetros y retorno de cada método se convierten a tipos de dos facetas, con faceta pública $P_{Ai}$ y $P_{Bi}$ respectivamente.
 
 Las facetas públicas $P_{Ai}$ y $P_{Bi}$ se pueden establecer según distintos criterios. En un sistema de tipos con polimorfismo, podemos considerarlas como variables de tipo cuantificadas, que pueden tomar distintos valores. Aquello está fuera del alcance de este trabajo, por lo que se debe tomar una decisión respecto al valor que tendrán las facetas públicas en la operación \texttt{convert}.
 
@@ -120,7 +120,7 @@ En el ejemplo \ref{ej3-1} se muestra un código parcialmente anotado con facetas
   \end{enumerate}
 \end{ej}
 
-La variable de tipo $\alpha$ corresponde al tipo del parámetro \texttt{password}. La variable de tipo $\beta$ corresponde al tipo de la condición en la expresión condicional. La variable de tipo $\gamma$ corresponde al tipo de la expresión de invocación al método \texttt{password.hash()}.
+La variable de tipo $\alpha$ corresponde al tipo del parámetro \texttt{password}. La variable de tipo $\beta$ corresponde al tipo de la condición en la expresión condicional. La variable de tipo $\gamma$ corresponde al tipo de la expresión de la invocación a método \texttt{password.hash()}.
 
 Las restricciones 1 y 2 se generan por las llamadas a métodos sobre el parámetro \texttt{password}. Las restricciones 3 y 4 se generan por la relación entre el contexto de seguridad (\texttt{Bot}) y el retorno del método (\texttt{Bot}) en ambas ramas de la expresión condicional, y las restricciones 5 y 6 se generan por la relación entre la expresión de retorno ($\gamma$ y \texttt{Bot}) y el retorno del método en ambas ramas de la expresión condicional.
 \clearpage

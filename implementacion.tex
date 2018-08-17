@@ -68,7 +68,7 @@ En esta fase, la clase \texttt{ConstraintSolver} se encarga de convertir el conj
 
 En el algoritmo de unificación, se pueden generar errores del tipo \texttt{SecurityError}, al momento de verificar las restricciones.
 
-Al final del proceso de resolución, se extraen las facetas públicas desde el diccionario que almacena el tipo de los elementos, que serán informadas al programador mediante errores del tipo \texttt{InferredFacetInfo}. Si un elemento está asociado a una variable de tipo, se genera un error del tipo \texttt{UnableToResolveInfo}.
+Al final del proceso de resolución, se extraen las facetas públicas desde el diccionario que almacena el tipo de los elementos, que serán informadas al programador mediante errores del tipo \texttt{InferredFacetInfo}.
 
 Los errores generados en esta fase son recolectados mediante el mismo \texttt{ErrorCollector} de la fase de generación de constraints.
 
