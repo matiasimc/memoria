@@ -44,7 +44,7 @@ Antes de la generación de restricciones sobre un archivo, se realiza una etapa 
 \subsection{Fase de generación de restricciones}
 Una vez que se procesan las facetas públicas, se procede a la generación de restricciones. Esto se realiza implementando varios visitors mostrados en el diagrama de la figura \ref{uml}.
 
-La clase encargada de procesar las clases declaradas en un archivo es \texttt{CompilationUnitVisitor}. Mediante el visitor \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el visitor implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de constraints de la sección \ref{propuestaGen}.
+La clase encargada de procesar las clases declaradas en un archivo es \texttt{CompilationUnitVisitor}. Mediante el visitor \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el visitor implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de restricciones de la sección \ref{propuestaGen}.
 
 La clase \texttt{Store} es la encargada de la generación de variables de tipo, y el almacenamiento en diccionarios del tipo de las expresiones y elementos. Una expresión es un ente sintáctico representado por un nodo en el AST, mientras que un elemento es un ente semántico que fue declarado con un nombre en algún lugar del programa.
 
@@ -70,7 +70,7 @@ En el algoritmo de unificación, se pueden generar errores del tipo \texttt{Secu
 
 Al final del proceso de resolución, se extraen las facetas públicas desde el diccionario que almacena el tipo de los elementos, que serán informadas al programador mediante errores del tipo \texttt{InferredFacetInfo}.
 
-Los errores generados en esta fase son recolectados mediante el mismo \texttt{ErrorCollector} de la fase de generación de constraints.
+Los errores generados en esta fase son recolectados mediante el mismo \texttt{ErrorCollector} de la fase de generación de restricciones.
 
 
 \subsection{Tipos de errores}
