@@ -1,6 +1,6 @@
 \begin{intro}
 
-	La protección de la confidencialidad de la información manipulada por los programas computacionales es un problema cuya relevancia se ha incrementado en el último tiempo, a pesar de tener varias décadas de investigación. Por ejemplo, una aplicación web (o móvil) que como parte de su funcionamiento debe interactuar con servicios de terceros y por tanto debe proteger que su información sensible no se escape durante la ejecución de la aplicación a canales públicos.
+	La protección de la confidencialidad de la información manipulada por los programas computacionales es un problema cuya relevancia se ha incrementado en el último tiempo, a pesar de tener varias décadas de investigación. Por ejemplo, una aplicación web (o móvil) que interactúa con servicios de terceros debe asegurar que su información sensible no se escape durante la ejecución de la aplicación a canales públicos.
 
 	Los sistemas computacionales seguros aplican múltiples técnicas de protección de confidencialidad de la información, las cuales pueden ser específicas a un nivel de comunicación de un programa. Por ejemplo, a nivel de red se utilizan protocolos de encriptación para cifrar mensajes confidenciales, y a nivel del sistema operativo el núcleo restringe el acceso a información manipulada por procesos independientes.
 
@@ -14,14 +14,14 @@
 
 	El fundamento teórico de la desclasificación basada en tipos está bien descrito, pero carece de una implementación que permita comprobar la utilidad práctica de la propuesta. Además, se considera poco viable la implementación en su estado actual, ya que el programador tendría que agregar muchas anotaciones innecesarias al código para poder efectuar el análisis de control de flujo.
 
-	Un problema similar es el que resuelven los lenguajes de programación utilizando inferencia de tipos, que consiste en asignar un tipo adecuado a las expresiones sin una anotación de tipo, con el fin de facilitar el trabajo al programador y mantener los beneficios de un lenguaje estáticamente tipado. En esta dirección, se han propuesto mecanismos de inferencia para tipos de seguridad~\cite{Pottier}, lo que motiva una proposición similar para la desclasificación basada en tipos.
+	Un problema similar es resuelto por los lenguajes de programación utilizando inferencia de tipos, que consiste en asignar un tipo adecuado a las expresiones sin una anotación de tipo, con el fin de facilitar el trabajo al programador y mantener los beneficios de un lenguaje estáticamente tipado. En esta dirección, se han propuesto mecanismos de inferencia para tipos de seguridad~\cite{Pottier}, lo que motiva una proposición similar para la desclasificación basada en tipos.
 
 	Dart es un lenguaje de programación de propósito general, orientado a objetos y de código abierto desarrollado por Google. Es usado para construir aplicaciones web, móviles y dispositivos IoT (Internet of Things).
 
-	Dart ofrece herramientas para realizar análisis personalizado sobre el árbol sintáctico de un código fuente Dart. Estas herramientas pueden ser integradas a los ambientes de desarrollo (IDE) mediante extensiones, lo que permite al usuario analizar sus programas de forma interactiva.
+	Dart ofrece herramientas para realizar análisis personalizado sobre el árbol sintáctico de un código fuente Dart. Estas herramientas pueden ser integradas a los ambientes de desarrollo (IDE) mediante extensiones, lo que permite al usuario analizar sus programas de forma interactiva. Además de tener características adecuadas para el desarrollo de este trabajo, Dart es estudiado por los investigadores que realizaron el trabajo de la desclasificación basada en tipos como parte de un proyecto de investigación mayor en el área de seguridad.
 
 	\section{Objetivos}
-	El objetivo de la memoria es realizar la implementación de un sistema de inferencia para la desclasificación basada en tipos. Dentro de los objetivos específicos del trabajo, podemos encontrar:
+	El objetivo de la memoria es implementar un sistema de inferencia para la desclasificación basada en tipos. Dentro de los objetivos específicos del trabajo, podemos encontrar:
 
 	\begin{itemize}
 	\item \textbf{Inferencia y verificación estática de la desclasificación basada en tipos}. Se entiende coma la implementación de un sistema de inferencia de facetas de desclasificación para la desclasificación basada en tipos, en el lenguaje de programación Dart.
@@ -32,6 +32,5 @@
 
 	\section{Organización del documento}
 
-	Los antecedentes teóricos necesarios para entender este trabajo se abordan en los capítulos 2 y 3, mientras que la propuesta de solución es desarrollada en el capítulo 4. Los detalles de diseño de implementación de la propuesta son revisados en el capítulo 5, y la validación del trabajo es discutida en el capitulo 6. En el último capítulo se presentan las conclusiones y el trabajo futuro.
-
+	Los antecedentes teóricos necesarios para entender este trabajo se abordan en los capítulos 2 y 3, mientras que la propuesta de solución es desarrollada en el capítulo 4. Los detalles de diseño de implementación de la propuesta son revisados en el capítulo 5, y la validación del trabajo es discutida en el capítulo 6. En el último capítulo se presentan las conclusiones y el trabajo futuro.
 \end{intro}

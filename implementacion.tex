@@ -44,7 +44,7 @@ Antes de la generación de restricciones sobre un archivo, se realiza una etapa 
 \subsection{Fase de generación de restricciones}
 Una vez que se procesan las facetas públicas, se procede a la generación de restricciones. Esto se realiza implementando varios visitors mostrados en el diagrama de la figura \ref{uml}.
 
-La clase encargada de procesar las clases declaradas en un archivo es \texttt{CompilationUnitVisitor}. Mediante el visitor \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el visitor implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de restricciones de la sección \ref{propuestaGen}.
+La clase encargada de visitar y procesar todas las clases declaradas en un archivo es \texttt{CompilationUnitVisitor}. Mediante el visitor \texttt{ClassMemberVisitor}, se procesa cada método, campo y constructor de cada clase. Finalmente, el visitor implementado para procesar el cuerpo de cada miembro es \texttt{BlockVisitor}, en donde se procesa cada expresión relevante para el algoritmo de generación de restricciones de la sección \ref{propuestaGen}.
 
 La clase \texttt{Store} es la encargada de la generación de variables de tipo, y el almacenamiento en diccionarios del tipo de las expresiones y elementos. Una expresión es un ente sintáctico representado por un nodo en el AST, mientras que un elemento es un ente semántico que fue declarado con un nombre en algún lugar del programa.
 
@@ -54,7 +54,7 @@ El diccionario que almacena el tipo de las expresiones es necesario para almacen
 
 El diccionario que almacena el tipo de los elementos es necesario para la generación de restricciones sobre identificadores. Por ejemplo, en una invocación a método sobre una variable, se debe obtener el tipo del \texttt{VariableElement} para generar la restricción de invocación a método. Además, al final del proceso de inferencia, los elementos incluidos en este diccionario deben ser marcados en el código fuente para informar el tipo inferido al programador.
 
-En la fase de generación de restricciones se pueden generar errores de tipo \texttt{IllFormedTypeError} y \texttt{UndefinedFacetWarning}, los cuales son recolectados mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante la extensión.
+En esta fase, los distintos algoritmos pueden generar errores de tipo \texttt{IllFormedTypeError} y \texttt{UndefinedFacetWarning}, los cuales son recolectados mediante un \texttt{ErrorCollector}, el cual será utilizado para el despliegue de la información mediante la extensión.
 \clearpage
 \begin{figure}[ht]
   \centering

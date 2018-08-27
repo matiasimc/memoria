@@ -1,5 +1,5 @@
 \chapter{Control de flujo de información} \label{controlflujo}
-El control de flujo de información es una técnica de seguridad que permite controlar las acciones que se pueden realizar con los valores que manipula un programa, y hacia dónde está permitido que fluyan. En este capítulo se presentan los antecedentes de tipado de seguridad para el control de flujo de información, y los conceptos importantes de la desclasificación basada en tipos.
+El control de flujo de información es una técnica de seguridad que permite controlar las acciones que se pueden realizar con los valores manipulados por un programa, y hacia dónde está permitido que fluyan. En este capítulo se presentan los antecedentes de tipado de seguridad para el control de flujo de información, y los conceptos importantes de la desclasificación basada en tipos.
 
 \section{Tipado de seguridad}
 Los lenguajes con tipado de seguridad para el control del flujo de la información clasifican los valores de un programa con respecto a sus niveles de confidencialidad, expresado mediante un retículo\footnote{Un orden parcial, donde todo par de elementos tiene un único supremo e ínfimo} (\emph{lattice}) de etiquetas de seguridad. Por ejemplo, con el retículo de dos niveles de seguridad \texttt{L} $\sqsubseteq$ \texttt{H} se puede distinguir entre valores públicos o de baja confidencialidad (\texttt{L}) y valores privados o de alta confidencialidad (\texttt{H}). Un sistema de tipos con control de flujo asegura de forma estática el cumplimiento de la propiedad de no-interferencia~\cite{noninterference}, esto es, que la información confidencial no fluya directa o indirectamente hacia canales públicos~\cite{volpanoAl:S96}.
@@ -53,7 +53,7 @@ Existen otros flujos de información que ocurren mediante la influencia indirect
 
 En el ejemplo \ref{ej2-3} ocurre un flujo implícito que infringe con la propiedad de no-interferencia, debido a que un observador público puede obtener información del parámetro confidencial \texttt{password} observando cambios en el valor de retorno de la función, mediante el control de flujo del programa.
 
-Es posible detectar un flujo implícito inválido considerando que las instrucciones de retorno y asignación de valores de baja confidencialidad, ocurren en un contexto de alta confidencialidad, determinado por la condición de la instrucción \texttt{if}. Para considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos, se utiliza el concepto de \emph{contexto de seguridad}~\cite{pc}, usualmente llamado \texttt{pc} por \emph{program counter}. Así, en el ejemplo \ref{ej2-3} las instrucciones de retorno son inválidas, debido a que retornan valores de baja confidencialidad cuando el contexto de seguridad tiene un valor de alta confidencialidad.
+Los flujos implícitos inválidos se pueden detectar considerando el contexto de ejecución de las instrucciones. En una instrucción condicional, el contexto de ejecución de las ramas del condicional está determinado por la condición. Para considerar el contexto de ejecución de una instrucción en las reglas del sistema de tipos, se utiliza el concepto de \emph{contexto de seguridad}~\cite{pc}, usualmente llamado \texttt{pc} por \emph{program counter}. Así, en el ejemplo \ref{ej2-3} las instrucciones de retorno son inválidas, debido a que retornan valores de baja confidencialidad cuando el contexto de seguridad tiene un valor de alta confidencialidad.
 
 \section{Desclasificación}
 A pesar de que no-interferencia es una propiedad atractiva para la especificación de sistemas seguros, se considera muy estricta en la práctica, debido a que impide que la información confidencial tenga cualquier tipo de influencia en una salida observable de un programa. En efecto, queremos que el programa de \texttt{login} del ejemplo \ref{ej2-3} sea aceptado a pesar de no cumplir con la propiedad, pues de otra forma no tendríamos cómo realizar la autenticación.
@@ -114,7 +114,7 @@ Al igual que en tipado de seguridad de dos o más niveles, las facetas de la des
 
 Los métodos declarados en la faceta pública también poseen tipos de dos facetas en sus firmas. Así, el tipo \texttt{StringEq} visto anteriormente se define como $\mathtt{StringEq} \triangleq [\mathtt{eq} : \mathtt{String}$\texttt{<}$\mathtt{String} \rightarrow \mathtt{Bool}$\texttt{<}$\mathtt{Bool}]$.
 
-Existen dos reglas principales para comprobar que un programa con tipos de dos facetas se encuentra bien tipado. Consideremos el siguiente ejemplo, en donde $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{Unit}$\texttt{<}$\mathtt{Unit} \rightarrow \mathtt{String}$\texttt{<}$\mathtt{StringEq}]$.
+Existen dos reglas principales para comprobar que un programa con tipos de dos facetas se encuentra bien tipado. Consideremos el siguiente ejemplo, en donde $\mathtt{StringHashEq} \triangleq [\mathtt{hash} : \mathtt{Unit}$\texttt{<}$\mathtt{Unit} \rightarrow \mathtt{String}$\texttt{<}$\mathtt{StringEq}]$ es una faceta pública que tiene un método \texttt{hash}, el cual retorna un \texttt{String} con faceta pública \texttt{StringEq}.
 
 \begin{ej} \ \\
   \normalfont
@@ -387,7 +387,7 @@ Para resolver este tipo de restricciones, se considera la relación de orden par
   \label{subt1}
 \end{figure}
 
-Un orden parcial admite las operaciones \texttt{meet} y \texttt{join}, que corresponden a la máxima cota inferior (ínfimo) y a la mínima cota superior (supremo) entre dos tipos, respectivamente. Estas operaciones tienen solución si todo par de tipos en el orden parcial tiene un único supremo e ínfimo, lo que se define como retículo. En la figura \ref{subt1}, se debe agregar el tipo \texttt{Bot} para que el orden parcial sea un retículo.
+Un orden parcial admite las operaciones \texttt{meet} y \texttt{join}, que corresponden a la máxima cota inferior (ínfimo) y a la mínima cota superior (supremo) entre dos tipos, respectivamente. Estas operaciones tienen solución si todo par de tipos en el orden parcial tiene un único supremo e ínfimo, lo que se define como retículo. En la figura \ref{subt1}, se debe agregar el tipo \texttt{Bot} para que el orden parcial sea un retículo. El tipo \texttt{Bot} sería en este caso un tipo que no tiene instancias, y que es subtipo de todo tipo.
 
 Luego, mediante los tipos $\mathtt{t_1 \sqcap t_2}$ y $\mathtt{t_1 \sqcup t_2}$ introducidos por Cardelli~\cite{cardelli}, se representan las operaciones \texttt{meet} y \texttt{join} entre dos tipos, respectivamente.
 
